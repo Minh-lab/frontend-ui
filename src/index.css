@@ -4,15 +4,32 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
+  
+  /* Background & Foreground */
+  --background: oklch(0.98 0.005 260); /* Xám trắng cực nhẹ cho nền */
+  --foreground: oklch(0.2 0.04 260);
+  
+  /* Primary - Màu xanh Navy Thủy Lợi (Header/Sidebar active) */
+  --primary: oklch(0.35 0.12 260); 
+  --primary-foreground: oklch(0.98 0.01 260);
+  
+  /* Success - Màu xanh lá cho nút "Nộp" */
+  --success: oklch(0.72 0.18 145);
+  --success-foreground: oklch(0.99 0.01 145);
+
+  /* Destructive - Màu đỏ coral cho nút "Hủy" */
+  --destructive: oklch(0.68 0.18 25);
+  --destructive-foreground: oklch(0.99 0.01 25);
+
+  /* Accent - Màu tím nhạt cho các link "Xem & Duyệt" */
+  --accent: oklch(0.55 0.15 300);
+  --accent-foreground: oklch(0.98 0.01 300);
+
+  /* Sidebar & UI Elements */
+  --sidebar-background: oklch(1 0 0);
+  --border: oklch(0.92 0.01 260);
+  --input: oklch(0.92 0.01 260);
+  --ring: oklch(0.7 0.04 260);
 }
 
 @theme inline {
@@ -20,11 +37,17 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-sidebar: var(--sidebar-background);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
