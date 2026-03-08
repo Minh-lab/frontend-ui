@@ -1,17 +1,15 @@
 import * as React from "react"
 import { Bell, UserCircle } from "lucide-react"
 import useAuthStore from "@/store/useAuthStore"
-// Import logo ở đây
 import logoTLU from "@/assets/logo-tlu.png" 
 
 export function Header() {
   const { user, role } = useAuthStore()
 
   return (
-    <header className="flex flex-col w-full text-white shadow-md">
+    <header className="flex flex-col w-full text-white shadow-md z-50">
       <div className="bg-primary px-6 py-3 flex justify-between items-center border-b border-white/10">
         <div className="flex items-center gap-4">
-          {/* Sử dụng biến logo đã import */}
           <img 
             src={logoTLU} 
             alt="TLU Logo" 
@@ -37,9 +35,9 @@ export function Header() {
           
           <div className="flex items-center gap-3 cursor-pointer border-l border-white/20 pl-4 md:pl-6">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold">{user?.displayName || "Nguyễn Văn A"}</p>
+              <p className="text-sm font-bold">{user?.displayName || "Người dùng"}</p>
               <p className="text-[10px] text-blue-200 uppercase tracking-tighter">
-                {role || "Sinh viên"}
+                {role || "Khách"}
               </p>
             </div>
             <div className="bg-cyan-400 p-1 rounded-full border-2 border-white/50">

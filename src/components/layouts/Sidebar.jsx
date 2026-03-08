@@ -8,29 +8,33 @@ import useAuthStore from "@/store/useAuthStore";
 import { cn } from "@/lib/utils";
 
 const menuConfig = {
+  // Đồng bộ tiền tố /student
   student: [
-    { title: "Trang chủ", path: "/", icon: Home },
+    { title: "Trang chủ", path: "/student/dashboard", icon: Home },
     { label: "ĐỒ ÁN TỐT NGHIỆP" },
-    { title: "Đăng ký đề tài", path: "/register-topic", icon: GraduationCap },
-    { title: "Đăng ký GVHD đồ án", path: "/register-lecturer", icon: UserCheck },
-    { title: "Báo cáo đồ án", path: "/project-reports", icon: ClipboardList },
+    { title: "Đăng ký đề tài", path: "/student/register-topic", icon: GraduationCap },
+    { title: "Đăng ký GVHD đồ án", path: "/student/register-lecturer", icon: UserCheck },
+    { title: "Báo cáo đồ án", path: "/student/project-reports", icon: ClipboardList },
     { label: "THỰC TẬP DOANH NGHIỆP" },
-    { title: "Đăng ký doanh nghiệp", path: "/register-company", icon: Briefcase },
-    { title: "Báo cáo thực tập", path: "/intern-reports", icon: FileText },
+    { title: "Đăng ký doanh nghiệp", path: "/student/register-company", icon: Briefcase },
+    { title: "Báo cáo thực tập", path: "/student/intern-reports", icon: FileText },
   ],
+  // Đồng bộ tiền tố /company
   company: [
-    { title: "Trang chủ", path: "/", icon: Home },
-    { title: "Xác nhận thực tập", path: "/confirm-intern", icon: UserCheck },
-    { title: "Quản lý thực tập", path: "/manage-interns", icon: Briefcase },
+    { title: "Trang chủ", path: "/company/dashboard", icon: Home },
+    { title: "Xác nhận thực tập", path: "/company/confirm-intern", icon: UserCheck },
+    { title: "Quản lý thực tập", path: "/company/manage-interns", icon: Briefcase },
   ],
+  // Đồng bộ tiền tố /admin
   admin: [
-    { title: "Trang chủ", path: "/", icon: Home },
+    { title: "Trang chủ", path: "/admin/dashboard", icon: Home },
     { label: "QUẢN LÝ TÀI KHOẢN" },
-    { title: "Thêm tài khoản", path: "/add-account", icon: UserPlus },
-    { title: "Danh sách tài khoản", path: "/accounts", icon: Users },
+    { title: "Thêm tài khoản", path: "/admin/add-account", icon: UserPlus },
+    { title: "Danh sách tài khoản", path: "/admin/accounts", icon: Users },
   ],
+  // Giữ nguyên tiền tố /faculty (đã chuẩn)
   faculty: [
-    { title: "Trang chủ", path: "/", icon: Home },
+    { title: "Trang chủ", path: "/faculty/dashboard", icon: Home },
     { title: "Quản lý thực tập", path: "/faculty/intern", icon: Briefcase },
     { title: "Quản lý đồ án", path: "/faculty/projects", icon: GraduationCap },
     { title: "Quản lý giảng viên", path: "/faculty/lecturers", icon: UserCheck },
@@ -38,8 +42,9 @@ const menuConfig = {
     { title: "Quản lý kế hoạch", path: "/faculty/plans", icon: Calendar },
     { title: "Quản lý đề tài", path: "/faculty/topics", icon: Layers },
   ],
+  // Giữ nguyên tiền tố /lecturer (đã chuẩn)
   lecturer: [
-    { title: "Trang chủ", path: "/", icon: Home },
+    { title: "Trang chủ", path: "/lecturer/dashboard", icon: Home },
     { title: "Quản lý đề tài", path: "/lecturer/topics", icon: Layers },
     { label: "HƯỚNG DẪN THỰC TẬP" },
     { title: "Quản lý báo cáo thực tập", path: "/lecturer/intern-reports", icon: FileText },
@@ -55,14 +60,14 @@ const menuConfig = {
 };
 
 export function Sidebar() {
-  const { role } = useAuthStore();
+  // Sửa lỗi "đỏ role" bằng cách dùng Selector của Zustand
+  const role = useAuthStore((state) => state.role);
   const currentMenu = menuConfig[role] || [];
 
   return (
-    <nav className="flex flex-col h-full bg-white py-4 overflow-y-auto custom-scrollbar">
+    <nav className="flex flex-col h-full bg-white py-4 overflow-y-auto custom-scrollbar border-r">
       <div className="px-4 space-y-1">
         {currentMenu.map((item, index) => {
-          // Nếu là nhãn tiêu đề nhóm (Label)
           if (item.label) {
             return (
               <p key={index} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-6 mb-2 px-2">
@@ -79,7 +84,7 @@ export function Sidebar() {
               className={({ isActive }) => cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
                 isActive 
-                  ? "bg-blue-50 text-primary shadow-sm" 
+                  ? "bg-blue-50 text-primary shadow-sm font-bold" 
                   : "text-slate-600 hover:bg-slate-50 hover:text-primary"
               )}
             >
