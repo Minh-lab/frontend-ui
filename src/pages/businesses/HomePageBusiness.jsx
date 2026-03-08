@@ -13,8 +13,8 @@ const HomePageBusiness = () => {
            <button className='flex gap-5 items-center text-left w-full'>
               <Users className="text-indigo-600 w-7 h-7"/>
               <div className='flex flex-col'>
-                <span className='text-[20px]'>So sinh vien tham gia thuc tap</span>
-                <span className='text-[30px]'>{soSVthuctap}</span>
+                <span className='text-[20px] text-[#1C2F8E]'>Số sinh viên đang thực tập</span>
+                <span className='text-[30px] text-[#1C2F8E]'>{soSVthuctap}</span>
               </div>
             </button>
           </Card>
@@ -22,8 +22,8 @@ const HomePageBusiness = () => {
             <div className='flex gap-5 items-center'>
               <AlertCircle className="text-indigo-600 w-7 h-7"/>
               <div className='flex flex-col'>
-                <span className='text-[20px]'>So sinh vien chua duoc danh gia</span>
-                <span className='text-[30px]'>{soSVchuaNX}</span>
+                <span className='text-[20px] text-[#DA5C02]'>Số sinh viên chưa được đánh giá</span>
+                <span className='text-[30px] text-[#DA5C02]'>{soSVchuaNX}</span>
               </div>
             </div>
           </Card>

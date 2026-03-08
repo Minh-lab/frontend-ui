@@ -11,7 +11,7 @@ import useAuthStore from "@/store/useAuthStore";
 // import { lecturerRoutes } from "./lecturer.routes";
 // import { adminRoutes } from "./admin.routes";
 import { facultyRoutes } from "./faculty.routes";
-// import { companyRoutes } from "./company.routes";
+import { companyRoutes } from "./company.routes";
 
 // Pages (Sử dụng lazy để tối ưu dung lượng tải ban đầu)
 // const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
@@ -68,11 +68,11 @@ export default function AppRouter() {
             },
 
             // --- MODULE DOANH NGHIỆP ---
-            // {
-            //   path: "company",
-            //   element: <ProtectedRoute allowedRoles={["company"]} />,
-            //   children: companyRoutes,
-            // },
+            {
+              path: "company",
+              element: <ProtectedRoute allowedRoles={["company"]} />,
+              children: companyRoutes,
+            },
 
             // // --- MODULE ADMIN ---
             // {

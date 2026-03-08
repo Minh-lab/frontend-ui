@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card'
 import { sinhvienTT } from '../../data/businessData'
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 
 const XacNhanThucTap = () => {
@@ -58,11 +59,11 @@ const XacNhanThucTap = () => {
                       </td>
                       <td className='px-4 py-3'>
                           <div className='flex gap-5'>
-                            <Button className="bg-[#24AD47] hover:bg-[#1f933d] text-white w-9 h-9 p-0">
+                            <Button onClick = {() =>  toast.success("Hành động của bạn đã được ghi nhận",{className: "!bg-[#AAFAB8] !text-[#24AD47]"})} className="bg-[#24AD47] hover:bg-[#1f933d] text-white w-9 h-9 p-0">
                               ✔
                             </Button>
 
-                            <Button className="bg-[#FF0000] hover:bg-[#cc0000] text-white w-9 h-9 p-0">
+                            <Button onClick = {() =>  toast.error("Hành động từ chối được ghi nhận",{className: "!bg-[#FFF2D2] !text-[#DA5C02]"})} className="bg-[#FF0000] hover:bg-[#cc0000] text-white w-9 h-9 p-0">
                               ✕
                             </Button>
                           </div>

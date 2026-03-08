@@ -4,6 +4,7 @@ import useAuthStore from "@/store/useAuthStore";
 import AppRouter from "@/routes"; // Đường dẫn đến file routes/index.jsx tổng
 
 import { Toaster } from "@/components/ui/sonner";
+import { business } from "./data/businessData";
 
 /**
  * File App.jsx hoàn chỉnh
@@ -22,12 +23,10 @@ function App() {
   useEffect(() => {
     setAuth(
       { 
-        displayName: "Cán bộ Văn phòng Khoa", 
-        usercode: "TLU-VPK01",
-        email: "vpkcntt@tlu.edu.vn"
+        name: business.tenDN, 
       },
       "dummy-access-token",
-      "faculty" // Đang để vai trò VPK theo yêu cầu của bạn
+      "company" // Đang để vai trò VPK theo yêu cầu của bạn
     );
   }, [setAuth]);
 
@@ -37,7 +36,7 @@ function App() {
         - richColors: Hiển thị màu sắc theo loại (Success, Error,...)
         - position: Vị trí xuất hiện trên màn hình
       */}
-      <Toaster position="top-right" richColors closeButton />
+      <Toaster position="bottom-right" richColors closeButton />
       
       {/* AppRouter: Chứa toàn bộ logic định tuyến lồng nhau (Nested Routes), 
         phân quyền (ProtectedRoute) và bộ khung giao diện (AppLayout).
