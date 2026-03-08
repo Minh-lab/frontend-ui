@@ -1,4 +1,4 @@
-// import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense } from "react";
 import { useRoutes, Navigate } from "react-router-dom";
 
 // Layouts & Guards
@@ -9,7 +9,7 @@ import useAuthStore from "@/store/useAuthStore";
 // Module Routes
 // import { studentRoutes } from "./student.routes";
 // import { lecturerRoutes } from "./lecturer.routes";
-// import { adminRoutes } from "./admin.routes";
+import { adminRoutes } from "./admin.routes";
 import { facultyRoutes } from "./faculty.routes";
 // import { companyRoutes } from "./company.routes";
 
@@ -17,6 +17,8 @@ import { facultyRoutes } from "./faculty.routes";
 // const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 // const UnauthorizedPage = lazy(() => import("@/pages/errors/UnauthorizedPage"));
 // const NotFoundPage = lazy(() => import("@/pages/errors/NotFoundPage"));
+const NotificationsPage = lazy(() => import("@/pages/common/Notifications"));
+const ChangePassword = lazy(() => import("@/pages/common/ChangePassword"));
 
 /**
  * Component điều hướng thông minh dựa trên Role
@@ -46,6 +48,8 @@ export default function AppRouter() {
             // Tự động điều hướng khi vào trang chủ "/"
             { index: true, element: <RoleRedirect /> },
 
+            { path: "notifications", element: <NotificationsPage /> },
+            { path: "change-password", element: <ChangePassword /> },
             // // --- MODULE SINH VIÊN ---
             // {
             //   path: "student",
@@ -63,7 +67,7 @@ export default function AppRouter() {
             // --- MODULE VĂN PHÒNG KHOA ---
             {
               path: "faculty",
-              element: <ProtectedRoute allowedRoles={["faculty"]} />,
+              element: <ProtectedRoute allowedRoles={["faculty_staff"]} />,
               children: facultyRoutes,
             },
 
@@ -74,12 +78,12 @@ export default function AppRouter() {
             //   children: companyRoutes,
             // },
 
-            // // --- MODULE ADMIN ---
-            // {
-            //   path: "admin",
-            //   element: <ProtectedRoute allowedRoles={["admin"]} />,
-            //   children: adminRoutes,
-            // },
+            // --- MODULE ADMIN ---
+            {
+              path: "admin",
+              element: <ProtectedRoute allowedRoles={["admin"]} />,
+              children: adminRoutes,
+            },
           ],
         },
       ],
@@ -90,13 +94,13 @@ export default function AppRouter() {
     // { path: "*", element: <NotFoundPage /> },
   ]);
 
-  return routes;
+  // return routes;
 
   // bỏ comment return dưới đây sau khi đã có các lazy login, unauthorized, notfound 
-  // return (
-  //   // // Suspense hiển thị loading trong lúc các trang lazy đang được tải
-  //   // <Suspense fallback={<div className="flex h-screen items-center justify-center font-bold text-primary">Đang tải hệ thống quản lý đồ án và thực tập khoa Công Nghệ Thông Tin trường đại học Thủy Lợi...</div>}>
-  //   //   {routes}
-  //   // </Suspense>
-  // );
+  return (
+    // Suspense hiển thị loading trong lúc các trang lazy đang được tải
+    <Suspense fallback={<div className="flex h-screen items-center justify-center font-bold text-primary">Đang tải hệ thống quản lý đồ án và thực tập khoa Công Nghệ Thông Tin trường đại học Thủy Lợi...</div>}>
+      {routes}
+    </Suspense>
+  );
 }

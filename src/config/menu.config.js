@@ -8,7 +8,7 @@ export const MASTER_MENU = [
   // --- CHUNG ---
   { 
     title: "Trang chủ", 
-    path: "/dashboard", // Bạn có thể sửa path linh hoạt theo logic router
+    path: "/", // Bạn có thể sửa path linh hoạt theo logic router
     icon: Home, 
     roles: ["student", "lecturer", "company", "faculty", "admin"] 
   },

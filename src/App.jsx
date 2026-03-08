@@ -22,12 +22,12 @@ function App() {
   useEffect(() => {
     setAuth(
       { 
-        displayName: "Cán bộ Văn phòng Khoa", 
-        usercode: "TLU-VPK01",
-        email: "vpkcntt@tlu.edu.vn"
+        displayName: "Quản trị viên", 
+        usercode: "TLU-ADMIN01",
+        email: "admin@tlu.edu.vn"
       },
       "dummy-access-token",
-      "faculty" // Đang để vai trò VPK theo yêu cầu của bạn
+      "admin" // Đang để vai trò VPK theo yêu cầu của bạn
     );
   }, [setAuth]);
 
