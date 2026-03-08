@@ -50,7 +50,7 @@ const ProfilePageBusiness = () => {
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 bg-[#FCFCFC]">
 
           <Field label="Mã số thuế:" value={business.maST} />
           <Field label="Tên doanh nghiệp:" value={business.tenDN} />
@@ -77,7 +77,7 @@ const ProfilePageBusiness = () => {
                               <button onClick={handleChangePassword} className="px-5 py-2.5 text-sm bg-[#5c60c0] text-white rounded-lg hover:bg-[#4a4ea8] font-medium transition">Xac nhan</button>
                             </div>
                           </div>
-                        </Modal>
+                  </Modal>
               )}
 
         
