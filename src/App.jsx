@@ -37,7 +37,7 @@ function App() {
         - richColors: Hiển thị màu sắc theo loại (Success, Error,...)
         - position: Vị trí xuất hiện trên màn hình
       */}
-      <Toaster position="top-right" richColors closeButton />
+      <Toaster position="bottom-right" richColors closeButton />
       
       {/* AppRouter: Chứa toàn bộ logic định tuyến lồng nhau (Nested Routes), 
         phân quyền (ProtectedRoute) và bộ khung giao diện (AppLayout).

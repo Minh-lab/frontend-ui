@@ -74,7 +74,7 @@ export default function EditAccount() {
   };
 
   const handleResetPassword = () => {
-    toast.info("Đã gửi yêu cầu cấp lại mật khẩu.");
+    toast.info("Đã cấp lại mật khẩu.");
     setIsResetOpen(false);
   };
 
@@ -207,7 +207,7 @@ export default function EditAccount() {
         onClose={() => setIsResetOpen(false)}
         onConfirm={handleResetPassword}
         title="Xác nhận Reset mật khẩu"
-        description="Mật khẩu của người dùng này sẽ được đặt về giá trị mặc định của hệ thống."
+        description="Mật khẩu của người dùng này sẽ được đặt về giá trị mặc định của hệ thống (tên người dùng)."
         confirmText="Xác nhận"
         variant="default"
       />
