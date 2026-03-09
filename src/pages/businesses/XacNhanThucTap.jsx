@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card'
 import { sinhvienTT } from '../../data/businessData'
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 
 const XacNhanThucTap = () => {
@@ -13,7 +14,7 @@ const XacNhanThucTap = () => {
           <span className='font-inter'>Danh sách sinh viên đăng ký thực tập</span>
         </div>
         <Card className="mx-6 overflow-hidden p-0">
-          <table className='text-x font-normal'>
+          <table className='w-full border-collapse text-x font-normal'>
             <thead >
               <tr className='bg-gray-50 border-b border-gray-200'>
                 <th className="px-4 py-2.5 text-left font-normal font-inter">
@@ -38,7 +39,7 @@ const XacNhanThucTap = () => {
             </thead>
             <tbody>
                 {sinhvienTT.map((sv) => (
-                    <tr key = {sv.id} className='bg-white border-b border-gray-50 hover:bg-gray-50/50 transition'>
+                    <tr key = {sv.id} className='bg-white border-b border-gray-300 hover:bg-gray-50/50 transition'>
                       <td className='px-4 py-3  font-inter text-gray-700'>
                         {sv.id}
                       </td>
@@ -58,11 +59,11 @@ const XacNhanThucTap = () => {
                       </td>
                       <td className='px-4 py-3'>
                           <div className='flex gap-5'>
-                            <Button className="bg-[#24AD47] hover:bg-[#1f933d] text-white w-9 h-9 p-0">
+                            <Button onClick = {() =>  toast.success("Hành động của bạn đã được ghi nhận",{className: "!bg-[#AAFAB8] !text-[#24AD47]"})} className="bg-[#24AD47] hover:bg-[#1f933d] text-white w-9 h-9 p-0">
                               ✔
                             </Button>
 
-                            <Button className="bg-[#FF0000] hover:bg-[#cc0000] text-white w-9 h-9 p-0">
+                            <Button onClick = {() =>  toast.error("Hành động từ chối được ghi nhận",{className: "!bg-[#FFF2D2] !text-[#DA5C02]"})} className="bg-[#FF0000] hover:bg-[#cc0000] text-white w-9 h-9 p-0">
                               ✕
                             </Button>
                           </div>
