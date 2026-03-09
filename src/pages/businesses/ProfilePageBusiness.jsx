@@ -4,7 +4,6 @@ import { Card } from '@/components/ui/card'
 import { business } from '@/data/businessData'
 import { User } from 'lucide-react'
 import React, { useState } from 'react'
-import { toast } from 'sonner'
 
 function Field({ label = "sd", value }) {
   return (
@@ -51,7 +50,7 @@ const ProfilePageBusiness = () => {
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-4 bg-[#FCFCFC]">
+        <div className="p-6 space-y-4">
 
           <Field label="Mã số thuế:" value={business.maST} />
           <Field label="Tên doanh nghiệp:" value={business.tenDN} />
@@ -75,10 +74,10 @@ const ProfilePageBusiness = () => {
                             ))}
                             <div className="flex justify-end gap-3 pt-2">
                               <button onClick={() => setShowPwC(false)} className="px-5 py-2.5 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition">Huy</button>
-                              <button onClick = {() => {setShowPwC(false); toast.success("Hành động của bạn đã được ghi nhận",{className: "!bg-[#AAFAB8] !text-[#24AD47]"})}} className="px-5 py-2.5 text-sm bg-[#5c60c0] text-white rounded-lg hover:bg-[#4a4ea8] font-medium transition">Xac nhan</button>
+                              <button onClick={handleChangePassword} className="px-5 py-2.5 text-sm bg-[#5c60c0] text-white rounded-lg hover:bg-[#4a4ea8] font-medium transition">Xac nhan</button>
                             </div>
                           </div>
-                  </Modal>
+                        </Modal>
               )}
 
         
