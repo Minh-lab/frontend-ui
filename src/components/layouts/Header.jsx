@@ -52,11 +52,13 @@ export function Header() {
         
         {/* Logo và Tên trường - Luôn nằm bên trái */}
         <div className="flex items-center gap-4">
-          <img 
-            src={logoTLU} 
-            alt="TLU Logo" 
-            className="h-14 w-14 object-contain bg-white rounded-full p-1 shadow-sm" 
-          />
+          <Link to="/">
+            <img 
+              src={logoTLU} 
+              alt="TLU Logo" 
+              className="h-14 w-14 object-contain bg-white rounded-full p-1 shadow-sm hover:opacity-80 transition-opacity cursor-pointer" 
+            />
+          </Link>
           <div>
             <h1 className="text-lg md:text-xl font-bold leading-tight uppercase tracking-wide">
               Trường Đại học Thủy Lợi
