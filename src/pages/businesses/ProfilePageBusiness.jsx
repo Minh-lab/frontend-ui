@@ -5,6 +5,7 @@ import { business } from '@/data/businessData'
 import { User } from 'lucide-react'
 import React, { useState } from 'react'
 import { toast } from 'sonner'
+import ChangePasswordd from '@/components/layouts/ChangePassword'
 
 function Field({ label = "sd", value }) {
   return (
@@ -22,19 +23,6 @@ function Field({ label = "sd", value }) {
 
 const ProfilePageBusiness = () => {
   const [showPwC,setShowPwC] = useState(false)
-  const [pwd, setPwd] = useState({ current: "", new1: "", new2: "" });
-
-  const handleChangePassword = () => {
-  if (pwd.new1 !== pwd.new2) {
-    alert("Mat khau moi khong trung");
-    return;
-  }
-
-  console.log("Gui len server:", pwd);
-
-  // goi API doi mat khau
-};
-
   return (
     <div className='p-6'>
       <Card className="p-0">
@@ -65,24 +53,8 @@ const ProfilePageBusiness = () => {
 
 
         {showPwC && (
-                <Modal title="Doi mat khau" onClose={() => setShowPwC(false)} size="sm">
-                          <div className="space-y-4">
-                            {[ ["Mat khau hien tai", "current"], ["Mat khau moi", "new1"], ["Xac nhan mat khau moi", "new2"] ].map(([lbl, key]) => (
-                              <div key={key}>
-                                <label className="text-sm font-medium text-gray-700 block mb-1.5">{lbl}</label>
-                                <input type="password" className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" value={pwd[key]} onChange={(e) => setPwd({ ...pwd, [key]: e.target.value })} />
-                              </div>
-                            ))}
-                            <div className="flex justify-end gap-3 pt-2">
-                              <button onClick={() => setShowPwC(false)} className="px-5 py-2.5 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition">Huy</button>
-                              <button onClick = {() => {setShowPwC(false); toast.success("Hành động của bạn đã được ghi nhận",{className: "!bg-[#AAFAB8] !text-[#24AD47]"})}} className="px-5 py-2.5 text-sm bg-[#5c60c0] text-white rounded-lg hover:bg-[#4a4ea8] font-medium transition">Xac nhan</button>
-                            </div>
-                          </div>
-                  </Modal>
-              )}
-
-        
-
+          <ChangePasswordd setShowPwC={() =>setShowPwC(false)}/>
+        )}
       </Card>
     </div>
   )
