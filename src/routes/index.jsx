@@ -5,9 +5,9 @@ import { useRoutes, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layouts/AppLayout";
 import { ProtectedRoute } from "./ProtectedRoute";
 import useAuthStore from "@/store/useAuthStore";
-
+import { lazy } from "react";
 // Module Routes
-// import { studentRoutes } from "./student.routes";
+import { studentRoutes } from "./student.routes";
 // import { lecturerRoutes } from "./lecturer.routes";
 // import { adminRoutes } from "./admin.routes";
 import { facultyRoutes } from "./faculty.routes";
@@ -17,6 +17,9 @@ import { companyRoutes } from "./company.routes";
 // const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 // const UnauthorizedPage = lazy(() => import("@/pages/errors/UnauthorizedPage"));
 // const NotFoundPage = lazy(() => import("@/pages/errors/NotFoundPage"));
+
+const NotificationsPage = lazy(() => import("@/pages/common/Notifications"));
+const ChangePassword = lazy(() => import("@/pages/common/ChangePassword"));
 
 /**
  * Component điều hướng thông minh dựa trên Role
@@ -45,13 +48,16 @@ export default function AppRouter() {
           children: [
             // Tự động điều hướng khi vào trang chủ "/"
             { index: true, element: <RoleRedirect /> },
+            
+            { path: "notifications", element: <NotificationsPage /> },
+            { path: "change-password", element: <ChangePassword /> },
 
             // // --- MODULE SINH VIÊN ---
-            // {
-            //   path: "student",
-            //   element: <ProtectedRoute allowedRoles={["student"]} />,
-            //   children: studentRoutes,
-            // },
+            {
+              path: "student",
+              element: <ProtectedRoute allowedRoles={["student"]} />,
+              children: studentRoutes,
+            },
 
             // // --- MODULE GIẢNG VIÊN ---
             // {

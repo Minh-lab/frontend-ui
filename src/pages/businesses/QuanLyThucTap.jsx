@@ -114,23 +114,23 @@ const QuanLyThucTap = () => {
                     <p><span className="font-semibold">Trường:</span> Đại học Thủy Lợi</p>
                   </div><br />
           
-                  <span>Preview bao cao:</span>
+                  <span>Preview báo cáo:</span>
 
                   <PreviewBaoCao /> <br />
                   
                   <div className='flex gap-3 items-center'>
-                    <span className='font-bold p-1'>Diem doanh nghiep cham: </span>
+                    <span className='font-bold p-1'>Điểm doanh nghiệp chấm: </span>
                     <input type="number" step= "0.25" className='bg-[#DBF7E4] text-[#0FB245] flex-1 border border-gray-400 p-1 h-[50px]'/>
                   </div><br />
 
-                  <span className='font-bold'>Nhan xet chi tiet:</span>
+                  <span className='font-bold'>Nhận xét chi tiết:</span>
                   <div className='flex'>
                     <textarea className='flex-1 bg-[#FCFCFC] border border-gray-500 p-1 h-[80px]'/>
                   </div>
                   
                     <div className='flex gap-4 pt-4 justify-end'>
-                      <Button onClick = {() => setSelectedSv(null) } className="bg-[#FF0000] hover:bg-[#cc0000] text-white w-[60px] h-9 p-0">Huy</Button>
-                      <Button onClick = {() => {setSelectedSv(null); toast.success("Hành động của bạn đã được ghi nhận",{className: "!bg-[#AAFAB8] !text-[#24AD47]"})}} className="bg-[#24AD47] hover:bg-[#1f933d] text-white w-[80px] h-9 p-0">Luu</Button>
+                      <Button onClick = {() => setSelectedSv(null) } className="bg-[#FF0000] hover:bg-[#cc0000] text-white w-[60px] h-9 p-0">Hủy</Button>
+                      <Button onClick = {() => {setSelectedSv(null); toast.success("Hành động của bạn đã được ghi nhận",{className: "!bg-[#AAFAB8] !text-[#24AD47]"})}} className="bg-[#24AD47] hover:bg-[#1f933d] text-white w-[80px] h-9 p-0">Lưu</Button>
                     </div>
                   
                 </div>
