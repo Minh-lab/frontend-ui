@@ -27,7 +27,7 @@ function App() {
         email: "admin@tlu.edu.vn"
       },
       "dummy-access-token",
-      "admin" // Đang để vai trò VPK theo yêu cầu của bạn
+      "company" // Đang để vai trò VPK theo yêu cầu của bạn
     );
   }, [setAuth]);
 

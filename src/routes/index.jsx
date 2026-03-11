@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from "react";
+// import React, { lazy, Suspense } from "react";
 import { useRoutes, Navigate } from "react-router-dom";
 
 // Layouts & Guards
@@ -17,7 +17,6 @@ import { companyRoutes } from "./company.routes";
 // const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 // const UnauthorizedPage = lazy(() => import("@/pages/errors/UnauthorizedPage"));
 // const NotFoundPage = lazy(() => import("@/pages/errors/NotFoundPage"));
-const NotificationsPage = lazy(() => import("@/pages/common/Notifications"));
 
 /**
  * Component điều hướng thông minh dựa trên Role
@@ -47,7 +46,6 @@ export default function AppRouter() {
             // Tự động điều hướng khi vào trang chủ "/"
             { index: true, element: <RoleRedirect /> },
 
-            { path: "notifications", element: <NotificationsPage /> },
             // // --- MODULE SINH VIÊN ---
             // {
             //   path: "student",
@@ -92,13 +90,13 @@ export default function AppRouter() {
     // { path: "*", element: <NotFoundPage /> },
   ]);
 
-  // return routes;
+  return routes;
 
   // bỏ comment return dưới đây sau khi đã có các lazy login, unauthorized, notfound 
-  return (
-    // Suspense hiển thị loading trong lúc các trang lazy đang được tải
-    <Suspense fallback={<div className="flex h-screen items-center justify-center font-bold text-primary">Đang tải hệ thống quản lý đồ án và thực tập khoa Công Nghệ Thông Tin trường đại học Thủy Lợi...</div>}>
-      {routes}
-    </Suspense>
-  );
+  // return (
+  //   // Suspense hiển thị loading trong lúc các trang lazy đang được tải
+  //   <Suspense fallback={<div className="flex h-screen items-center justify-center font-bold text-primary">Đang tải hệ thống quản lý đồ án và thực tập khoa Công Nghệ Thông Tin trường đại học Thủy Lợi...</div>}>
+  //     {routes}
+  //   </Suspense>
+  // );
 }
