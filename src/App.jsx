@@ -4,6 +4,7 @@ import useAuthStore from "@/store/useAuthStore";
 import AppRouter from "@/routes"; // Đường dẫn đến file routes/index.jsx tổng
 
 import { Toaster } from "@/components/ui/sonner";
+import { business } from "./data/businessData";
 
 /**
  * File App.jsx hoàn chỉnh
@@ -22,12 +23,12 @@ function App() {
   useEffect(() => {
     setAuth(
       { 
-        displayName: "Quản trị viên", 
-        usercode: "TLU-ADMIN01",
-        email: "admin@tlu.edu.vn"
+        displayName: business.tenDN, 
+        usercode: business.maST,
+        email: business.email
       },
       "dummy-access-token",
-      "company" // Đang để vai trò VPK theo yêu cầu của bạn
+      "student" // Test với vai trò Company
     );
   }, [setAuth]);
 

@@ -7,8 +7,8 @@ import React, { useState } from 'react'
 
 function Field({ label = "sd", value }) {
   return (
-    <div className='flex items-center gap-6 px-[40px] flex-col sm:flex-row'>
-      <span className="w-44  text-left text-sm font-semibold text-[#5c60c0] flex-shrink-0">
+    <div className='flex items-center gap-6 px-10 flex-col sm:flex-row'>
+      <span className="w-44  text-left text-sm font-semibold text-[#5c60c0] shrink-0">
         {label}
       </span>
 
@@ -38,7 +38,7 @@ const ProfilePageBusiness = () => {
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 bg-[#FCFCFC]">
 
           <Field label="Mã số thuế:" value={business.maST} />
           <Field label="Tên doanh nghiệp:" value={business.tenDN} />

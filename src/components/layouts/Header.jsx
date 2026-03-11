@@ -36,7 +36,7 @@ export function Header() {
 
   return (
     <header className="flex flex-col w-full text-white shadow-md z-50">
-      {/* 2. Thanh điều hướng chính (Top Bar) */}
+      {/* Thanh điều hướng chính (Top Bar) */}
       <div className="bg-primary px-6 py-3 flex justify-between items-center border-b border-white/10">
         
         {/* Logo và Tên trường - Luôn nằm bên trái */}
@@ -60,10 +60,10 @@ export function Header() {
 
         <div className="flex items-center gap-4 md:gap-8">
           
-          {/* 3. Cụm Thông báo */}
+          {/* Cụm Thông báo */}
           <NotificationDropdown />
           
-          {/* 4. Dropdown Tài khoản */}
+          {/* Dropdown Tài khoản */}
           <div className="relative" ref={dropdownRef}>
             <div 
               className="flex items-center gap-3 cursor-pointer border-l border-white/20 pl-4 md:pl-8 group"
@@ -89,7 +89,7 @@ export function Header() {
             </div>
 
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-4 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-[60] animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute right-0 mt-4 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-60 animate-in fade-in zoom-in-95 duration-200">
                 <Link 
                   to={`/${role}/profile`}
                   className="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
@@ -98,7 +98,6 @@ export function Header() {
                   <UserIcon className="size-4 text-blue-600" />
                   <span>Thông tin cá nhân</span>
                 </Link>
-
 
                 <div className="h-px bg-slate-100 my-1 mx-2"></div>
 
@@ -118,14 +117,14 @@ export function Header() {
         </div>
       </div>
 
-      {/* 5. Dòng tiêu đề hệ thống (Đã chỉnh sang bên PHẢI theo ảnh mẫu) */}
+      {/* Dòng tiêu đề hệ thống */}
       <div className="bg-primary/95 px-6 py-2 shadow-inner flex justify-start">
         <h2 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] opacity-90">
           Hệ thống quản lý đồ án & thực tập
         </h2>
       </div>
 
-      {/* 6. Hộp thoại xác nhận đăng xuất */}
+      {/* Hộp thoại xác nhận đăng xuất */}
       <ConfirmAction 
         isOpen={isLogoutDialogOpen}
         onClose={() => setIsLogoutDialogOpen(false)}
