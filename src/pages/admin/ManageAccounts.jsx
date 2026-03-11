@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { 
-  Search, UserPlus, Edit, Trash2, 
+  Search, UserPlus, Eye, Trash2, 
   ChevronLeft, ChevronRight 
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -79,14 +79,14 @@ export default function ManageAccounts() {
         </div>
       </div>
 
+      <div className="p-1 bg-slate-50/50">
+          <h3 className="font-bold text-lg text-slate-700">Danh sách tài khoản</h3>
+        </div>
       {/* 3. Bảng danh sách tài khoản chuyên nghiệp */}
       <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-4 border-b bg-slate-50/50">
-          <h3 className="font-bold text-lg text-slate-700">Danh sách người dùng</h3>
-        </div>
         
         <Table>
-          <TableHeader className="bg-blue-50/30">
+          <TableHeader className="bg-blue-500 text-white">
             <TableRow>
               <TableHead className="w-20">Stt</TableHead>
               <TableHead>Tên tài khoản</TableHead>
@@ -118,9 +118,9 @@ export default function ManageAccounts() {
                     variant="outline" 
                     size="sm" 
                     className="h-8 w-8 p-0 text-blue-600 border-blue-200 hover:bg-blue-50"
-                    onClick={() => navigate(`/admin/edit-account/${item.id}`)} // Chuyển sang trang edit với ID
+                    onClick={() => navigate(`/admin/detail-account/${item.id}`)} // Chuyển sang trang edit với ID
                     >
-                    <Edit className="size-4" />
+                    <Eye className="size-4" />
                   </Button>
                   <Button 
                     variant="cancel" 
