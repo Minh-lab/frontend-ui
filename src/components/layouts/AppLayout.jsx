@@ -2,8 +2,10 @@ import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { Sidebar } from "./Sidebar"; 
+import { useState } from "react";
 
 export function AppLayout() {
+  const [openSidebar, setOpenSidebar] = useState(false);
   return (
     <div className="flex flex-col min-h-screen font-sans bg-slate-50 text-slate-900">
       {/* 1. Header: Full width trên cùng */}
@@ -15,7 +17,7 @@ export function AppLayout() {
         <aside className="w-64 bg-white border-r border-border hidden md:block shrink-0 overflow-y-auto custom-scrollbar">
           <Sidebar />
         </aside>
-
+        
         {/* Khu vực nội dung chính */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
           <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar">

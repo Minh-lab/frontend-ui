@@ -5,7 +5,7 @@ import AppRouter from "@/routes"; // Đường dẫn đến file routes/index.js
 
 import { Toaster } from "@/components/ui/sonner";
 import { business } from "./data/businessData";
-
+import { student } from "./data/studentData";
 /**
  * File App.jsx hoàn chỉnh
  * 1. Bọc ứng dụng trong BrowserRouter để quản lý điều hướng.
@@ -14,7 +14,7 @@ import { business } from "./data/businessData";
  */
 function App() {
   const setAuth = useAuthStore((state) => state.setAuth);
-
+  
   // ==========================================================
   // GIẢ LẬP ĐĂNG NHẬP (MOCK AUTH)
   // Bạn hãy thay đổi giá trị 'role' để kiểm tra các giao diện khác nhau:
@@ -23,10 +23,10 @@ function App() {
   useEffect(() => {
     setAuth(
       { 
-        name: business.tenDN, 
+        name: student.hoTen, 
       },
       "dummy-access-token",
-      "company" // Đang để vai trò VPK theo yêu cầu của bạn
+      "lecturer" // Đang để vai trò VPK theo yêu cầu của bạn
     );
   }, [setAuth]);
 

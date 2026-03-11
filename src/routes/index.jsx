@@ -8,7 +8,7 @@ import useAuthStore from "@/store/useAuthStore";
 import { lazy } from "react";
 // Module Routes
 import { studentRoutes } from "./student.routes";
-// import { lecturerRoutes } from "./lecturer.routes";
+import { lecturerRoutes } from "./lecturer.routes";
 // import { adminRoutes } from "./admin.routes";
 import { facultyRoutes } from "./faculty.routes";
 import { companyRoutes } from "./company.routes";
@@ -60,11 +60,11 @@ export default function AppRouter() {
             },
 
             // // --- MODULE GIẢNG VIÊN ---
-            // {
-            //   path: "lecturer",
-            //   element: <ProtectedRoute allowedRoles={["lecturer"]} />,
-            //   children: lecturerRoutes,
-            // },
+            {
+              path: "lecturer",
+              element: <ProtectedRoute allowedRoles={["lecturer"]} />,
+              children: lecturerRoutes,
+            },
 
             // --- MODULE VĂN PHÒNG KHOA ---
             {
