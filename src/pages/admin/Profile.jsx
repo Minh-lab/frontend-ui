@@ -1,15 +1,23 @@
-import React from "react";
-import { 
-  User, Mail, Fingerprint, Calendar, 
-  Users, ArrowLeft 
-} from "lucide-react";
+import React, { useState } from "react";
+import { User, ArrowLeft } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
+import ChangePasswordModal from "@/components/ChangePasswordModal";
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // Dữ liệu hiển thị (ưu tiên dữ liệu từ store, nếu không có thì dùng mặc định)
   const profileData = {
@@ -20,92 +28,144 @@ export default function Profile() {
     dob: user?.dob || "01/01/1990",
   };
 
+  const form = useForm({
+    defaultValues: {
+      usercode: profileData.usercode,
+      full_name: profileData.full_name,
+      email: profileData.email,
+      gender: profileData.gender,
+      dob: profileData.dob,
+    },
+  });
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500">
-      {/* Header điều hướng */}
-      <div className="flex items-center gap-3">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={() => navigate(-1)} 
-          className="rounded-full size-9"
-        >
-          <ArrowLeft className="size-4" />
-        </Button>
-        <h1 className="text-2xl font-bold text-slate-800">Thông tin cá nhân</h1>
-      </div>
-
-      {/* Card nội dung chính */}
-      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-        <div className="p-5 border-b bg-slate-50/50 flex items-center gap-2">
-          <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-            <User className="size-5" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+      <div className="max-w-2xl mx-auto">
+        {/* Header với gradient */}
+        <div className="bg-gradient-to-r from-[#6155F5] to-[#7B68EE] rounded-t-3xl px-6 py-6 flex items-center gap-4 shadow-lg">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition text-white"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full">
+            <User className="w-8 h-8 text-white" />
           </div>
-          <h3 className="font-bold text-slate-700">Chi tiết tài khoản</h3>
+          <h1 className="text-3xl font-bold text-white">Thông tin cá nhân</h1>
         </div>
 
-        <div className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-            
-            {/* Mã nhân viên */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <Fingerprint className="size-3.5" /> Mã số định danh
-              </label>
-              <p className="text-lg font-bold text-blue-600 bg-blue-50/50 px-3 py-2 rounded-lg border border-blue-100 border-dashed inline-block min-w-[150px]">
-                {profileData.usercode}
-              </p>
-            </div>
+        {/* Main content */}
+        <div className="bg-white rounded-b-3xl shadow-lg overflow-hidden p-8">
+          <Form {...form}>
+            <form className="space-y-4">
+              {/* Mã nhân viên */}
+              <FormField
+                control={form.control}
+                name="usercode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-gray-700">Mã nhân viên</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        className="bg-gray-100 cursor-default border-gray-200"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-            {/* Họ và tên */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <User className="size-3.5" /> Họ và tên
-              </label>
-              <p className="text-base font-semibold text-slate-700 pb-2 border-b border-slate-100">
-                {profileData.full_name}
-              </p>
-            </div>
+              {/* Email */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-gray-700">Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        className="bg-gray-100 cursor-default border-gray-200"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-            {/* Email */}
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <Mail className="size-3.5" /> Địa chỉ Email
-              </label>
-              <p className="text-base font-semibold text-slate-700 pb-2 border-b border-slate-100">
-                {profileData.email}
-              </p>
-            </div>
+              {/* Họ Tên */}
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-gray-700">Họ Tên</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        className="bg-gray-100 cursor-default border-gray-200"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-            {/* Giới tính */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <Users className="size-3.5" /> Giới tính
-              </label>
-              <p className="text-base font-semibold text-slate-700 pb-2 border-b border-slate-100">
-                {profileData.gender}
-              </p>
-            </div>
+              {/* Giới tính */}
+              <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-gray-700">Giới tính</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        className="bg-gray-100 cursor-default border-gray-200"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-            {/* Ngày sinh */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <Calendar className="size-3.5" /> Ngày sinh
-              </label>
-              <p className="text-base font-semibold text-slate-700 pb-2 border-b border-slate-100">
-                {profileData.dob}
-              </p>
-            </div>
-
-          </div>
+              {/* Ngày sinh */}
+              <FormField
+                control={form.control}
+                name="dob"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-gray-700">Ngày sinh</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        className="bg-gray-100 cursor-default border-gray-200"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
         </div>
 
-        {/* Footer ghi chú
-        <div className="px-8 py-4 bg-slate-50 border-t border-slate-100">
-          <p className="text-xs text-slate-400 text-center italic">
-            Thông tin này được quản lý bởi hệ thống đào tạo. Nếu có sai sót, vui lòng liên hệ phòng quản trị.
-          </p>
-        </div> */}
+        {/* Nút Đổi mật khẩu */}
+        <div className="flex justify-center mt-8">
+          <Button 
+            onClick={() => setShowPasswordModal(true)}
+            className="bg-[#6155F5] hover:bg-[#5247E0] text-white px-8 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition"
+          >
+            Đổi mật khẩu
+          </Button>
+        </div>
+
+        <ChangePasswordModal 
+          isOpen={showPasswordModal} 
+          onClose={() => setShowPasswordModal(false)}
+        />
       </div>
     </div>
   );

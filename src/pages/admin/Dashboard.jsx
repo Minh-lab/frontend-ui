@@ -54,45 +54,7 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {/* Grid: Thống kê chi tiết từng Role */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard 
-          title="Sinh viên" 
-          count={stats.roles.student} 
-          icon={GraduationCap} 
-          color="text-blue-600" 
-          bgColor="bg-blue-50" 
-        />
-        <StatCard 
-          title="Giảng viên" 
-          count={stats.roles.lecturer} 
-          icon={Users} 
-          color="text-emerald-600" 
-          bgColor="bg-emerald-50" 
-        />
-        <StatCard 
-          title="Doanh nghiệp" 
-          count={stats.roles.company} 
-          icon={Briefcase} 
-          color="text-amber-600" 
-          bgColor="bg-amber-50" 
-        />
-        <StatCard 
-          title="Văn phòng Khoa" 
-          count={stats.roles.faculty} 
-          icon={Landmark} 
-          color="text-purple-600" 
-          bgColor="bg-purple-50" 
-        />
-        <StatCard 
-          title="Quản trị viên" 
-          count={stats.roles.admin} 
-          icon={ShieldCheck} 
-          color="text-rose-600" 
-          bgColor="bg-rose-50" 
-        />
-      </div>
-
+    
       {/* Grid: Phím tắt chức năng chính */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card Thêm Tài Khoản */}

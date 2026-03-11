@@ -1,38 +1,27 @@
 import React, { useState, useRef, useEffect } from "react";
 import { 
-  Bell, UserCircle, ChevronDown, 
-  LogOut, KeyRound, User as UserIcon 
+  UserCircle, ChevronDown, 
+  LogOut, User as UserIcon 
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import useAuthStore from "@/store/useAuthStore";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
-import logoTLU from "@/assets/logo-tlu.png"; 
-
-// 1. Dữ liệu mẫu cho danh sách thông báo nhanh
-const MOCK_NOTIFICATIONS = [
-  { id: 1, title: "Hệ thống", content: "Đề tài 'Quản lý đồ án' đã được phê duyệt thành công.", time: "2 phút trước" },
-  { id: 2, title: "Giảng viên", content: "Thầy Nguyễn Văn A đã gửi phản hồi về báo cáo tuần 5.", time: "1 giờ trước" },
-  { id: 3, title: "Lịch nhắc", content: "Hạn cuối nộp báo cáo tiến độ thực tập là ngày mai.", time: "3 giờ trước" },
-];
+import NotificationDropdown from "@/components/NotificationDropdown";
+import logoTLU from "@/assets/logo-tlu.png";
 
 export function Header() {
   const navigate = useNavigate();
   const { user, role, logout } = useAuthStore();
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isNotiOpen, setIsNotiOpen] = useState(false);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   
   const dropdownRef = useRef(null);
-  const notiRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
-      }
-      if (notiRef.current && !notiRef.current.contains(event.target)) {
-        setIsNotiOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -72,57 +61,7 @@ export function Header() {
         <div className="flex items-center gap-4 md:gap-8">
           
           {/* 3. Cụm Thông báo */}
-          <div className="relative" ref={notiRef}>
-            <div 
-              className="relative cursor-pointer hover:opacity-80 transition-all p-1"
-              onClick={() => {
-                setIsNotiOpen(!isNotiOpen);
-                setIsDropdownOpen(false);
-              }}
-            >
-              <Bell className="size-6 text-white" />
-              <span className="absolute top-0 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white border-2 border-primary">
-                3
-              </span>
-            </div>
-
-            {isNotiOpen && (
-              <div className="absolute right-0 mt-4 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[60]">
-                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                  <span className="font-bold text-slate-800 text-sm">Thông báo</span>
-                </div>
-
-                <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                  {MOCK_NOTIFICATIONS.map((noti) => (
-                    <div 
-                      key={noti.id} 
-                      className="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer group"
-                    >
-                      <div className="flex justify-between items-start mb-1 gap-2">
-                        <span className="font-bold text-xs text-blue-600 uppercase tracking-wide truncate flex-1">
-                          {noti.title}
-                        </span>
-                        <span className="text-[10px] text-slate-400 whitespace-nowrap">
-                          {noti.time}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600 line-clamp-1 leading-snug group-hover:text-slate-900">
-                        {noti.content}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <Link 
-                  to="/notifications"
-                  onClick={() => setIsNotiOpen(false)}
-                  className="block w-full py-3 text-center text-sm font-semibold text-primary bg-slate-50 hover:bg-slate-100 transition-colors border-t"
-                >
-                  Xem tất cả chi tiết
-                </Link>
-              </div>
-            )}
-          </div>
+          <NotificationDropdown />
           
           {/* 4. Dropdown Tài khoản */}
           <div className="relative" ref={dropdownRef}>
@@ -130,7 +69,6 @@ export function Header() {
               className="flex items-center gap-3 cursor-pointer border-l border-white/20 pl-4 md:pl-8 group"
               onClick={() => {
                 setIsDropdownOpen(!isDropdownOpen);
-                setIsNotiOpen(false);
               }}
             >
               <div className="text-right hidden sm:block">
@@ -161,14 +99,6 @@ export function Header() {
                   <span>Thông tin cá nhân</span>
                 </Link>
 
-                <Link 
-                  to="/change-password"
-                  className="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  <KeyRound className="size-4 text-amber-500" />
-                  <span>Đổi mật khẩu</span>
-                </Link>
 
                 <div className="h-px bg-slate-100 my-1 mx-2"></div>
 
