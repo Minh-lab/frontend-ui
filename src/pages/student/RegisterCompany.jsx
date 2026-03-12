@@ -1,6 +1,9 @@
 ﻿import { useState } from "react";
 import StatusBadge from "../../components/StatusBadge";
 import FileUpload from "../../components/FileUpload";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { getStudentAccess } from "@/lib/studentAccess";
 
 const defaultForm = {
   tenCongTy: "Cong ty co phan ABC",
@@ -101,7 +104,28 @@ function DaDangKy({ form }) {
 }
 
 export default function DangKyDoanhNghiepPage() {
+  const navigate = useNavigate();
+  const [access] = useState(() => getStudentAccess());
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState(defaultForm);
+  if (!access.internEnabled) {
+    return (
+      <div className="p-6">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm max-w-2xl mx-auto">
+          <div className="bg-[#5c60c0] text-white px-5 py-3 rounded-t-xl font-semibold">
+            Đăng ký doanh nghiệp thực tập
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-3 rounded-lg">
+              Bạn chưa mở đợt thực tập nên chưa thể sử dụng chức năng này.
+            </div>
+            <Button onClick={() => navigate("/student/dashboard")} className="bg-[#5c60c0] hover:bg-[#4a4ea8] text-white">
+              Quay về trang chủ
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return <div className="p-6">{submitted ? <DaDangKy form={form} /> : <ChuaDangKy form={form} setForm={setForm} onSubmit={() => setSubmitted(true)} />}</div>;
 }

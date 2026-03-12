@@ -26,7 +26,7 @@ function App() {
         name: student.hoTen, 
       },
       "dummy-access-token",
-      "lecturer" // Đang để vai trò VPK theo yêu cầu của bạn
+      "student" // Đang để vai trò VPK theo yêu cầu của bạn
     );
   }, [setAuth]);
 

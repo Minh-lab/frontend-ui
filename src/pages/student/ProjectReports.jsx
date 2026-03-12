@@ -4,17 +4,16 @@ import Modal from "../../components/Modal";
 import StatusBadge from "../../components/StatusBadge";
 import FileUpload from "../../components/FileUpload";
 import { Button } from "@/components/ui/button";
-
+import { toast } from "sonner";
+import tlu from "@/assets/logo-tlu.png"
+import { useNavigate } from "react-router-dom";
+import { getStudentAccess } from "@/lib/studentAccess";
 function PreviewBaoCao({ type = "do_an" }) {
   return (
     <div className="border border-gray-300 rounded-lg p-6 bg-white text-center space-y-3 min-h-55 flex flex-col items-center justify-center">
       <p className="text-xs font-semibold text-gray-500 tracking-wide">BỘ GIÁO DỤC VÀ ĐÀO TẠO &nbsp;&nbsp;&nbsp; BỘ NÔNG NGHIỆP VÀ PTNT</p>
       <p className="text-xs font-semibold text-gray-500 tracking-wide">TRƯỜNG ĐẠI HỌC THỦY LỢI</p>
-      <div className="w-20 h-20 rounded-full bg-blue-800 border-4 border-blue-600 flex items-center justify-center mx-auto">
-        <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-          <span className="text-blue-800 font-bold text-xs">DHTL</span>
-        </div>
-      </div>
+      <img src={tlu} alt="" />
       <p className="text-xs font-semibold text-blue-700 tracking-widest mt-1">
         {type === "do_an" ? "BÁO CÁO ĐỒ ÁN" : "BÁO CÁO THỰC TẬP"}
       </p>
@@ -73,7 +72,12 @@ function ModalNopBaoCao({ bc, onClose }) {
           </Button>
           <Button 
             className="bg-green-500 hover:bg-green-600 text-white "
-            onClick={onClose}
+            onClick={()=> {
+              onClose();
+              toast.success("Hạnh động đã được ghi nhận", {
+                    className: "!bg-[#AAFAB8] !text-[#24AD47]",
+              })
+            }}
           >
             Nộp
           </Button>
@@ -85,7 +89,29 @@ function ModalNopBaoCao({ bc, onClose }) {
 }
 
 export default function BaoCaoDoAnPage() {
+  const navigate = useNavigate();
+  const [access] = useState(() => getStudentAccess());
   const [modal, setModal] = useState(null);
+
+  if (!access.projectEnabled) {
+    return (
+      <div className="p-6">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm max-w-2xl mx-auto">
+          <div className="bg-[#5c60c0] text-white px-5 py-3 rounded-t-xl font-semibold">
+            Báo cáo đồ án
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-3 rounded-lg">
+              Bạn chưa mở đợt đồ án nên chưa thể sử dụng chức năng này.
+            </div>
+            <Button onClick={() => navigate("/student/dashboard")} className="bg-[#5c60c0] hover:bg-[#4a4ea8] text-white">
+              Quay về trang chủ
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -110,7 +136,7 @@ export default function BaoCaoDoAnPage() {
           </div>
 
           {/* Table */}
-          <div className="border border-gray-200 rounded-xl overflow-hidden">
+          <div className="border border-gray-200 rounded-xl overflow-x-auto">
             <div className="bg-gray-50 px-5 py-3 text-center border-b border-gray-100">
               <p className="font-semibold text-gray-700 text-sm">Nộp báo cáo đồ án</p>
               <p className="text-xs text-gray-400 mt-0.5">
@@ -142,7 +168,7 @@ export default function BaoCaoDoAnPage() {
                           Xem chi tiết
                         </Button>
                         <Button
-                          onClick={() => setModal({ type: "nop", bc })}
+                          onClick={() => {setModal({ type: "nop", bc }); bc.trangThai = "Cho duyet"}}
                           className={`text-white 
                             ${bc.trangThai === "Da hoan thanh" || bc.trangThai === "Cho duyet" ? "bg-gray-300 cursor-default" : "bg-green-500 hover:bg-green-600"}`}
                             size="sm"

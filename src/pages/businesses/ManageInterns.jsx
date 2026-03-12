@@ -18,13 +18,26 @@ function PreviewBaoCao() {
   );
 }
 
-<<<<<<< HEAD:src/pages/businesses/ManageInterns.jsx
 const ManageInterns = () => {
-=======
-const QuanLyThucTap = () => {
+  const [interns, setInterns] = useState(sinhvienTT)
   const [selectedSv, setSelectedSv] = useState(null)
+  const [comment, setComment] = useState("");
+  const [diem, setDiem] = useState("");
+  const [isGra,setIsGra] = useState();
+  const handleSaveReview = (comment,diem) => {
+    if (!selectedSv) return
 
->>>>>>> e298347277b37711a8dcfad60642b141bb050945:src/pages/businesses/QuanLyThucTap.jsx
+    setInterns((prevInterns) =>
+      prevInterns.map((sv) =>
+        sv.id === selectedSv.id ? { ...sv, trangthai: "da danh gia" , diem: Number(diem),nhanXet:comment } : sv
+      )
+    )
+    setSelectedSv(null)
+    toast.success("Hạnh động đã được ghi nhận", {
+      className: "!bg-[#AAFAB8] !text-[#24AD47]",
+    })
+  }
+
   return (
       <div className='p-6'>
         <Card className="bg-[#ECF9FF]">
@@ -32,8 +45,9 @@ const QuanLyThucTap = () => {
           <div className='px-6'>
             <span className='font-inter'>Danh sách sinh viên đăng ký thực tập</span>
           </div>
-          <Card className="mx-6 overflow-hidden p-0">
-            <table className='text-x font-normal'>
+          <Card className="mx-6  p-0">
+           <div className="overflow-x-auto">
+              <table className='text-x font-normal'>
               <thead >
                 <tr className='bg-gray-50 border-b border-gray-200'>
                   <th className="px-4 py-2.5 text-left font-normal font-inter">
@@ -49,7 +63,7 @@ const QuanLyThucTap = () => {
                     Vị trí đăng ký
                   </th>
                   <th className="px-4 py-2.5 text-left font-normal font-inter">
-                    Thời gian đăng ký
+                    Điểm
                   </th>
                   <th className="px-4 py-2.5 text-left font-normal font-inter">
                     Trạng thái
@@ -60,7 +74,7 @@ const QuanLyThucTap = () => {
                 </tr>
               </thead>
               <tbody>
-                  {sinhvienTT.map((sv) => (
+                  {interns.map((sv) => (
                       <tr key = {sv.id} className='bg-white border-b border-gray-200 hover:bg-gray-50/50 transition'>
                         <td className='px-4 py-3  font-inter text-gray-700'>
                           {sv.id}
@@ -77,7 +91,7 @@ const QuanLyThucTap = () => {
                           </span>
                         </td >
                         <td className='px-4 py-3 font-inter text-gray-700'>
-                          {sv.thoigianDki}
+                          {sv.diem > 0 ? sv.diem : "--"}
                         </td>
                         <td className='px-4 py-3 font-inter text-gray-700'>
                           <span
@@ -92,7 +106,10 @@ const QuanLyThucTap = () => {
                         </td>
                         <td className='px-4 py-3'>
                             <div className='flex gap-5'>
-                              <Button onClick = {() => setSelectedSv(sv)} className="">
+                              <Button
+                                onClick={() => {setSelectedSv(sv);setComment(sv.nhanXet);setDiem(sv.diem); setIsGra(sv.trangthai === "da danh gia")}}
+                                className="disabled:cursor-not-allowed disabled:opacity-50"
+                              >
                                 Xem chi tiết
                               </Button>
   
@@ -103,6 +120,7 @@ const QuanLyThucTap = () => {
                   ))}
               </tbody>
             </table>
+            </div>
           </Card>
           {selectedSv  && (
             <Modal size = 'xl' className = "" title = {"Chấm điểm và đánh giá"} onClose={() => setSelectedSv(null)}>
@@ -124,17 +142,29 @@ const QuanLyThucTap = () => {
                   
                   <div className='flex gap-3 items-center'>
                     <span className='font-bold p-1'>Điểm doanh nghiệp chấm: </span>
-                    <input type="number" step= "0.25" className='bg-[#DBF7E4] text-[#0FB245] flex-1 border border-gray-400 p-1 h-[50px]'/>
+                   <input
+                      
+                      type="number"
+                      step="0.25"
+                      value={diem}
+                      onChange={(e) => setDiem(e.target.value)}
+                      className='bg-[#DBF7E4] text-[#0FB245] flex-1 border border-gray-400 p-1 h-[50px]'
+                    />
                   </div><br />
 
                   <span className='font-bold'>Nhận xét chi tiết:</span>
                   <div className='flex'>
-                    <textarea className='flex-1 bg-[#FCFCFC] border border-gray-500 p-1 h-[80px]'/>
+                   <textarea
+                      
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      className='flex-1 bg-[#FCFCFC] border border-gray-500 p-1 h-[80px]'
+                    />
                   </div>
                   
                     <div className='flex gap-4 pt-4 justify-end'>
-                      <Button onClick = {() => setSelectedSv(null) } className="bg-[#FF0000] hover:bg-[#cc0000] text-white w-[60px] h-9 p-0">Hủy</Button>
-                      <Button onClick = {() => {setSelectedSv(null); toast.success("Hành động của bạn đã được ghi nhận",{className: "!bg-[#AAFAB8] !text-[#24AD47]"})}} className="bg-[#24AD47] hover:bg-[#1f933d] text-white w-[80px] h-9 p-0">Lưu</Button>
+                      <Button  onClick = {() => setSelectedSv(null) } className="bg-[#FF0000] hover:bg-[#cc0000] text-white w-[60px] h-9 p-0">Hủy</Button>
+                      <Button  onClick={() => handleSaveReview(comment, diem)} className="bg-[#24AD47] hover:bg-[#1f933d] text-white w-[80px] h-9 p-0">Lưu</Button>
                     </div>
                   
                 </div>
@@ -146,3 +176,4 @@ const QuanLyThucTap = () => {
 }
 
 export default ManageInterns
+
