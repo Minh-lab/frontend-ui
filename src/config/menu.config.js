@@ -33,8 +33,8 @@ export const MASTER_MENU = [
   { title: "Danh sách tài khoản", path: "/admin/accounts", icon: Users, roles: ["admin"] },
 
   // --- VĂN PHÒNG KHOA ---
-  { title: "Quản lý thực tập", path: "/faculty/intern", icon: Briefcase, roles: ["faculty"] },
-  { title: "Quản lý đồ án", path: "/faculty/projects", icon: GraduationCap, roles: ["faculty"] },
+  { title: "Quản lý thực tập", path: "/faculty/internships", icon: Briefcase, roles: ["faculty"] },
+  { title: "Quản lý đồ án", path: "/faculty/capstones", icon: GraduationCap, roles: ["faculty"] },
   { title: "Quản lý giảng viên", path: "/faculty/lecturers", icon: UserCheck, roles: ["faculty"] },
   { title: "Quản lý hội đồng", path: "/faculty/council", icon: Users, roles: ["faculty"] },
   { title: "Quản lý kế hoạch", path: "/faculty/plans", icon: Calendar, roles: ["faculty"] },

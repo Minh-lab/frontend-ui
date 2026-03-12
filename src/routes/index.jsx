@@ -65,7 +65,7 @@ export default function AppRouter() {
             // --- MODULE VĂN PHÒNG KHOA ---
             {
               path: "faculty",
-              element: <ProtectedRoute allowedRoles={["faculty_staff"]} />,
+              element: <ProtectedRoute allowedRoles={["faculty"]} />,
               children: facultyRoutes,
             },
 

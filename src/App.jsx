@@ -28,7 +28,7 @@ function App() {
         email: business.email
       },
       "dummy-access-token",
-      "student" // Test với vai trò Company
+      "faculty" // Test với vai trò Company
     );
   }, [setAuth]);
 

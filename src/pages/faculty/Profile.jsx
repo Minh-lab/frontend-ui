@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { User, ArrowLeft, Mail, Fingerprint, Calendar, ShieldCheck, ShieldAlert } from "lucide-react";
+import { User, ArrowLeft, Mail, Fingerprint, Calendar, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "@/store/useAuthStore";
@@ -14,18 +14,18 @@ import {
 } from "@/components/ui/form";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
 
-export default function AdminProfile() {
+export default function FacultyProfile() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-  // Dữ liệu hiển thị
+  // Dữ liệu giả lập (hoặc lấy từ store)
   const profileData = {
-    usercode: user?.usercode || "ADMIN_001",
-    full_name: user?.displayName || "Quản trị viên hệ thống",
-    email: user?.email || "admin@tlu.edu.vn",
+    usercode: user?.usercode || "NV2026001",
+    full_name: user?.displayName || "Nguyễn Văn Khoa",
+    email: user?.email || "vpk@tlu.edu.vn",
     gender: user?.gender || "Nam",
-    dob: user?.dob || "01/01/1990",
+    dob: user?.dob || "15/05/1985",
   };
 
   const form = useForm({
@@ -36,7 +36,7 @@ export default function AdminProfile() {
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 animate-in fade-in duration-500">
       <div className="max-w-3xl mx-auto space-y-6">
         
-        {/* Nút quay lại */}
+        {/* Nút quay lại đơn giản */}
         <button 
           onClick={() => navigate(-1)} 
           className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-colors group"
@@ -45,44 +45,40 @@ export default function AdminProfile() {
           QUAY LẠI
         </button>
 
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-          {/* Header Bar - Tông màu Indigo đậm chất Admin */}
+        <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+          {/* Header Bar - Dùng màu Indigo dịu nhẹ, không quá gắt */}
           <div className="h-32 bg-indigo-600 relative">
              <div className="absolute -bottom-12 left-10 p-2 bg-white rounded-3xl shadow-lg">
-                <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+                <div className="bg-indigo-50 p-4 rounded-2xl">
                   <User className="w-12 h-12 text-indigo-600" />
                 </div>
              </div>
           </div>
 
-          <div className="pt-16 pb-10 px-10 space-y-10">
-            {/* Tiêu đề và Nút hành động */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="pt-16 pb-10 px-10 space-y-8">
+            <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                  Hồ sơ Quản trị viên
-                  <ShieldCheck className="w-5 h-5 text-green-500" />
-                </h1>
-                <p className="text-sm text-slate-400 font-medium">Quyền hạn tối cao trên hệ thống quản lý thực tập</p>
+                <h1 className="text-2xl font-bold text-slate-800">Thông tin cá nhân</h1>
+                <p className="text-sm text-slate-400 font-medium">Cán bộ Văn phòng Khoa - Đại học Thủy Lợi</p>
               </div>
               <Button 
                 onClick={() => setShowPasswordModal(true)}
-                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold px-6 rounded-xl border-none shadow-none transition-all active:scale-95"
+                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold px-6 rounded-xl border-none shadow-none"
               >
-                <ShieldAlert className="w-4 h-4 mr-2" /> Đổi mật khẩu
+                <ShieldCheck className="w-4 h-4 mr-2" /> Đổi mật khẩu
               </Button>
             </div>
 
             <Form {...form}>
-              <form className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+              <form className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
                 
-                {/* Mã Quản trị viên */}
+                {/* Mã nhân viên */}
                 <FormField
                   control={form.control}
                   name="usercode"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">Mã định danh</FormLabel>
+                      <FormLabel className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Mã nhân viên</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
@@ -99,7 +95,7 @@ export default function AdminProfile() {
                   name="gender"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">Giới tính</FormLabel>
+                      <FormLabel className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Giới tính</FormLabel>
                       <FormControl>
                         <Input {...field} readOnly className="bg-slate-50/50 border-transparent font-medium text-slate-700 h-12 rounded-xl focus-visible:ring-0 cursor-default" />
                       </FormControl>
@@ -113,7 +109,7 @@ export default function AdminProfile() {
                   name="full_name"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">Họ và Tên</FormLabel>
+                      <FormLabel className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Họ và Tên</FormLabel>
                       <FormControl>
                         <Input {...field} readOnly className="bg-slate-50/50 border-transparent font-bold text-slate-800 text-lg h-12 rounded-xl focus-visible:ring-0 cursor-default" />
                       </FormControl>
@@ -121,13 +117,13 @@ export default function AdminProfile() {
                   )}
                 />
 
-                {/* Email Quản trị */}
+                {/* Email */}
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">Email quản trị</FormLabel>
+                      <FormLabel className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Email công vụ</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
@@ -144,7 +140,7 @@ export default function AdminProfile() {
                   name="dob"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">Ngày sinh</FormLabel>
+                      <FormLabel className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Ngày sinh</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
@@ -159,6 +155,7 @@ export default function AdminProfile() {
           </div>
         </div>
 
+      
 
         <ChangePasswordModal 
           isOpen={showPasswordModal} 
