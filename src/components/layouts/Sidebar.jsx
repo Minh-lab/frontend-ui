@@ -3,7 +3,7 @@ import useAuthStore from "@/store/useAuthStore";
 import { cn } from "@/lib/utils";
 import { MASTER_MENU } from "@/config/menu.config"; // Import config mới
 
-export function Sidebar() {
+export function Sidebar({ onNavigate }) {
   // Sử dụng selector để lấy role, tránh re-render thừa và lỗi IDE
   const role = useAuthStore((state) => state.role);
 
@@ -34,6 +34,7 @@ export function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={() => onNavigate?.()}
               className={({ isActive }) => cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
                 isActive 

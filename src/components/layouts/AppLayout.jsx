@@ -2,12 +2,14 @@ import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { Sidebar } from "./Sidebar"; 
+import { useState } from "react";
 
 export function AppLayout() {
+  const [openSidebar, setOpenSidebar] = useState(false);
   return (
     <div className="flex flex-col min-h-screen font-sans bg-slate-50 text-slate-900">
       {/* 1. Header: Full width trên cùng */}
-      <Header />
+      <Header onMenuClick={() => setOpenSidebar(true)} />
       
       {/* Khối giữa chứa Sidebar và Main content */}
       <div className="flex flex-1 overflow-hidden">
@@ -16,6 +18,23 @@ export function AppLayout() {
           <Sidebar />
         </aside>
 
+        {openSidebar && (
+          <button
+            type="button"
+            aria-label="Dong sidebar"
+            className="fixed inset-0 z-40 bg-slate-950/45 md:hidden"
+            onClick={() => setOpenSidebar(false)}
+          />
+        )}
+
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-white shadow-xl transition-transform duration-300 md:hidden ${
+            openSidebar ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <Sidebar onNavigate={() => setOpenSidebar(false)} />
+        </aside>
+        
         {/* Khu vực nội dung chính */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
           <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar">
