@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 
-const XacNhanThucTap = () => {
+const ConfirmIntern = () => {
   return (
     <div className='p-6'>
       <Card className="bg-[#ECF9FF]">
@@ -78,4 +78,4 @@ const XacNhanThucTap = () => {
   )
 }
 
-export default XacNhanThucTap
+export default ConfirmIntern

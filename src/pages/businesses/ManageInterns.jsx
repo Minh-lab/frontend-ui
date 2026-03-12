@@ -18,9 +18,13 @@ function PreviewBaoCao() {
   );
 }
 
+<<<<<<< HEAD:src/pages/businesses/ManageInterns.jsx
+const ManageInterns = () => {
+=======
 const QuanLyThucTap = () => {
   const [selectedSv, setSelectedSv] = useState(null)
 
+>>>>>>> e298347277b37711a8dcfad60642b141bb050945:src/pages/businesses/QuanLyThucTap.jsx
   return (
       <div className='p-6'>
         <Card className="bg-[#ECF9FF]">
@@ -141,4 +145,4 @@ const QuanLyThucTap = () => {
     )
 }
 
-export default QuanLyThucTap
+export default ManageInterns

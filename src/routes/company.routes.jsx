@@ -3,18 +3,23 @@ import { Navigate } from "react-router-dom";
 
 // Sử dụng lazy loading để tối ưu hiệu năng
 const CompanyDashboard = lazy(() => import("@/pages/businesses/HomePageBusiness"));
-const CompanyConfirmIntern = lazy(() => import("@/pages/businesses/XacNhanThucTap"));
-const CompanyManagerIntern = lazy(() => import("@/pages/businesses/QuanLyThucTap"));
-const CompanyProfile = lazy(() => import("@/pages/businesses/ProfilePageBusiness"))
-
+const CompanyProfile = lazy(() => import("@/pages/businesses/ProfilePageBusiness"));
+const CompanyConfirmIntern = lazy(() => import("@/pages/businesses/ConfirmIntern"));
+const CompanyManageInterns = lazy(() => import("@/pages/businesses/ManageInterns"));
 
 export const companyRoutes = [
-  // Tự động vào dashboard khi truy cập /faculty
-  { index: true, element: <Navigate to="dashboard" replace /> }, 
+  // Tự động vào dashboard khi truy cập /company
+  { index: true, element: <Navigate to="dashboard" replace /> },
+  
+  // Dashboard / Trang chủ
   { path: "dashboard", element: <CompanyDashboard /> },
-  { path: "confirm-intern", element: <CompanyConfirmIntern /> },
-  { path: "manage-interns", element: <CompanyManagerIntern /> },
+  
+  // Thông tin doanh nghiệp
   { path: "profile", element: <CompanyProfile /> },
-//   { path: "lecturers", element: <ManageLecturers /> },
-  // Các path này phải khớp chính xác với path trong menu.config.js
+  
+  // Xác nhận thực tập
+  { path: "confirm-intern", element: <CompanyConfirmIntern /> },
+  
+  // Quản lý thực tập
+  { path: "manage-interns", element: <CompanyManageInterns /> },
 ];

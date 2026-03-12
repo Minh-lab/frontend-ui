@@ -8,9 +8,12 @@ import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 import { visibleTaskLimit } from '@/lib/data'
 import Modal from '@/components/Modal'
+import { toast } from 'sonner'
 
 
-function PheDuyetBaoCao({item,onBack}) {
+function PheDuyetBaoCao({item,onBack , onApprove}) {
+    const isGraded = item.trangthai === 'da duyet'
+    const [comment,setComment] = useState(item.nhanXet ?? "")
     return (
         <div>
             <div className='flex gap-2 items-center justify-center'>
@@ -31,32 +34,40 @@ function PheDuyetBaoCao({item,onBack}) {
                 </Card>
                 <div className='flex flex-col gap-3 flex-1 '>
                     <Card>
-                        <div className='p-1'>
-                            <div className='flex flex-col sm:flex-row gap-3 items-center'>
-                                <span class="text-[16px] font-semibold leading-[25.6px]">Thong tin bao cao thuc tap</span>
+                        <div className='px-4'>
+                            <div className='flex flex-col sm:flex-row gap-10 items-center'>
+                                <span className="text-[16px] font-semibold leading-[25.6px]">Thong tin bao cao thuc tap</span>
                                 <span className='bg-[#f9f5ff] border border-[#e9d7fe] text[#6941b6] rounded-xl p-1'>{item.trangthai}</span>
                             </div> <hr />
                             <div>
-                                <span  class="text-sm text-slate-500">Sinh vien thuc hien</span> <br />
-                                <span class="text-[16px] font-semibold leading-[25.6px]">{item.hoTen}</span><br /> <br />
-                                <span  class="text-sm text-slate-500">Cong ty</span> <br />
-                                <span>{item.congty}</span><br /> <br />
-                                <span  class="text-sm text-slate-500">Vi tri dang ky</span> <br />
-                                <span>{item.vitri}</span>
+                                <span  className="text-sm text-slate-500">Sinh vien thuc hien</span> <br />
+                                <span className="text-[16px] font-semibold leading-[25.6px]">{item.hoTen}</span><br /> <br />
+                                <span  className="text-sm text-slate-500">Cong ty</span> <br />
+                                <span className='text-[#2563eb]'> {item.congty}</span><br /> <br />
+                                <span  className="text-sm text-slate-500">Vi tri dang ky</span> <br />
+                                <span className='text-[#2563eb]'>{item.vitri}</span>
     
                             </div>
                         </div>
                     </Card>
                     <Card>
-                        <div className='flex flex-col sm:flex-row gap-3 items-center'>
-                            <span class="text-[16px] font-semibold leading-[25.6px]">Thong tin bao cao thuc tap</span>
-                            <span className='bg-[#f9f5ff] border border-[#e9d7fe] text[#6941b6] rounded-xl p-1'>{item.trangthai}</span>
-                        </div> <hr />
-                        <div>
-                            <span  class="text-sm text-slate-500">Sinh vien thuc hien</span> <br />
-                            <span class="text-[16px] font-semibold leading-[25.6px]">{item.hoTen}</span><br /> <br />
-                            <span  class="text-sm text-slate-500">Cong ty</span> <br />
- 
+                        <div className='px-4'>
+                            <div>
+                                <span>Nhan xet</span><br />
+                                <textarea
+                                value={comment}
+                                onChange = {(event) => setComment(event.target.value)}
+                                disabled = {isGraded}
+                                className="w-full border border-gray-300 rounded-lg p-3 text-sm 
+                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                                hover:border-gray-400 transition resize-none"
+                                placeholder="Nhập nội dung..."
+                                ></textarea>
+                            </div>
+                            <div className='flex gap-10'>
+                                <Button disabled = {isGraded} onClick = {onBack} className ="bg-white-500 border border-red-300 text-red-500 hover:bg-[#F4F4F4]">Tu choi</Button>
+                                <Button disabled = {isGraded} onClick = {() => onApprove(item.id,comment)}>Duyet</Button>
+                            </div>
                         </div>
                     </Card  >
                 </div>
@@ -65,22 +76,38 @@ function PheDuyetBaoCao({item,onBack}) {
     )
 }
 
-function BaoCaoThucTap({onChon}){
+function BaoCaoThucTap({onChon , report}){
     const [page,setPage] = useState(1);  
-  const [show, setShow] = useState(false);
-  const visibleTask = sinhvienTT.slice(
-    (page-1) * visibleTaskLimit,
-    page * visibleTaskLimit
-);
-const totalPages = Math.ceil(sinhvienTT.length / visibleTaskLimit )
-const pageItems = useMemo(() => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i += 1) pages.push(i);
-    return pages;
-  }, [totalPages]);
+    const [show, setShow] = useState(false);
+    const [keyword, setKeyword] = useState('')
+    const [statusKeyword, setStatusKeyword] = useState('')
+    const [statusFilter, setStatusFilter] = useState('')
+    const [searchTerm, setSearchTerm] = useState('')
+    
 
 
-
+    const filteredReports = useMemo(() => {
+        return report.filter((item) => {
+            const matchesKeyword =
+            !searchTerm ||
+            item.maSV.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.hoTen.toLowerCase().includes(searchTerm.toLowerCase())
+    
+            const matchesStatus = !statusFilter || item.trangthai === statusFilter
+    
+            return matchesKeyword && matchesStatus 
+        })
+    }, [report, searchTerm, statusFilter, ])
+    const visibleTask = filteredReports.slice(
+        (page-1) * visibleTaskLimit,
+        page * visibleTaskLimit
+    );
+    const totalPages = Math.ceil(filteredReports.length / visibleTaskLimit )
+    const pageItems = useMemo(() => {
+        const pages = [];
+        for (let i = 1; i <= totalPages; i += 1) pages.push(i);
+        return pages;
+    }, [totalPages]);
 return (
     
     <Card className="bg-[#ffffff]">
@@ -89,23 +116,28 @@ return (
             <div className='flex flex-col sm:flex-row gap-2'>
                 <div className='flex-2 relative'>
                     <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400'/>
-                    <Input className = "pl-9"/>
+                    <Input 
+                        className = "pl-9" 
+                        value={keyword}
+                        onChange={(event) => setKeyword(event.target.value)} 
+                    />
                 </div>
                 <div className='flex-1'>
-                    <select className="h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/20" name="" id="">
+                    <select
+                    value={statusKeyword}
+                    onChange={(event) => setStatusKeyword(event.target.value)} 
+                    className="h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/20" name="" id="">
                         <option value="">Trang thai</option>
-                        <option value="">Chua duyet</option>
-                        <option value="">Da Duyet</option>
+                        <option value="chua duyet">Chua duyet</option>
+                        <option value="da duyet">Da Duyet</option>
                     </select>
                 </div>
-                <div className='flex-1'>
-                    <select className="h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/20" name="" id="">
-                        <option value="">Trang thai</option>
-                        <option value="">Chua duyet</option>
-                        <option value="">Da Duyet</option>
-                    </select>
-                </div>
-                <Button className='flex-1'>
+                <Button className='flex-1'
+                onClick={() => {
+                    setSearchTerm(keyword)
+                    setStatusFilter(statusKeyword)
+                    setPage(1)
+                }}>
                     Tim kiem
                 </Button>
             </div>
@@ -127,25 +159,42 @@ return (
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {visibleTask.map((item,index) => (
-                            <TableRow key= {item.id}>
-                                <TableCell>{item.id}</TableCell>
-                                <TableCell>{item.maSV}</TableCell>
-                                <TableCell>{item.hoTen}</TableCell>
-                                <TableCell>{item.vitri}</TableCell>
-                                <TableCell>{item.congty}</TableCell>
-                                <TableCell>{item.trangthai}</TableCell>
-                                <TableCell></TableCell>
-                                <TableCell>
-                                    <span
-                                    onClick={() => onChon(item)}
-                                    className="cursor-pointer bg-[#eef4ff] border border-[#c7d7fe] text-[#3538CD] rounded-xl p-1"  
-                                    >
-                                        xem chi tiet
-                                    </span>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {visibleTask.map((item,index) => {
+                            const isGraded = item.trangthai === 'da duyet'
+                            return(
+                                <TableRow key= {item.id}>
+                                    <TableCell>{item.id}</TableCell>
+                                    <TableCell>{item.maSV}</TableCell>
+                                    <TableCell>{item.hoTen}</TableCell>
+                                    <TableCell>{item.vitri}</TableCell>
+                                    <TableCell>{item.congty}</TableCell>
+                                    <TableCell>{item.trangthai}</TableCell>
+                                    <TableCell></TableCell>
+                                    <TableCell>
+                                        <div className='flex gap-2'>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => onChon(item)}
+                                                disabled={isGraded}
+                                                className="rounded-full border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed] hover:bg-[#f3e8ff] disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                Duyet
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => onChon(item)}
+                                                disabled={!isGraded}
+                                                className="rounded-full border-[#bfdbfe] bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                Xem chi tiet
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })}
                     </TableBody>
                 </Table>
                 {show && <PheDuyetBaoCao />}
@@ -188,9 +237,26 @@ return (
 
 const InternReports = () => {
     const [ttSV,setTtSV] =useState(null)
+    const [reports, setReports] = useState(sinhvienTT)
+
+   const handleApprove = (reportId, comment) => {
+  setReports((prev) =>
+    prev.map((report) =>
+      report.id === reportId
+        ? { ...report, trangthai: "da duyet", nhanXet: comment }
+        : report
+    )
+  )
+
+  toast.success('Da duyet bao cao thuc tap', {
+    className: '!bg-[#dcfce7] !text-[#047857]',
+  })
+
+  setTtSV(null)
+}
     return(
         <div>
-            {ttSV? <PheDuyetBaoCao item={ttSV} onBack={() => setIsShow(null)}/> : <BaoCaoThucTap onChon = {(item) => setTtSV(item)}/>} 
+            {ttSV? <PheDuyetBaoCao onApprove={handleApprove} item={ttSV} onBack={() => setTtSV(null)}/> : <BaoCaoThucTap report={reports} onChon = {(item) => setTtSV(item)}/>} 
         </div>
     )
 }

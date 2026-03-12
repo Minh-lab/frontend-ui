@@ -1,6 +1,5 @@
 ﻿import { useState } from "react";
 import { student } from "../../data/studentData";
-import Modal from "../../components/Modal";
 import ChangePassword from "@/components/layouts/ChangePassword";
 
 function Field({ label, value }) {

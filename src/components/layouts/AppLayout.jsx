@@ -9,13 +9,30 @@ export function AppLayout() {
   return (
     <div className="flex flex-col min-h-screen font-sans bg-slate-50 text-slate-900">
       {/* 1. Header: Full width trên cùng */}
-      <Header />
+      <Header onMenuClick={() => setOpenSidebar(true)} />
       
       {/* Khối giữa chứa Sidebar và Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar: Cố định bên trái */}
         <aside className="w-64 bg-white border-r border-border hidden md:block shrink-0 overflow-y-auto custom-scrollbar">
           <Sidebar />
+        </aside>
+
+        {openSidebar && (
+          <button
+            type="button"
+            aria-label="Dong sidebar"
+            className="fixed inset-0 z-40 bg-slate-950/45 md:hidden"
+            onClick={() => setOpenSidebar(false)}
+          />
+        )}
+
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-white shadow-xl transition-transform duration-300 md:hidden ${
+            openSidebar ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <Sidebar onNavigate={() => setOpenSidebar(false)} />
         </aside>
         
         {/* Khu vực nội dung chính */}

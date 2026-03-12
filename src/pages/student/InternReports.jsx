@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 function PreviewBaoCao() {
   return (
-    <div className="border border-gray-300 rounded-lg p-6 bg-white text-center space-y-3 min-h-[220px] flex flex-col items-center justify-center">
+    <div className="border border-gray-300 rounded-lg p-6 bg-white text-center space-y-3 min-h-55 flex flex-col items-center justify-center">
       <p className="text-xs font-semibold text-gray-500 tracking-wide">BỘ GIÁO DỤC VÀ ĐÀO TẠO &nbsp;&nbsp;&nbsp; BỘ NÔNG NGHIỆP VÀ PTNT</p>
       <p className="text-xs font-semibold text-gray-500 tracking-wide">TRƯỜNG ĐẠI HỌC THỦY LỢI</p>
       <div className="w-20 h-20 rounded-full bg-blue-800 border-4 border-blue-600 flex items-center justify-center mx-auto">
@@ -62,11 +62,8 @@ function ModalNopBaoCao({ bc, onClose }) {
             Hủy
           </Button>
           <Button 
-          className="bg-green-500 hover:bg-green-600 text-white "
-          onClick={() => {
-            onClose();
-            bc.trangThai = "Da hoan thanh"
-          }}
+            className="bg-green-500 hover:bg-green-600 text-white "
+            onClick={onClose}
           >
             Nộp
           </Button>

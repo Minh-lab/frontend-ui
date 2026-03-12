@@ -2,7 +2,7 @@ import { Mail, Phone, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-[#4a569f] text-white px-8 py-5 mt-auto">
+    <footer className="bg-primary text-white px-8 py-5 mt-auto">
       <div className="max-w-7xl mx-auto space-y-2 text-sm">
         {/* Tiêu đề Khoa */}
         <h3 className="font-bold text-base uppercase tracking-wide mb-3">

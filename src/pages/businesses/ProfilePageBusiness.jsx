@@ -1,16 +1,14 @@
-import Modal from '@/components/Modal'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import ChangePasswordModal from '@/components/ChangePasswordModal'
 import { business } from '@/data/businessData'
 import { User } from 'lucide-react'
 import React, { useState } from 'react'
-import { toast } from 'sonner'
-import ChangePasswordd from '@/components/layouts/ChangePassword'
 
 function Field({ label = "sd", value }) {
   return (
-    <div className='flex items-center gap-6 px-[40px] flex-col sm:flex-row'>
-      <span className="w-44  text-left text-sm font-semibold text-[#5c60c0] flex-shrink-0">
+    <div className='flex items-center gap-6 px-10 flex-col sm:flex-row'>
+      <span className="w-44  text-left text-sm font-semibold text-[#5c60c0] shrink-0">
         {label}
       </span>
 
@@ -22,7 +20,8 @@ function Field({ label = "sd", value }) {
 }
 
 const ProfilePageBusiness = () => {
-  const [showPwC,setShowPwC] = useState(false)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+
   return (
     <div className='p-6'>
       <Card className="p-0">
@@ -47,15 +46,15 @@ const ProfilePageBusiness = () => {
           <Field label="Email:" value={business.email} />
           <Field label="Website:" value={business.website} />
           <div className = "flex items-center justify-center">
-            <Button onClick = {() => setShowPwC(true)}>Đổi mật khẩu</Button>
+            <Button onClick = {() => setShowPasswordModal(true)}>Đổi mật khẩu</Button>
           </div>
-        </div>  
-
-
-        {showPwC && (
-          <ChangePasswordd setShowPwC={() =>setShowPwC(false)}/>
-        )}
+        </div>
       </Card>
+
+      <ChangePasswordModal 
+        isOpen={showPasswordModal} 
+        onClose={() => setShowPasswordModal(false)}
+      />
     </div>
   )
 }
