@@ -1,10 +1,34 @@
-﻿import { useState } from "react";
+﻿import { use, useMemo, useState } from "react";
 import { giangVienList, student } from "../../data/studentData";
 import FileUpload from "../../components/FileUpload";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
+import { getStudentAccess } from "@/lib/studentAccess";
 
-function DanhSachGV({ onChon , isRegister }) {
+function DanhSachGV({ listGV, onChon , isRegister }) {
   const [search, setSearch] = useState("Tran Thi Huong|");
+  const [keyword, setKeyword] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusKeyword, setStatusKeyword] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [topicKeyword, setTopicKeyword] = useState('')
+  const [topicFilter, setTopicFilter] = useState('')
+  const filteredGV = useMemo(() => {
+    return listGV.filter((gv) => {
+      const matchesKeyword =
+        !searchTerm ||
+        gv.ten.toLowerCase().includes(searchTerm.toLowerCase())
+
+      const matchesStatus =
+      !statusFilter || gv.conNhan === (statusFilter === "true");
+      const matchesTopic = !topicFilter || gv.chuyenMon.some(mon => mon.toLowerCase().includes(topicFilter.toLowerCase()));
+
+      return matchesKeyword && matchesStatus && matchesTopic
+    })
+  }, [listGV, searchTerm, statusFilter, topicFilter])
+
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -14,9 +38,11 @@ function DanhSachGV({ onChon , isRegister }) {
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0" />
           </svg>
-          <input
-            className="w-full border border-gray-300 rounded-lg pl-9 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40"
-            value={search} onChange={(e) => setSearch(e.target.value)}
+          <Input
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+            className="pl-9 "
+            
           />
           {search && (
             <button onClick={() => setSearch("")} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
@@ -26,13 +52,35 @@ function DanhSachGV({ onChon , isRegister }) {
             </button>
           )}
         </div>
-        <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
-          <option>Chuyên môn ▾</option>
+        <select
+          value={topicKeyword}
+          onChange={(event) => setTopicKeyword(event.target.value)} 
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
+          <option value= "">Chuyên môn ▾</option>
+          <option value= "Mang may tinh">Mạng máy tính</option>
+          <option value= "Lap trinh Web">Lập trình web</option>
+          <option value= "An toan thong tin">An toàn thông tin</option>
+          <option value= "Quan tri Mang">Quản trị mạng</option>
+          <option value= "Phan tich du lieu lon">Phân tích dữ liệu lớn</option>
+          <option value= "DevOps">DevOps</option>
         </select>
-        <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
-          <option>Trạng thái ▾</option>
+        <select
+          value={statusKeyword}
+          onChange={(e) => setStatusKeyword(e.target.value)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none"
+        >
+          <option value="">Trạng thái ▾</option>
+          <option value="true">Còn nhận</option>
+          <option value="false">Không nhận</option>
         </select>
-        <button className="bg-[#5c60c0]/10 hover:bg-[#5c60c0]/20 text-[#5c60c0] px-4 py-2 rounded-lg text-sm font-medium transition border border-[#5c60c0]/20">
+        <button 
+        onClick={() => {
+              setSearchTerm(keyword)
+              setStatusFilter(statusKeyword)
+              setTopicFilter(topicKeyword)
+              
+            }}
+        className="bg-[#5c60c0]/10 hover:bg-[#5c60c0]/20 text-[#5c60c0] px-4 py-2 rounded-lg text-sm font-medium transition border border-[#5c60c0]/20">
           Tìm kiếm
         </button>
       </div>
@@ -40,7 +88,7 @@ function DanhSachGV({ onChon , isRegister }) {
       <h3 className="font-bold text-gray-700 mb-3">Danh sách giảng viên</h3>
 
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm divide-y divide-gray-100">
-        {giangVienList.map((gv) => {
+        {filteredGV.map((gv) => {
           const full = gv.daDangKy >= gv.max;
           return (
             <div key={gv.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition">
@@ -176,6 +224,10 @@ function FormDangKyGVHD({ gv, onBack,setIsRegister }) {
             onBack();
             setIsRegister(true);
             gv.daDangKy += 1
+            toast.success("Hạnh động đã được ghi nhận", {
+              className: "!bg-[#AAFAB8] !text-[#24AD47]",
+            })
+            
           }}>
             Đăng ký
           </Button>
@@ -186,7 +238,29 @@ function FormDangKyGVHD({ gv, onBack,setIsRegister }) {
 }
 
 export default function DangKyGVHDPage() {
+  const navigate = useNavigate();
+  const [access] = useState(() => getStudentAccess());
+  const [listGV,setListGV] = useState(giangVienList);
   const [selectedGV, setSelectedGV] = useState(null);
   const [isRegister, setIsRegister] = useState(false);
-  return <div className="p-6">{selectedGV ? <FormDangKyGVHD setIsRegister={setIsRegister} gv={selectedGV} onBack={() => setSelectedGV(null)} /> : <DanhSachGV onChon={(gv) => setSelectedGV(gv) } isRegister = {isRegister} />}</div>;
+  if (!access.projectEnabled) {
+    return (
+      <div className="p-6">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm max-w-2xl mx-auto">
+          <div className="bg-[#5c60c0] text-white px-5 py-3 rounded-t-xl font-semibold">
+            Đăng ký giảng viên hướng dẫn
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-3 rounded-lg">
+              Bạn chưa mở đợt đồ án nên chưa thể sử dụng chức năng này.
+            </div>
+            <Button onClick={() => navigate("/student/dashboard")} className="bg-[#5c60c0] hover:bg-[#4a4ea8] text-white">
+              Quay về trang chủ
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return <div className="p-6">{selectedGV ? <FormDangKyGVHD setIsRegister={setIsRegister} gv={selectedGV} onBack={() => setSelectedGV(null)} /> : <DanhSachGV listGV = {listGV} onChon={(gv) => setSelectedGV(gv) } isRegister = {isRegister} />}</div>;
 }

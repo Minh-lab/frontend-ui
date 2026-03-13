@@ -7,7 +7,7 @@ import AppRouter from "@/routes"; // Đường dẫn đến file routes/index.js
 import { Toaster } from "@/components/ui/sonner";
 // eslint-disable-next-line no-unused-vars
 import { business } from "./data/businessData";
-
+import { student } from "./data/studentData";
 /**
  * File App.jsx hoàn chỉnh
  * 1. Bọc ứng dụng trong BrowserRouter để quản lý điều hướng.
@@ -17,7 +17,7 @@ import { business } from "./data/businessData";
 function App() {
   // eslint-disable-next-line no-unused-vars
   const setAuth = useAuthStore((state) => state.setAuth);
-
+  
   // ==========================================================
   // GIẢ LẬP ĐĂNG NHẬP (MOCK AUTH)
   // Bạn hãy thay đổi giá trị 'role' để kiểm tra các giao diện khác nhau:

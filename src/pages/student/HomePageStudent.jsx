@@ -1,7 +1,10 @@
 ﻿import StatusBadge from "@/components/StatusBadge";
 import { doAn, thucTap } from "../../data/studentData";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getStudentAccess, setStudentAccess } from "@/lib/studentAccess";
+import { toast } from "sonner";
 const steps = [
   { label: "Dang ky", done: true },
   { label: "Cho duyet", done: true },
@@ -18,13 +21,66 @@ function StepIcon({ done, failed, num }) {
 
 export default function HomePageStudent() {
   const navigate = useNavigate();
+  const [access, setAccess] = useState(() => getStudentAccess());
+
+  const handleEnableProject = () => {
+    setAccess(setStudentAccess({ projectEnabled: true }));
+    toast.success("Đã mở đợt đồ án", {
+      className: "!bg-[#AAFAB8] !text-[#24AD47]",
+    });
+  };
+
+  const handleDisableProject = () => {
+    setAccess(setStudentAccess({ projectEnabled: false }));
+    toast.success("Đã hủy đợt đồ án", {
+      className: "!bg-[#AAFAB8] !text-[#24AD47]",
+    });
+  };
+
+  const handleEnableIntern = () => {
+    setAccess(setStudentAccess({ internEnabled: true }));
+    toast.success("Đã mở đợt thực tập", {
+      className: "!bg-[#AAFAB8] !text-[#24AD47]",
+    });
+  };
+
+  const handleDisableIntern = () => {
+    setAccess(setStudentAccess({ internEnabled: false }));
+    toast.success("Đã hủy đợt thực tập", {
+      className: "!bg-[#AAFAB8] !text-[#24AD47]",
+    });
+  };
   return (
     <div className="p-6 space-y-4">
       <div className="flex flex-wrap gap-3 justify-end">
-        <Button className="bg-gray-400 hover:bg-gray-500">Dang ky dot do an</Button>
-        <Button className="bg-[#5c60c0] hover:bg-[#4a4ea8] ">Dang ky dot thuc tap</Button>
-        <Button className="bg-red-400 hover:bg-red-500 ">Yeu cau huy do an</Button>
-        <Button className="bg-gray-400 hover:bg-gray-500 ">Yeu cau huy thuc tap</Button>
+        <Button
+          onClick={handleEnableProject}
+          disabled={access.projectEnabled}
+          className="bg-[#5c60c0] hover:bg-[#4a4ea8]"
+        >
+          {access.projectEnabled ? "Đã mở đợt đồ án" : "Đăng ký đợt đồ án"}
+        </Button>
+        <Button
+          onClick={handleEnableIntern}
+          disabled={access.internEnabled}
+          className="bg-[#5c60c0] hover:bg-[#4a4ea8] "
+        >
+          {access.internEnabled ? "Đã mở đợt thực tập" : "Đăng ký đợt thực tập"}
+        </Button>
+        <Button
+          onClick={handleDisableProject}
+          disabled={!access.projectEnabled}
+          className="bg-red-400 hover:bg-red-500 "
+        >
+          {access.projectEnabled ? "Yêu cầu hủy đồ án" : "Đã hủy đồ án"}
+        </Button>
+        <Button
+          onClick={handleDisableIntern}
+          disabled={!access.internEnabled}
+          className="bg-red-400 hover:bg-red-500 "
+        >
+          {access.internEnabled ? "Yêu cầu hủy thực tập" : "Đã hủy thực tập"}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -35,16 +91,34 @@ export default function HomePageStudent() {
           </div>
           <div className="p-4 space-y-1">
             <p className="font-bold text-gray-800 text-base">{thucTap.tenDN}</p>
-            <p className="text-sm text-gray-500">Vi tri: {thucTap.viTri}</p>
-            <p className="text-sm text-gray-500">GVHD thuc tap: {thucTap.gvhd}</p>
-            <button onClick={() => navigate("/student/intern-reports")} className="bg-[#e6ecff] mt-3 w-full border border-indigo-300 text-[#5c60c0] text-sm font-medium py-2 rounded-lg hover:bg-indigo-50 transition">Truy cap =&gt;</button>
+            <p className="text-sm text-gray-500">Vị trí: {thucTap.viTri}</p>
+            <p className="text-sm text-gray-500">GVHD thực tập: {thucTap.gvhd}</p>
+            <button
+              onClick={() => access.internEnabled && navigate("/student/intern-reports")}
+              disabled={!access.internEnabled}
+              className={`mt-3 w-full border text-sm font-medium py-2 rounded-lg transition ${
+                access.internEnabled
+                  ? "bg-[#e6ecff] border-indigo-300 text-[#5c60c0] hover:bg-indigo-50"
+                  : "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              Truy cap =&gt;
+            </button>
           </div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
           <div className="bg-[#5c60c0] text-white px-4 py-2.5 flex items-center justify-between">
-            <span className="text-sm font-semibold">Tien do do an</span>
-            <button onClick={() => navigate("/student/project-reports")} className="text-xs text-blue-200 hover:text-white underline">Xem chi tiet</button>
+            <span className="text-sm font-semibold">Tiến độ đồ án</span>
+            <button
+              onClick={() => access.projectEnabled && navigate("/student/project-reports")}
+              disabled={!access.projectEnabled}
+              className={`text-xs underline ${
+                access.projectEnabled ? "text-blue-200 hover:text-white" : "text-blue-100/60 cursor-not-allowed"
+              }`}
+            >
+              Xem chi tiet
+            </button>
           </div>
           <div className="p-4">
             <div className="flex items-start justify-between relative mb-4">
@@ -57,8 +131,8 @@ export default function HomePageStudent() {
               ))}
             </div>
             <div className="text-sm space-y-1 border-t border-gray-100 pt-3">
-              <p className="text-gray-700 text-center font-bold">Ten de tai: {doAn.tenDeTai}</p>
-              <p className="text-gray-500">Trang thai: <span className="text-orange-500 font-medium">{doAn.trangThai}</span></p>
+              <p className="text-gray-700 text-center font-bold">Tên đề tài: {doAn.tenDeTai}</p>
+              <p className="text-gray-500">Trạng thái: <span className="text-orange-500 font-medium">{doAn.trangThai}</span></p>
               <p className="text-gray-500">GVHDDA : {doAn.gvhd}</p>
               <p className="text-gray-500">GVPB : {doAn.gvpb}</p>
             </div>
@@ -66,8 +140,22 @@ export default function HomePageStudent() {
         </div>
       </div>
 
-      <button onClick={() => navigate("/student/register-topic")} className="w-full bg-[#ecf9ff] border border-[#ecf9ff] rounded-xl p-6 flex flex-col items-center gap-2 hover:border-indigo-400 transition group">
-        <p className="text-base font-semibold text-gray-700 group-hover:text-[#5c60c0] transition">Ngan hang de tai</p>
+      <button
+        onClick={() => access.projectEnabled && navigate("/student/register-topic")}
+        disabled={!access.projectEnabled}
+        className={`w-full rounded-xl p-6 flex flex-col items-center gap-2 transition group ${
+          access.projectEnabled
+            ? "bg-[#ecf9ff] border border-[#ecf9ff] hover:border-indigo-400"
+            : "bg-gray-100 border border-gray-100 cursor-not-allowed"
+        }`}
+      >
+        <p
+          className={`text-base font-semibold transition ${
+            access.projectEnabled ? "text-gray-700 group-hover:text-[#5c60c0]" : "text-gray-400"
+          }`}
+        >
+          Ngan hang de tai
+        </p>
         <p className="text-sm text-gray-400">Tham khao 200+ de tai co san</p>
       </button>
     </div>

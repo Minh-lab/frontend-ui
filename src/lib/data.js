@@ -1,0 +1,1 @@
+export const visibleTaskLimit = 5;

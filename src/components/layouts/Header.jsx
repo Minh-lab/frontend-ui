@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { 
-  UserCircle, ChevronDown, 
+  UserCircle, ChevronDown, Menu,
   LogOut, User as UserIcon 
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
@@ -13,7 +13,7 @@ import notificationService from "@/services/notificationService ";
 import authService from "@/services/authService";
 import { toast } from "sonner";
 
-export function Header() {
+export function Header({ onMenuClick }) {
   const navigate = useNavigate();
   const { user, role, logout } = useAuthStore();
   const { setNotifications } = useNotificationStore();
@@ -97,7 +97,15 @@ export function Header() {
       <div className="bg-primary px-6 py-3 flex justify-between items-center border-b border-white/10">
         
         {/* Logo và Tên trường - Luôn nằm bên trái */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
+          <button
+            type="button"
+            aria-label="Mo sidebar"
+            className="inline-flex items-center justify-center rounded-lg border border-white/20 p-2 text-white transition hover:bg-white/10 md:hidden"
+            onClick={onMenuClick}
+          >
+            <Menu className="size-5" />
+          </button>
           <Link to="/">
             <img 
               src={logoTLU} 

@@ -13,7 +13,7 @@ const ConfirmIntern = () => {
         <div className='px-6'>
           <span className='font-inter'>Danh sách sinh viên đăng ký thực tập</span>
         </div>
-        <Card className="mx-6 overflow-hidden p-0">
+        <Card className="mx-6 overflow-x-auto p-0">
           <table className='w-full border-collapse text-x font-normal'>
             <thead >
               <tr className='bg-gray-50 border-b border-gray-200'>
