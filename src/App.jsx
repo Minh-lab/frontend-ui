@@ -1,10 +1,13 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useEffect } from "react";
 import { BrowserRouter } from "react-router-dom";
-import useAuthStore from "@/store/useAuthStore";
+import useAuthStore from "@/stores/useAuthStore";
 import AppRouter from "@/routes"; // Đường dẫn đến file routes/index.jsx tổng
 
 import { Toaster } from "@/components/ui/sonner";
+// eslint-disable-next-line no-unused-vars
 import { business } from "./data/businessData";
+// eslint-disable-next-line no-unused-vars
 import { student } from "./data/studentData";
 /**
  * File App.jsx hoàn chỉnh
@@ -13,6 +16,7 @@ import { student } from "./data/studentData";
  * 3. Sử dụng useEffect để giả lập dữ liệu đăng nhập cho mục đích kiểm thử.
  */
 function App() {
+  // eslint-disable-next-line no-unused-vars
   const setAuth = useAuthStore((state) => state.setAuth);
   
   // ==========================================================
@@ -20,15 +24,17 @@ function App() {
   // Bạn hãy thay đổi giá trị 'role' để kiểm tra các giao diện khác nhau:
   // 'student', 'lecturer', 'faculty', 'admin', 'company'
   // ==========================================================
-  useEffect(() => {
-    setAuth(
-      { 
-        name: student.hoTen, 
-      },
-      "dummy-access-token",
-      "student" // Đang để vai trò VPK theo yêu cầu của bạn
-    );
-  }, [setAuth]);
+  // useEffect(() => {
+  //   setAuth(
+  //     { 
+  //       displayName: business.tenDN, 
+  //       usercode: business.maST,
+  //       email: business.email
+  //     },
+  //     "dummy-access-token",
+  //     "faculty" // Test với vai trò Company
+  //   );
+  // }, [setAuth]);
 
   return (
     <BrowserRouter>

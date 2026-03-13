@@ -17,8 +17,10 @@ export const adminRoutes = [
   // Quản lý tài khoản
   { path: "accounts", element: <ManageAccounts /> },
   { path: "add-account", element: <AddAccount /> },
-  { path: "detail-account/:id", element: <DetailAccount /> },
-  
+  {
+  path: "detail-account/:role/:id",
+  element: <DetailAccount />
+},
   // Thông tin cá nhân & Bảo mật (Khớp với đường dẫn /admin/profile)
   { path: "profile", element: <AdminProfile /> },
 ];
