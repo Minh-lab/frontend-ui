@@ -1,9 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ArrowLeft, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+
+const gradeSchema = yup.object().shape({
+    score: yup
+        .number()
+        .transform((value, originalValue) => (originalValue === '' ? undefined : value))
+        .typeError('Vui lòng nhập điểm là số')
+        .required('Vui lòng nhập điểm')
+        .min(0, 'Điểm không được nhỏ hơn 0')
+        .max(10, 'Điểm không được lớn hơn 10'),
+    comment: yup.string().required('Vui lòng nhập nhận xét'),
+});
 
 const initialData = [
     { id: 1, msv: '2351170101', name: 'Nguyễn Thị Hải Anh', topicName: 'Ứng dụng AI nhận diện...', status: 'Đã duyệt', score: null },
@@ -19,8 +33,15 @@ const ReviewGrade = () => {
     const [page, setPage] = useState(1);
     const [viewMode, setViewMode] = useState('list'); // 'list' | 'grade' | 'view'
     const [selectedStudent, setSelectedStudent] = useState(null);
-    const [scoreInput, setScoreInput] = useState('');
-    const [commentInput, setCommentInput] = useState('');
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm({
+        resolver: yupResolver(gradeSchema),
+    });
 
     const itemsPerPage = 5;
     const totalPages = Math.max(1, Math.ceil(data.length / itemsPerPage));
@@ -29,15 +50,19 @@ const ReviewGrade = () => {
 
     const handleGoToGrade = (student) => {
         setSelectedStudent(student);
-        setScoreInput('');
-        setCommentInput('');
+        reset({
+            score: student.score || '',
+            comment: student.comment || '',
+        });
         setViewMode('grade');
     };
 
     const handleGoToView = (student) => {
         setSelectedStudent(student);
-        setScoreInput(student.score || '');
-        setCommentInput(student.comment || '');
+        reset({
+            score: student.score || '',
+            comment: student.comment || '',
+        });
         setViewMode('view');
     };
 
@@ -46,15 +71,10 @@ const ReviewGrade = () => {
         setSelectedStudent(null);
     };
 
-    const handleSubmitGrade = () => {
-        if (!scoreInput || isNaN(scoreInput) || Number(scoreInput) < 0 || Number(scoreInput) > 10) {
-            toast.error('Vui lòng nhập điểm hợp lệ từ 0 đến 10', { className: '!bg-[#fee2e2] !text-[#b91c1c]' });
-            return;
-        }
-
+    const onSubmit = (dataInput) => {
         setData((prev) => prev.map((item) => {
             if (item.id === selectedStudent.id) {
-                return { ...item, status: 'Đã chấm', score: Number(scoreInput), comment: commentInput };
+                return { ...item, status: 'Đã chấm', score: dataInput.score, comment: dataInput.comment };
             }
             return item;
         }));
@@ -116,40 +136,44 @@ const ReviewGrade = () => {
                         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
                             <h3 className="font-bold text-slate-800 text-[15px] mb-5 pb-4 border-b border-slate-100">Kết quả đánh giá</h3>
                             
-                            <div className="mb-6">
-                                <label className="text-xs font-bold text-slate-700 block mb-2 px-1">Điểm tổng <span className="text-red-500">*</span></label>
-                                <div className="flex items-center gap-2">
-                                    <input 
-                                        type="number" 
-                                        value={scoreInput}
-                                        onChange={(e) => setScoreInput(e.target.value)}
+                            <form onSubmit={handleSubmit(onSubmit)}>
+                                <div className="mb-6">
+                                    <label className="text-xs font-bold text-slate-700 block mb-2 px-1">Điểm tổng <span className="text-red-500">*</span></label>
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                {...register('score')}
+                                                type="number" 
+                                                disabled={viewMode === 'view'}
+                                                placeholder="0.0"
+                                                className={`w-24 px-4 py-2 border ${errors.score ? 'border-red-500' : 'border-slate-200'} rounded-xl text-center font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/50 focus:border-[#3b82f6] disabled:bg-slate-50 disabled:text-slate-500 transition-all placeholder:font-medium placeholder:text-slate-400`}
+                                                step="0.1"
+                                            />
+                                            <span className="text-slate-400 font-bold text-[15px]">/10</span>
+                                        </div>
+                                        {errors.score && <p className="text-xs text-red-500 mt-1">{errors.score.message}</p>}
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="text-xs font-bold text-slate-700 block mb-2 px-1">Nhận xét</label>
+                                    <textarea 
+                                        {...register('comment')}
                                         disabled={viewMode === 'view'}
-                                        placeholder="0.0"
-                                        className="w-24 px-4 py-2 border border-slate-200 rounded-xl text-center font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/50 focus:border-[#3b82f6] disabled:bg-slate-50 disabled:text-slate-500 transition-all placeholder:font-medium placeholder:text-slate-400"
-                                        min="0" max="10" step="0.5"
-                                    />
-                                    <span className="text-slate-400 font-bold text-[15px]">/10</span>
+                                        placeholder="Ghi chú các điểm mạnh, điểm yếu và câu hỏi gợi ý cho hội đồng..."
+                                        className={`w-full min-h-[140px] px-4 py-3 border ${errors.comment ? 'border-red-500' : 'border-slate-200'} rounded-xl text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/50 focus:border-[#3b82f6] disabled:bg-slate-50 disabled:text-slate-500 resize-y transition-all placeholder:font-normal placeholder:text-slate-400`}
+                                    ></textarea>
+                                    {errors.comment && <p className="text-xs text-red-500 mt-1">{errors.comment.message}</p>}
                                 </div>
-                            </div>
 
-                            <div className="mb-6">
-                                <label className="text-xs font-bold text-slate-700 block mb-2 px-1">Nhận xét</label>
-                                <textarea 
-                                    value={commentInput}
-                                    onChange={(e) => setCommentInput(e.target.value)}
-                                    disabled={viewMode === 'view'}
-                                    placeholder="Ghi chú các điểm mạnh, điểm yếu và câu hỏi gợi ý cho hội đồng..."
-                                    className="w-full min-h-[140px] px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/50 focus:border-[#3b82f6] disabled:bg-slate-50 disabled:text-slate-500 resize-y transition-all placeholder:font-normal placeholder:text-slate-400"
-                                ></textarea>
-                            </div>
-
-                            {viewMode === 'grade' && (
-                                <div className="flex justify-end mt-6 pt-5 border-t border-slate-100">
-                                    <Button onClick={handleSubmitGrade} className="bg-[#10b981] hover:bg-[#059669] text-white px-6 font-bold h-10 rounded-xl shadow-[0_1px_2px_rgba(16,185,129,0.3)] transition-all hover:scale-[1.02]">
-                                        Hoàn tất chấm điểm
-                                    </Button>
-                                </div>
-                            )}
+                                {viewMode === 'grade' && (
+                                    <div className="flex justify-end mt-6 pt-5 border-t border-slate-100">
+                                        <Button type="submit" className="bg-[#10b981] hover:bg-[#059669] text-white px-6 font-bold h-10 rounded-xl shadow-[0_1px_2px_rgba(16,185,129,0.3)] transition-all hover:scale-[1.02]">
+                                            Hoàn tất chấm điểm
+                                        </Button>
+                                    </div>
+                                )}
+                            </form>
                         </div>
                     </div>
                 </div>

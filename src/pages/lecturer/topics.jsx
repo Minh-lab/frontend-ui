@@ -1,4 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import {
   Search,
   Plus,
@@ -40,6 +43,21 @@ const EMPTY_FORM = {
   status: "Khả dụng",
 };
 
+const topicSchema = yup.object().shape({
+  code: yup
+    .string()
+    .required("Vui lòng nhập mã đề tài")
+    .matches(/^[a-zA-Z0-9_-]+$/, "Mã đề tài không được chứa ký tự đặc biệt"),
+  name: yup
+    .string()
+    .required("Vui lòng nhập tên đề tài")
+    .min(5, "Tên đề tài phải ít nhất 5 ký tự"),
+  specialization: yup.string().required("Vui lòng chọn chuyên môn"),
+  technology: yup.string().required("Vui lòng chọn công nghệ"),
+  description: yup.string().required("Vui lòng nhập mô tả chi tiết"),
+  status: yup.string().required("Vui lòng chọn trạng thái"),
+});
+
 const Topics = () => {
   const [topicsData, setTopicsData] = useState(TOPICS);
 
@@ -57,7 +75,19 @@ const Topics = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const [formData, setFormData] = useState(EMPTY_FORM);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(topicSchema),
+    mode: "onChange",
+    defaultValues: EMPTY_FORM,
+  });
 
   const specializations = useMemo(
     () => [...new Set(topicsData.map((item) => item.specialization))],
@@ -106,13 +136,13 @@ const Topics = () => {
 
   const handleOpenAddForm = () => {
     setEditingId(null);
-    setFormData(EMPTY_FORM);
+    reset(EMPTY_FORM);
     setIsFormOpen(true);
   };
 
   const handleOpenEditForm = (topic) => {
     setEditingId(topic.id);
-    setFormData({
+    reset({
       code: topic.code,
       name: topic.name,
       specialization: topic.specialization,
@@ -126,37 +156,22 @@ const Topics = () => {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingId(null);
-    setFormData(EMPTY_FORM);
+    reset(EMPTY_FORM);
   };
 
-  const handleFormChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveTopic = () => {
-    if (
-      !formData.code.trim() ||
-      !formData.name.trim() ||
-      !formData.specialization.trim() ||
-      !formData.technology.trim() ||
-      !formData.description.trim()
-    ) {
-      window.alert("Vui lòng nhập đầy đủ thông tin đề tài.");
-      return;
-    }
-
+  const handleSaveTopic = (data) => {
     if (editingId) {
       setTopicsData((prev) =>
         prev.map((item) =>
           item.id === editingId
             ? {
               ...item,
-              ...formData,
-              code: formData.code.trim(),
-              name: formData.name.trim(),
-              specialization: formData.specialization.trim(),
-              technology: formData.technology.trim(),
-              description: formData.description.trim(),
+              ...data,
+              code: data.code.trim(),
+              name: data.name.trim(),
+              specialization: data.specialization.trim(),
+              technology: data.technology.trim(),
+              description: data.description.trim(),
             }
             : item
         )
@@ -171,12 +186,12 @@ const Topics = () => {
         ...prev,
         {
           id: nextId,
-          code: formData.code.trim(),
-          name: formData.name.trim(),
-          specialization: formData.specialization.trim(),
-          technology: formData.technology.trim(),
-          description: formData.description.trim(),
-          status: formData.status,
+          ...data,
+          code: data.code.trim(),
+          name: data.name.trim(),
+          specialization: data.specialization.trim(),
+          technology: data.technology.trim(),
+          description: data.description.trim(),
         },
       ]);
       toast.success("Thêm đề tài thành công", { className: "!bg-[#dcfce7] !text-[#047857]" });
@@ -395,10 +410,10 @@ const Topics = () => {
           <div className="px-6 py-6 pb-4 bg-white max-h-[80vh] overflow-y-auto">
             {editingId && (
               <p className="text-xs text-slate-500 font-medium mb-4">
-                Đang chỉnh sửa: <span className="font-bold text-slate-700">{formData.code}</span>
+                Đang chỉnh sửa: <span className="font-bold text-slate-700">{watch("code")}</span>
               </p>
             )}
-            
+
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -406,25 +421,25 @@ const Topics = () => {
                     MÃ ĐỀ TÀI {editingId ? "" : "*"}
                   </label>
                   <Input
-                    value={formData.code}
-                    onChange={(event) => handleFormChange("code", event.target.value)}
+                    {...register("code")}
                     placeholder="Mã đề tài"
-                    className="h-10 rounded-lg border-slate-200 focus:border-[#6d28d9] focus:ring-[#6d28d9]/20"
+                    className={`h-10 rounded-lg border-slate-200 focus:border-[#6d28d9] focus:ring-[#6d28d9]/20 ${errors.code ? "border-red-500" : ""}`}
                   />
+                  {errors.code && <p className="text-red-500 text-[10px] mt-1">{errors.code.message}</p>}
                 </div>
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
                     TRẠNG THÁI {editingId ? "" : "*"}
                   </label>
                   <select
-                    value={formData.status}
-                    onChange={(event) => handleFormChange("status", event.target.value)}
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-[#6d28d9] focus:ring-[3px] focus:ring-[#6d28d9]/20"
+                    {...register("status")}
+                    className={`h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-[#6d28d9] focus:ring-[3px] focus:ring-[#6d28d9]/20 ${errors.status ? "border-red-500" : ""}`}
                   >
                     <option value="">Trạng thái</option>
                     <option value="Khả dụng">Khả dụng</option>
                     <option value="Đã được đăng ký">Đã được đăng ký</option>
                   </select>
+                  {errors.status && <p className="text-red-500 text-[10px] mt-1">{errors.status.message}</p>}
                 </div>
               </div>
 
@@ -433,11 +448,11 @@ const Topics = () => {
                   TÊN ĐỀ TÀI {editingId ? "" : "*"}
                 </label>
                 <Input
-                  value={formData.name}
-                  onChange={(event) => handleFormChange("name", event.target.value)}
+                  {...register("name")}
                   placeholder="Nhập tên đề tài (Không ký tự đặc biệt)"
-                  className="h-10 rounded-lg border-slate-200 focus:border-[#6d28d9] focus:ring-[#6d28d9]/20"
+                  className={`h-10 rounded-lg border-slate-200 focus:border-[#6d28d9] focus:ring-[#6d28d9]/20 ${errors.name ? "border-red-500" : ""}`}
                 />
+                {errors.name && <p className="text-red-500 text-[10px] mt-1">{errors.name.message}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -446,9 +461,8 @@ const Topics = () => {
                     CHUYÊN MÔN {editingId ? "" : "*"}
                   </label>
                   <select
-                    value={formData.specialization}
-                    onChange={(event) => handleFormChange("specialization", event.target.value)}
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-[#6d28d9] focus:ring-[3px] focus:ring-[#6d28d9]/20"
+                    {...register("specialization")}
+                    className={`h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-[#6d28d9] focus:ring-[3px] focus:ring-[#6d28d9]/20 ${errors.specialization ? "border-red-500" : ""}`}
                   >
                     <option value="">Chuyên môn</option>
                     {specializations.map((item) => (
@@ -457,6 +471,7 @@ const Topics = () => {
                       </option>
                     ))}
                   </select>
+                  {errors.specialization && <p className="text-red-500 text-[10px] mt-1">{errors.specialization.message}</p>}
                 </div>
 
                 <div>
@@ -464,9 +479,8 @@ const Topics = () => {
                     CÔNG NGHỆ {editingId ? "" : "*"}
                   </label>
                   <select
-                    value={formData.technology}
-                    onChange={(event) => handleFormChange("technology", event.target.value)}
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-[#6d28d9] focus:ring-[3px] focus:ring-[#6d28d9]/20"
+                    {...register("technology")}
+                    className={`h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-[#6d28d9] focus:ring-[3px] focus:ring-[#6d28d9]/20 ${errors.technology ? "border-red-500" : ""}`}
                   >
                     <option value="">Công nghệ</option>
                     {technologies.map((item) => (
@@ -475,6 +489,7 @@ const Topics = () => {
                       </option>
                     ))}
                   </select>
+                  {errors.technology && <p className="text-red-500 text-[10px] mt-1">{errors.technology.message}</p>}
                 </div>
               </div>
 
@@ -483,24 +498,24 @@ const Topics = () => {
                   MÔ TẢ CHI TIẾT
                 </label>
                 <textarea
-                  value={formData.description}
-                  onChange={(event) => handleFormChange("description", event.target.value)}
+                  {...register("description")}
                   placeholder={editingId ? "Mô tả cũ của đề tài được đổ vào đây để chỉnh sửa..." : "Mô tả mục tiêu và yêu cầu đề tài..."}
-                  className="w-full min-h-[100px] p-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/20 focus:border-[#6d28d9] resize-none"
+                  className={`w-full min-h-[100px] p-3 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/20 focus:border-[#6d28d9] resize-none ${errors.description ? "border-red-500" : "border-slate-200"}`}
                 />
+                {errors.description && <p className="text-red-500 text-[10px] mt-1">{errors.description.message}</p>}
               </div>
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleCloseForm}
                 className="rounded-lg border-slate-200 text-slate-600 hover:bg-slate-50 px-6 font-semibold"
               >
                 {editingId ? "Hủy bỏ" : "Hủy"}
               </Button>
-              <Button 
-                onClick={handleSaveTopic}
+              <Button
+                onClick={handleSubmit(handleSaveTopic)}
                 className="rounded-lg bg-[#6d28d9] hover:bg-[#5b21b6] text-white px-6 font-semibold"
               >
                 {editingId ? "Cập nhật" : "Lưu đề tài"}
@@ -531,14 +546,14 @@ const Topics = () => {
               Lưu ý: Đề tài đã có sinh viên đăng ký sẽ không thể xóa.
             </p>
             <div className="flex justify-center gap-3 w-full">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setDeletingId(null)}
                 className="w-full rounded-lg border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold h-10"
               >
                 Quay lại
               </Button>
-              <Button 
+              <Button
                 onClick={handleDeleteTopic}
                 className="w-full rounded-lg bg-[#ef4444] hover:bg-[#dc2626] text-white font-semibold h-10"
               >

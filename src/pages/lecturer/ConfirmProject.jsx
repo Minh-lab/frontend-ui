@@ -2,8 +2,15 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+
+const confirmSchema = yup.object().shape({
+    comment: yup.string().required('Vui lòng nhập lời nhắn cho sinh viên'),
+});
 
 const initialData = [
     { id: 1, msv: '2351170101', name: 'Nguyễn Thị Hải Anh', class: '65KTPM', date: '19/02/2026' },
@@ -19,7 +26,17 @@ const initialData = [
 const ConfirmProject = () => {
     const [data, setData] = useState(initialData);
     const [page, setPage] = useState(1);
+    const [selectedStudent, setSelectedStudent] = useState(null);
     const itemsPerPage = 5;
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm({
+        resolver: yupResolver(confirmSchema),
+    });
 
     const totalPages = Math.max(1, Math.ceil(data.length / itemsPerPage));
     const currentPage = Math.min(page, totalPages);
@@ -34,18 +51,25 @@ const ConfirmProject = () => {
         pageItems.push(i);
     }
 
-    const handleApprove = (id, name) => {
-        setData((prev) => prev.filter((item) => item.id !== id));
-        toast.success(`Đã chấp nhận sinh viên ${name}`, {
-            className: '!bg-[#dcfce7] !text-[#047857]',
-        });
+    const handleOpenModal = (student) => {
+        setSelectedStudent(student);
+        reset({ comment: '' });
     };
 
-    const handleReject = (id, name) => {
-        setData((prev) => prev.filter((item) => item.id !== id));
-        toast.error(`Đã từ chối sinh viên ${name}`, {
+    const onApproveSubmit = (dataInput) => {
+        setData((prev) => prev.filter((item) => item.id !== selectedStudent.id));
+        toast.success(`Đã chấp nhận sinh viên ${selectedStudent.name}`, {
+            className: '!bg-[#dcfce7] !text-[#047857]',
+        });
+        setSelectedStudent(null);
+    };
+
+    const onRejectSubmit = (dataInput) => {
+        setData((prev) => prev.filter((item) => item.id !== selectedStudent.id));
+        toast.error(`Đã từ chối sinh viên ${selectedStudent.name}`, {
             className: '!bg-[#fee2e2] !text-[#b91c1c]',
         });
+        setSelectedStudent(null);
     };
 
     return (
@@ -87,21 +111,16 @@ const ConfirmProject = () => {
                                     <TableCell className="font-medium text-slate-600">{item.class}</TableCell>
                                     <TableCell className="text-slate-500">{item.date}</TableCell>
                                     <TableCell>
-                                        <div className="flex items-center justify-center gap-3">
-                                            <button
-                                                onClick={() => handleApprove(item.id, item.name)}
-                                                className="text-[#22c55e] hover:text-[#16a34a] hover:scale-110 transition-transform focus:outline-none"
-                                                title="Chấp nhận"
+                                        <div className="flex items-center justify-center">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-[#3b82f6] hover:text-[#2563eb] hover:bg-blue-50 font-medium h-8"
+                                                onClick={() => handleOpenModal(item)}
                                             >
-                                                <CheckCircle2 className="w-6 h-6 fill-[#22c55e] text-white" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleReject(item.id, item.name)}
-                                                className="text-[#ef4444] hover:text-[#dc2626] hover:scale-110 transition-transform focus:outline-none"
-                                                title="Từ chối"
-                                            >
-                                                <XCircle className="w-6 h-6 fill-[#ef4444] text-white" />
-                                            </button>
+                                                <span className="mr-1 inline-block w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></span>
+                                                Xem chi tiết
+                                            </Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -143,14 +162,6 @@ const ConfirmProject = () => {
                                 {item}
                             </Button>
                         ))}
-                        {totalPages > 5 && <span className="px-2 text-slate-400">...</span>}
-                        {totalPages > 5 && (
-                            <>
-                                <Button size="sm" variant="ghost" className="h-9 min-w-9 px-2 text-slate-600 font-medium">8</Button>
-                                <Button size="sm" variant="ghost" className="h-9 min-w-9 px-2 text-slate-600 font-medium">9</Button>
-                                <Button size="sm" variant="ghost" className="h-9 min-w-9 px-2 text-slate-600 font-medium">10</Button>
-                            </>
-                        )}
                     </div>
 
                     <Button
@@ -164,6 +175,89 @@ const ConfirmProject = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* View Detail Modal Overlay */}
+            {selectedStudent && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-[500px] overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="bg-[#9333ea] flex items-center justify-between p-4">
+                            <h3 className="text-white font-bold uppercase tracking-wider text-base md:text-lg">
+                                CHI TIẾT ĐĂNG KÝ HƯỚNG DẪN
+                            </h3>
+                            <button
+                                onClick={() => setSelectedStudent(null)}
+                                className="bg-red-500 hover:bg-red-600 text-white p-1.5 rounded transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <div className="space-y-4 mb-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                                            MÃ SINH VIÊN
+                                        </label>
+                                        <p className="font-bold text-slate-800">{selectedStudent.msv}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                                            LỚP
+                                        </label>
+                                        <p className="font-bold text-slate-800">{selectedStudent.class}</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                                        HỌ TÊN SINH VIÊN
+                                    </label>
+                                    <p className="font-bold text-slate-800 text-lg">{selectedStudent.name}</p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                                        THỜI GIAN ĐĂNG KÝ
+                                    </label>
+                                    <p className="font-medium text-slate-600">{selectedStudent.date}</p>
+                                </div>
+
+                                <div className="mt-6">
+                                    <label className="text-xs font-bold text-slate-600 block mb-2">
+                                        Lời nhắn cho sinh viên: <span className="text-red-500">*</span>
+                                    </label>
+                                    <textarea
+                                        {...register('comment')}
+                                        placeholder="Nhập lời nhắn hoặc lý do từ chối..."
+                                        className={`w-full min-h-[100px] p-3 text-sm border ${errors.comment ? 'border-red-500' : 'border-slate-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9333ea] focus:border-transparent resize-y`}
+                                    ></textarea>
+                                    {errors.comment && <p className="text-xs text-red-500 mt-1">{errors.comment.message}</p>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-4 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50">
+                            <Button
+                                variant="outline"
+                                onClick={handleSubmit(onRejectSubmit)}
+                                className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 px-6 font-semibold"
+                            >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Từ chối
+                            </Button>
+                            <Button
+                                onClick={handleSubmit(onApproveSubmit)}
+                                className="bg-[#9333ea] hover:bg-[#7e22ce] text-white px-6 font-semibold"
+                            >
+                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                Chấp nhận
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </Card>
     );
 };

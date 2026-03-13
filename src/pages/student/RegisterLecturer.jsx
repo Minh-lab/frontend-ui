@@ -1,4 +1,7 @@
-﻿import { use, useMemo, useState } from "react";
+import { use, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { giangVienList, student } from "../../data/studentData";
 import FileUpload from "../../components/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -7,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { getStudentAccess } from "@/lib/studentAccess";
 
-function DanhSachGV({ listGV, onChon , isRegister }) {
+function DanhSachGV({ listGV, onChon, isRegister }) {
   const [search, setSearch] = useState("Tran Thi Huong|");
   const [keyword, setKeyword] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -22,7 +25,7 @@ function DanhSachGV({ listGV, onChon , isRegister }) {
         gv.ten.toLowerCase().includes(searchTerm.toLowerCase())
 
       const matchesStatus =
-      !statusFilter || gv.conNhan === (statusFilter === "true");
+        !statusFilter || gv.conNhan === (statusFilter === "true");
       const matchesTopic = !topicFilter || gv.chuyenMon.some(mon => mon.toLowerCase().includes(topicFilter.toLowerCase()));
 
       return matchesKeyword && matchesStatus && matchesTopic
@@ -42,7 +45,7 @@ function DanhSachGV({ listGV, onChon , isRegister }) {
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             className="pl-9 "
-            
+
           />
           {search && (
             <button onClick={() => setSearch("")} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
@@ -54,15 +57,15 @@ function DanhSachGV({ listGV, onChon , isRegister }) {
         </div>
         <select
           value={topicKeyword}
-          onChange={(event) => setTopicKeyword(event.target.value)} 
+          onChange={(event) => setTopicKeyword(event.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
-          <option value= "">Chuyên môn ▾</option>
-          <option value= "Mang may tinh">Mạng máy tính</option>
-          <option value= "Lap trinh Web">Lập trình web</option>
-          <option value= "An toan thong tin">An toàn thông tin</option>
-          <option value= "Quan tri Mang">Quản trị mạng</option>
-          <option value= "Phan tich du lieu lon">Phân tích dữ liệu lớn</option>
-          <option value= "DevOps">DevOps</option>
+          <option value="">Chuyên môn ▾</option>
+          <option value="Mang may tinh">Mạng máy tính</option>
+          <option value="Lap trinh Web">Lập trình web</option>
+          <option value="An toan thong tin">An toàn thông tin</option>
+          <option value="Quan tri Mang">Quản trị mạng</option>
+          <option value="Phan tich du lieu lon">Phân tích dữ liệu lớn</option>
+          <option value="DevOps">DevOps</option>
         </select>
         <select
           value={statusKeyword}
@@ -73,14 +76,14 @@ function DanhSachGV({ listGV, onChon , isRegister }) {
           <option value="true">Còn nhận</option>
           <option value="false">Không nhận</option>
         </select>
-        <button 
-        onClick={() => {
-              setSearchTerm(keyword)
-              setStatusFilter(statusKeyword)
-              setTopicFilter(topicKeyword)
-              
-            }}
-        className="bg-[#5c60c0]/10 hover:bg-[#5c60c0]/20 text-[#5c60c0] px-4 py-2 rounded-lg text-sm font-medium transition border border-[#5c60c0]/20">
+        <button
+          onClick={() => {
+            setSearchTerm(keyword)
+            setStatusFilter(statusKeyword)
+            setTopicFilter(topicKeyword)
+
+          }}
+          className="bg-[#5c60c0]/10 hover:bg-[#5c60c0]/20 text-[#5c60c0] px-4 py-2 rounded-lg text-sm font-medium transition border border-[#5c60c0]/20">
           Tìm kiếm
         </button>
       </div>
@@ -132,8 +135,40 @@ function DanhSachGV({ listGV, onChon , isRegister }) {
   );
 }
 
-function FormDangKyGVHD({ gv, onBack,setIsRegister }) {
-  const [form, setForm] = useState({ linhVuc: "Phat trien Web", yTuong: "", file: "" });
+const schema = yup.object().shape({
+  linhVuc: yup.string().required("Vui lòng nhập lĩnh vực dự kiến"),
+  yTuong: yup.string().optional(),
+  file: yup.mixed().optional(),
+});
+
+function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+    mode: "onChange",
+    defaultValues: {
+      linhVuc: "",
+      yTuong: "",
+      file: "",
+    },
+  });
+
+  const fileValue = watch("file");
+
+  const onSubmit = (data) => {
+    onBack();
+    setIsRegister(true);
+    gv.daDangKy += 1;
+    toast.success("Hạnh động đã được ghi nhận", {
+      className: "!bg-[#AAFAB8] !text-[#24AD47]",
+    });
+    console.log("Form data:", data);
+  };
 
   return (
     <div className="max-w-2xl mx-auto bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -196,39 +231,33 @@ function FormDangKyGVHD({ gv, onBack,setIsRegister }) {
         <div>
           <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Lĩnh vực dự kiến: <span className="text-red-500">*</span></label>
           <input
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]"
-            value={form.linhVuc} onChange={(e) => setForm({ ...form, linhVuc: e.target.value })}
+            className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0] ${errors.linhVuc ? "border-red-500" : "border-gray-300"}`}
+            {...register("linhVuc")}
           />
+          {errors.linhVuc && <p className="text-red-500 text-xs mt-1">{errors.linhVuc.message}</p>}
         </div>
         <div>
           <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Ý tưởng đề tài sơ bộ (Nếu có):</label>
           <textarea
             rows={4}
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]"
-            value={form.yTuong} onChange={(e) => setForm({ ...form, yTuong: e.target.value })}
+            {...register("yTuong")}
           />
         </div>
         <div>
           <label className="text-sm font-semibold text-gray-700 mb-1.5 block">CV/ Bảng điểm (Tùy chọn):</label>
-          <FileUpload value={form.file} onChange={(v) => setForm({ ...form, file: v })} />
+          <FileUpload value={fileValue} onChange={(v) => setValue("file", v)} />
         </div>
 
         <div className="flex justify-end gap-3">
           <Button onClick={onBack} className="bg-red-500 hover:bg-red-600 text-white">
             Hủy
           </Button>
-          <Button 
-          variant="submit"
-          className="bg-[#3b3f8c] hover:bg-[#2e3278] text-white"
-          onClick= {() => {
-            onBack();
-            setIsRegister(true);
-            gv.daDangKy += 1
-            toast.success("Hạnh động đã được ghi nhận", {
-              className: "!bg-[#AAFAB8] !text-[#24AD47]",
-            })
-            
-          }}>
+          <Button
+            variant="submit"
+            className="bg-[#3b3f8c] hover:bg-[#2e3278] text-white"
+            onClick={handleSubmit(onSubmit)}
+          >
             Đăng ký
           </Button>
         </div>
@@ -240,7 +269,7 @@ function FormDangKyGVHD({ gv, onBack,setIsRegister }) {
 export default function DangKyGVHDPage() {
   const navigate = useNavigate();
   const [access] = useState(() => getStudentAccess());
-  const [listGV,setListGV] = useState(giangVienList);
+  const [listGV, setListGV] = useState(giangVienList);
   const [selectedGV, setSelectedGV] = useState(null);
   const [isRegister, setIsRegister] = useState(false);
   if (!access.projectEnabled) {
@@ -262,5 +291,5 @@ export default function DangKyGVHDPage() {
       </div>
     );
   }
-  return <div className="p-6">{selectedGV ? <FormDangKyGVHD setIsRegister={setIsRegister} gv={selectedGV} onBack={() => setSelectedGV(null)} /> : <DanhSachGV listGV = {listGV} onChon={(gv) => setSelectedGV(gv) } isRegister = {isRegister} />}</div>;
+  return <div className="p-6">{selectedGV ? <FormDangKyGVHD setIsRegister={setIsRegister} gv={selectedGV} onBack={() => setSelectedGV(null)} /> : <DanhSachGV listGV={listGV} onChon={(gv) => setSelectedGV(gv)} isRegister={isRegister} />}</div>;
 }

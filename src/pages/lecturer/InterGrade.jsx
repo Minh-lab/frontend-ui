@@ -7,44 +7,61 @@ import { visibleTaskLimit } from '@/lib/data'
 import { ChevronLeft, ChevronRight, FileText, Search } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+
+const gradeSchema = yup.object().shape({
+  score: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === '' ? undefined : value))
+    .typeError('Vui lòng nhập điểm là số')
+    .required('Vui lòng nhập điểm')
+    .min(0, 'Điểm không được nhỏ hơn 0')
+    .max(10, 'Điểm không được lớn hơn 10'),
+  comment: yup.string().required('Vui lòng nhập nhận xét'),
+})
 
 function InternStatusBadge({ status }) {
   const isGraded = status === 'da cham'
-
   return (
     <span
-      className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${isGraded
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
+        isGraded
           ? 'border-[#10b981] bg-[#dcfce7] text-[#10b981]'
-          : 'border-[#93c5fd] bg-[#dbeafe] text-[#2563eb]'
-        }`}
+          : 'border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed]'
+      }`}
     >
-      {isGraded ? 'Da cham' : 'Da duyet'}
+      {isGraded ? 'Đã chấm' : 'Chưa chấm'}
     </span>
   )
 }
 
 function PositionBadge({ position }) {
   return (
-    <span className="inline-flex rounded-full border border-[#bfdbfe] bg-[#ecfeff] px-3 py-1 text-[11px] font-medium text-[#0ea5e9]">
+    <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
       {position}
     </span>
   )
 }
 
 function InternGradeDetail({ item, onBack, onSave }) {
-  const [score, setScore] = useState(item.diemThi?.toString() ?? '')
-  const [comment, setComment] = useState(item.nhanXet ?? '')
   const isGraded = item.trangthai === 'da cham'
 
-  const handleSubmit = () => {
-    const numericScore = Number(score)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(gradeSchema),
+    defaultValues: {
+      score: item.diemThi ?? '',
+      comment: item.nhanXet ?? '',
+    },
+  })
 
-    if (score === '' || Number.isNaN(numericScore) || numericScore < 0 || numericScore > 10) {
-      toast.error('Vui long nhap diem tu 0 den 10')
-      return
-    }
-
-    onSave(item.id, numericScore, comment)
+  const onSubmit = (data) => {
+    onSave(item.id, data.score, data.comment)
   }
 
   return (
@@ -101,45 +118,45 @@ function InternGradeDetail({ item, onBack, onSave }) {
 
           <Card className="rounded-2xl border border-slate-200 p-6">
             <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Kết quả đánh giá</h3>
-            <div className="mt-6 space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5">
               <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <label className="text-sm font-semibold text-slate-700 md:text-base">Điểm tổng</label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    value={score}
-                    disabled={isGraded}
-                    onChange={(event) => setScore(event.target.value)}
-                    className="h-10 w-28 text-center"
-                  />
-                  <span className="text-sm text-slate-500">/10</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      {...register('score')}
+                      type="number"
+                      step="0.1"
+                      disabled={isGraded}
+                      className={`h-10 w-28 text-center ${errors.score ? 'border-red-500' : ''}`}
+                    />
+                    <span className="text-sm text-slate-500">/10</span>
+                  </div>
+                  {errors.score && <p className="text-xs text-red-500">{errors.score.message}</p>}
                 </div>
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">Nhận xét</label>
                 <textarea
-                  value={comment}
+                  {...register('comment')}
                   disabled={isGraded}
-                  onChange={(event) => setComment(event.target.value)}
-                  className="min-h-[140px] w-full rounded-xl border border-slate-300 p-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100"
+                  className={`min-h-[140px] w-full rounded-xl border ${errors.comment ? 'border-red-500' : 'border-slate-300'} p-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100`}
                   placeholder="Nhap nhan xet chi tiet..."
                 />
+                {errors.comment && <p className="text-xs text-red-500 mt-1">{errors.comment.message}</p>}
               </div>
 
               <div className="border-t border-slate-200 pt-5 text-right">
                 <Button
-                  onClick={handleSubmit}
+                  type="submit"
                   disabled={isGraded}
                   className="h-11 rounded-xl bg-[#10b981] px-6 text-white hover:bg-[#059669] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Hoàn tất chấm điểm
                 </Button>
               </div>
-            </div>
+            </form>
           </Card>
         </div>
       </div>
