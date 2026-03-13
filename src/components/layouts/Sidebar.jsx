@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import useAuthStore from "@/store/useAuthStore";
+import useAuthStore from "@/stores/useAuthStore";
 import { cn } from "@/lib/utils";
 import { MASTER_MENU } from "@/config/menu.config"; // Import config mới
 

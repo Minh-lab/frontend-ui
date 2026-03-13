@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm, useWatch } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { 
   ArrowLeft, Save, X, RotateCcw, Edit3, 
-  User, ShieldCheck, Mail, Fingerprint, Lock
+  User, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,58 +20,123 @@ import {
   SelectTrigger, SelectValue 
 } from "@/components/ui/select";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
+import adminService from "@/services/adminService";
 
+// Schema cập nhật theo field backend
 const schema = yup.object().shape({
   username: yup.string().required("Tên đăng nhập không được để trống"),
   email: yup.string().required("Email không được để trống").email("Email không hợp lệ"),
   status: yup.string().required("Vui lòng chọn trạng thái"),
-  code: yup.string().required("Mã định danh không được để trống"),
+  usercode: yup.string().required("Mã định danh không được để trống"),
 });
 
 export default function DetailAccount() {
-  const { id } = useParams();
+  const { role, id } = useParams();
   const navigate = useNavigate();
+  
   const [isEditing, setIsEditing] = useState(false);
   const [isResetOpen, setIsResetOpen] = useState(false);
-
-  // 1. Giả lập lấy dữ liệu dựa trên ID ngay tại đây (thay vì useEffect)
-  // Việc dùng useMemo giúp dữ liệu ổn định và form nhận diện được ngay lần render đầu
-  const accountData = useMemo(() => {
-    const allData = {
-      "1": { role: "admin", code: "AD001", username: "admin_tlu", email: "admin@tlu.edu.vn", status: "Hoạt động", full_name: "Quản trị viên hệ thống", gender: "Nam", dob: "1990-01-01" },
-      "2": { role: "student", code: "SV21001", username: "vanan_sv", email: "an.nv@sinhvien.tlu.edu.vn", status: "Hoạt động", full_name: "Nguyễn Văn An", gender: "Nam", dob: "2003-05-20", phone_number: "0987654321", class: "65KTPM1", gpa: "3.8" },
-      "3": { role: "lecturer", code: "GV502", username: "hoang_gv", email: "hoang.lecturer@tlu.edu.vn", status: "Vô hiệu hóa", full_name: "Lê Minh Hoàng", gender: "Nam", dob: "1985-11-12", degree: "Tiến sĩ", phone_number: "0912233445", department: "Công nghệ phần mềm" },
-      "4": { role: "company", code: "MST010203", username: "fpt_software", email: "hr@fpt.com.vn", status: "Hoạt động", company_name: "FPT Software", address: "Khu CNC Hòa Lạc, Hà Nội", website: "https://fpt-software.com", partner_status: "1" }
-    };
-    return allData[id] || {};
-  }, [id]);
+  const [loading, setLoading] = useState(true);
 
   const form = useForm({
     resolver: yupResolver(schema),
-    values: accountData, // Dùng 'values' thay cho reset() trong useEffect
+    defaultValues: {
+      role: "", username: "", email: "", status: "", usercode: "",
+      full_name: "", gender: "Nam", dob: "", phone_number: "",
+      class_id: "", gpa: "", degree: "", department: "",
+      name: "", address: "", website: "", is_partnered: "0" // Mặc định là "0" (Chưa ký kết)
+    }
   });
+
+  // 1. Fetch dữ liệu: Cần cả ID và Role
+  useEffect(() => {
+    const fetchAccount = async () => {
+      if (!role) {
+        toast.error("Thiếu thông tin vai trò (role) để truy vấn");
+        return;
+      }
+      try {
+        setLoading(true);
+        const res = await adminService.getAccountById(id, role);
+        if (res.success) {
+          // Backend trả về 'active'/'inactive', map sang label hiển thị
+          const displayStatus = res.data.status === "active" ? "Hoạt động" : "Vô hiệu hóa";
+          
+          // Chuyển đổi is_partnered từ boolean sang string cho Select
+          if (res.data.is_partnered !== undefined) {
+            res.data.is_partnered = res.data.is_partnered ? "1" : "0";
+          }
+          
+          form.reset({ ...res.data, status: displayStatus });
+        }
+      } catch (error) {
+        toast.error(error.message || "Không thể tải dữ liệu tài khoản");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAccount();
+  }, [id, role, form]);
 
   const selectedRole = useWatch({ control: form.control, name: "role" });
 
-  const onSubmit = (data) => {
-    console.log("Cập nhật:", data);
-    toast.success("Cập nhật tài khoản thành công!");
-    setIsEditing(false);
+  const onSubmit = async (data) => {
+    try {
+      // Chuyển đổi status từ hiển thị sang API
+      const apiStatus = data.status === "Hoạt động" ? "active" : "inactive";
+      
+      // Tạo payload với status đã chuyển đổi
+      const payload = { 
+        ...data, 
+        status: apiStatus,
+        // Chuyển is_partnered từ string "1"/"0" sang int 1/0
+        is_partnered: data.is_partnered === "1" ? 1 : 0
+      };
+      
+      const res = await adminService.updateAccount(id, role, payload);
+      if (res.success) {
+        toast.success("Cập nhật tài khoản thành công!");
+        setIsEditing(false);
+      }
+    } catch (error) {
+      toast.error(error.message || "Cập nhật thất bại");
+    }
+  };
+
+  // 3. Reset mật khẩu: Theo logic backend (gửi username để hash làm pass)
+  const handleConfirmReset = async () => {
+    try {
+      const username = form.getValues("username");
+      await adminService.resetPassword(id, role, username);
+      toast.success(`Reset thành công mật khẩu cho "${username}"!`);
+      setIsResetOpen(false);
+    } catch (error) {
+      toast.error(error.message || "Không thể reset mật khẩu");
+    }
   };
 
   const getCodeLabel = () => {
     switch (selectedRole) {
       case "student": return "Mã SV";
       case "lecturer": return "Mã GV";
-      case "faculty": return "Mã NV";
-      case "company": return "Mã số thuế";
+      case "faculty_staff": return "Mã NV";
+      case "company": return "Mã doanh nghiệp";
       case "admin": return "Mã QTV";
       default: return "Mã định danh";
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10 font-sans">
+      {/* Header Buttons */}
       <div className="flex items-center justify-between">
         <button onClick={() => navigate("/admin/accounts")} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-semibold transition group">
           <ArrowLeft className="size-5 group-hover:-translate-x-1 transition-transform" />
@@ -80,7 +145,7 @@ export default function DetailAccount() {
 
         <div className="flex gap-3">
           {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)} className="bg-indigo-600 hover:bg-indigo-700 shadow-lg px-8 font-bold text-white">
+            <Button onClick={() => setIsEditing(true)} className="bg-indigo-600 hover:bg-indigo-700 shadow-lg px-8 font-bold text-white transition-all active:scale-95">
               <Edit3 className="mr-2 size-4" /> Chỉnh sửa
             </Button>
           ) : (
@@ -88,7 +153,7 @@ export default function DetailAccount() {
               <Button variant="outline" onClick={() => { setIsEditing(false); form.reset(); }} className="border-slate-200 font-bold">
                 <X className="mr-2 size-4" /> Hủy bỏ
               </Button>
-              <Button onClick={form.handleSubmit(onSubmit)} className="bg-green-600 hover:bg-green-700 shadow-lg px-8 font-bold text-white">
+              <Button onClick={form.handleSubmit(onSubmit)} className="bg-green-600 hover:bg-green-700 shadow-lg px-8 font-bold text-white transition-all active:scale-95">
                 <Save className="mr-2 size-4" /> Lưu thông tin
               </Button>
             </>
@@ -98,7 +163,7 @@ export default function DetailAccount() {
 
       <div className="bg-white rounded-3xl border border-border shadow-sm overflow-hidden">
         <div className="p-6 border-b bg-slate-50/50">
-          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 uppercase">
+          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 uppercase tracking-tight">
             <User className="size-5 text-indigo-600" /> Chi tiết tài khoản
           </h2>
         </div>
@@ -107,20 +172,20 @@ export default function DetailAccount() {
           <form className="p-8 space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               
-              {/* VAI TRÒ (Vô hiệu hóa) */}
+              {/* Role - Readonly always as per Backend logic */}
               <FormField control={form.control} name="role" render={({ field }) => (
                 <FormItem className="md:col-span-2">
-                  <FormLabel className="font-bold text-slate-700">Vai trò hệ thống</FormLabel>
+                  <FormLabel className="font-bold text-slate-700 uppercase text-[11px] tracking-wider">Vai trò hệ thống</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || ""} disabled={true}>
                     <FormControl>
-                      <SelectTrigger className="bg-slate-100 opacity-80 cursor-not-allowed">
+                      <SelectTrigger className="bg-slate-100 opacity-80 cursor-not-allowed h-11">
                         <SelectValue placeholder="Chọn vai trò" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="bg-white border-slate-200 shadow-xl">
                       <SelectItem value="student">Sinh viên</SelectItem>
                       <SelectItem value="lecturer">Giảng viên</SelectItem>
-                      <SelectItem value="faculty">Văn phòng Khoa</SelectItem>
+                      <SelectItem value="faculty_staff">Văn phòng Khoa</SelectItem>
                       <SelectItem value="company">Doanh nghiệp</SelectItem>
                       <SelectItem value="admin">Quản trị viên</SelectItem>
                     </SelectContent>
@@ -128,19 +193,19 @@ export default function DetailAccount() {
                 </FormItem>
               )} />
 
-              <FormField control={form.control} name="code" render={({ field }) => (
+              <FormField control={form.control} name="usercode" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-bold text-slate-700">{getCodeLabel()}</FormLabel>
-                  <FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"} /></FormControl>
+                  <FormLabel className="font-bold text-slate-700 uppercase text-[11px] tracking-wider">{getCodeLabel()}</FormLabel>
+                  <FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl>
                 </FormItem>
               )} />
 
               <FormField control={form.control} name="status" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-bold text-slate-700">Trạng thái</FormLabel>
+                  <FormLabel className="font-bold text-slate-700 uppercase text-[11px] tracking-wider">Trạng thái</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}>
                     <FormControl>
-                      <SelectTrigger className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"}><SelectValue /></SelectTrigger>
+                      <SelectTrigger className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`}><SelectValue /></SelectTrigger>
                     </FormControl>
                     <SelectContent className="bg-white">
                       <SelectItem value="Hoạt động">Hoạt động</SelectItem>
@@ -152,66 +217,78 @@ export default function DetailAccount() {
 
               <FormField control={form.control} name="username" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-bold text-slate-700">Tên đăng nhập</FormLabel>
-                  <FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"} /></FormControl>
+                  <FormLabel className="font-bold text-slate-700 uppercase text-[11px] tracking-wider">Tên đăng nhập</FormLabel>
+                  <FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl>
                 </FormItem>
               )} />
 
               <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-bold text-slate-700">Email</FormLabel>
-                  <FormControl><Input {...field} type="email" readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"} /></FormControl>
+                  <FormLabel className="font-bold text-slate-700 uppercase text-[11px] tracking-wider">Email</FormLabel>
+                  <FormControl><Input {...field} type="email" readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl>
                 </FormItem>
               )} />
 
               {isEditing && (
-      
-                  <Button type="button" variant="outline" onClick={() => setIsResetOpen(true)} className="border-amber-300 text-amber-700 hover:bg-amber-100 font-bold">
+                <div className="flex items-end">
+                  <Button type="button" variant="outline" onClick={() => setIsResetOpen(true)} className="border-amber-300 text-amber-700 hover:bg-amber-50 font-bold h-11 w-full md:w-auto px-6">
                     <RotateCcw className="mr-2 size-4" /> Reset mật khẩu
                   </Button>
+                </div>
               )}
 
-              <div className="md:col-span-2 pt-6 border-t border-slate-100">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Thông tin chi tiết hồ sơ</h3>
+              {/* Chi tiết theo vai trò */}
+              <div className="md:col-span-2 pt-6 border-t border-slate-100 mt-4">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Thông tin chi tiết hồ sơ</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  
-                  {/* SINH VIÊN */}
                   {selectedRole === "student" && (
                     <>
-                      <FormField control={form.control} name="full_name" render={({ field }) => (<FormItem><FormLabel className="font-bold">Họ tên</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel className="font-bold">Giới tính</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}><FormControl><SelectTrigger className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"}><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-white"><SelectItem value="Nam">Nam</SelectItem><SelectItem value="Nữ">Nữ</SelectItem></SelectContent></Select></FormItem>)} />
-                      <FormField control={form.control} name="dob" render={({ field }) => (<FormItem><FormLabel className="font-bold">Ngày sinh</FormLabel><FormControl><Input {...field} type={isEditing ? "date" : "text"} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem><FormLabel className="font-bold">Số điện thoại</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="class" render={({ field }) => (<FormItem><FormLabel className="font-bold">Lớp</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold text-indigo-600" : "bg-white"} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="gpa" render={({ field }) => (<FormItem><FormLabel className="font-bold">GPA</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="full_name" render={({ field }) => (<FormItem><FormLabel className="font-bold">Họ tên</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold h-11" : "h-11 bg-white"} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel className="font-bold">Giới tính</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}><FormControl><SelectTrigger className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`}><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-white"><SelectItem value="Nam">Nam</SelectItem><SelectItem value="Nữ">Nữ</SelectItem></SelectContent></Select></FormItem>)} />
+                      <FormField control={form.control} name="dob" render={({ field }) => (<FormItem><FormLabel className="font-bold">Ngày sinh</FormLabel><FormControl><Input {...field} type={isEditing ? "date" : "text"} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem><FormLabel className="font-bold">Số điện thoại</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="class_id" render={({ field }) => (<FormItem><FormLabel className="font-bold">Lớp</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-black text-indigo-600" : "bg-white"}`} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="gpa" render={({ field }) => (<FormItem><FormLabel className="font-bold">GPA</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-black" : "bg-white"}`} /></FormControl></FormItem>)} />
                     </>
                   )}
-
-                  {/* GIẢNG VIÊN */}
                   {selectedRole === "lecturer" && (
                     <>
-                      <FormField control={form.control} name="full_name" render={({ field }) => (<FormItem><FormLabel className="font-bold">Họ tên</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel className="font-bold">Giới tính</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}><FormControl><SelectTrigger className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"}><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-white"><SelectItem value="Nam">Nam</SelectItem><SelectItem value="Nữ">Nữ</SelectItem></SelectContent></Select></FormItem>)} />
-                      <FormField control={form.control} name="degree" render={({ field }) => (<FormItem><FormLabel className="font-bold">Học hàm/Học vị</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="department" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel className="font-bold">Khoa</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="full_name" render={({ field }) => (<FormItem><FormLabel className="font-bold">Họ tên</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold h-11" : "h-11 bg-white"} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel className="font-bold">Giới tính</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}><FormControl><SelectTrigger className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`}><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-white"><SelectItem value="Nam">Nam</SelectItem><SelectItem value="Nữ">Nữ</SelectItem></SelectContent></Select></FormItem>)} />
+                      <FormField control={form.control} name="degree" render={({ field }) => (<FormItem><FormLabel className="font-bold">Học hàm/Học vị</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="department" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel className="font-bold">Khoa</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl></FormItem>)} />
                     </>
                   )}
-
-                  {/* DOANH NGHIỆP */}
                   {selectedRole === "company" && (
                     <>
-                      <FormField control={form.control} name="company_name" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel className="font-bold">Tên doanh nghiệp</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel className="font-bold">Địa chỉ</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel className="font-bold">Website</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none text-blue-500 underline" : "bg-white"} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="name" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel className="font-bold">Tên doanh nghiệp</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-black h-11" : "h-11 bg-white"} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="address" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel className="font-bold">Địa chỉ</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel className="font-bold">Website</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none text-blue-600 underline font-bold" : "bg-white"}`} /></FormControl></FormItem>)} />
+                      
+                      {/* THÊM TRƯỜNG IS_PARTNERED - Trạng thái đối tác */}
+                      <FormField control={form.control} name="is_partnered" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-bold text-slate-700">Trạng thái đối tác</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}>
+                            <FormControl>
+                              <SelectTrigger className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`}>
+                                <SelectValue placeholder="Chọn trạng thái" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="bg-white border-slate-200">
+                              <SelectItem value="1">Đã ký kết</SelectItem>
+                              <SelectItem value="0">Chưa ký kết</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )} />
                     </>
                   )}
-
-                  {/* VPK / ADMIN */}
-                  {(selectedRole === "faculty" || selectedRole === "admin") && (
+                  {(selectedRole === "faculty_staff" || selectedRole === "admin") && (
                     <>
-                      <FormField control={form.control} name="full_name" render={({ field }) => (<FormItem><FormLabel className="font-bold">Họ tên</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel className="font-bold">Giới tính</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}><FormControl><SelectTrigger className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"}><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-white"><SelectItem value="Nam">Nam</SelectItem><SelectItem value="Nữ">Nữ</SelectItem></SelectContent></Select></FormItem>)} />
-                      <FormField control={form.control} name="dob" render={({ field }) => (<FormItem><FormLabel className="font-bold">Ngày sinh</FormLabel><FormControl><Input {...field} type={isEditing ? "date" : "text"} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none" : "bg-white"} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="full_name" render={({ field }) => (<FormItem><FormLabel className="font-bold">Họ tên</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold h-11" : "h-11 bg-white"} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel className="font-bold">Giới tính</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}><FormControl><SelectTrigger className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`}><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-white"><SelectItem value="Nam">Nam</SelectItem><SelectItem value="Nữ">Nữ</SelectItem></SelectContent></Select></FormItem>)} />
+                      <FormField control={form.control} name="dob" render={({ field }) => (<FormItem><FormLabel className="font-bold">Ngày sinh</FormLabel><FormControl><Input {...field} type={isEditing ? "date" : "text"} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl></FormItem>)} />
                     </>
                   )}
                 </div>
@@ -224,13 +301,11 @@ export default function DetailAccount() {
       <ConfirmAction 
         isOpen={isResetOpen}
         onClose={() => setIsResetOpen(false)}
-        onConfirm={() => {
-          toast.success(`Reset thành công mật khẩu cho "${form.getValues("username")}"!`);
-          setIsResetOpen(false);
-        }}
+        onConfirm={handleConfirmReset}
         title="Xác nhận Reset mật khẩu"
         description="Mật khẩu của tài khoản này sẽ quay về mặc định hệ thống. Bạn có chắc chắn?"
         confirmText="Reset mật khẩu"
+        variant="cancel"
       />
     </div>
   );

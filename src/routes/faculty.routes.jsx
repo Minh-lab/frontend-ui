@@ -22,10 +22,13 @@ const InternshipStatistics = lazy(() => import("@/pages/faculty/Internship/Inter
 const Profile = lazy(() => import("@/pages/faculty/Profile"));
 const ManageCapstones = lazy(() => import("@/pages/faculty/Capstone/ManageCapstones"));
 const CapstoneStatistics = lazy(() => import("@/pages/faculty/Capstone/CapstoneStatistics"));
-
+const ManageCouncils = lazy(() => import("@/pages/faculty/council/ManageCouncils"));
+const UpdateCouncil = lazy(() => import("@/pages/faculty/council/UpdateCouncil"));
+const CouncilDetail = lazy(() => import("@/pages/faculty/council/CouncilDetail"));
+const GradeCouncil = lazy(() => import("@/pages/faculty/council/GradeCouncil"));
 
 export const facultyRoutes = [
-  // Tự động vào dashboard khi truy cập /faculty
+  // Tự động vào dashboard khi truy cập /faculty_staff
   { index: true, element: <Navigate to="dashboard" replace /> }, 
   { path: "dashboard", element: <FacultyDashboard /> },
   { path: "profile", element: <Profile /> },
@@ -53,7 +56,15 @@ export const facultyRoutes = [
   { path: "internships/statistics", element: <InternshipStatistics /> },
 
   { path: "capstones", element: <ManageCapstones /> },
-  { path: "capstones/statistics", element: <CapstoneStatistics /> }
+  { path: "capstones/statistics", element: <CapstoneStatistics /> },
+
+  { path: "councils", element: <ManageCouncils /> },
+  { path: "councils/create", element: <UpdateCouncil /> },
+  { path: "councils/edit/:id", element: <UpdateCouncil /> },
+  { path: "councils/detail/:id", element: <CouncilDetail /> },
+  { path: "councils/grade/:id", element: <GradeCouncil /> },
+
+
 
 
   

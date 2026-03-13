@@ -15,6 +15,8 @@ import {
   FormField,
   FormMessage,
 } from "@/components/ui/form";
+import authService from "@/services/authService";
+import useAuthStore from "@/stores/useAuthStore";
 
 /**
  * Schema Validation với Yup để kiểm tra tính hợp lệ của mật khẩu
@@ -41,6 +43,9 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const logout = useAuthStore((state) => state.logout);
 
   const form = useForm({
     resolver: yupResolver(passwordSchema),
@@ -52,20 +57,58 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
   });
 
   const onSubmit = async (data) => {
+    setIsSubmitting(true);
     try {
-      console.log("Dữ liệu gửi lên server:", data);
-      // Giả lập gọi API đổi mật khẩu
-      // await authService.changePassword(data);
-
-      toast.success("Đổi mật khẩu thành công!");
-      form.reset();
-      if (onSuccess) {
-        onSuccess();
+      // GỬI ĐỦ 3 TRƯỜNG theo ChangePasswordRequest
+      const response = await authService.changePassword({
+        current_password: data.currentPassword,    // current_password
+        password: data.newPassword,                // password
+        password_confirmation: data.confirmPassword // password_confirmation
+      });
+      
+      if (response.success) {
+        toast.success(response.message || "Đổi mật khẩu thành công!");
+        form.reset();
+        
+        // Backend xóa token -> logout
+        logout();
+        
+        if (onSuccess) onSuccess();
+        onClose();
+        
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1000);
       }
-      onClose();
-    // eslint-disable-next-line no-unused-vars
     } catch (error) {
-      toast.error("Mật khẩu hiện tại không chính xác.");
+      // Xử lý lỗi từ backend
+      if (error.errors) {
+        // Laravel validation errors
+        Object.keys(error.errors).forEach(key => {
+          if (key === 'current_password') {
+            form.setError('currentPassword', { message: error.errors[key][0] });
+          } else if (key === 'password') {
+            form.setError('newPassword', { message: error.errors[key][0] });
+          } else if (key === 'password_confirmation') {
+            form.setError('confirmPassword', { message: error.errors[key][0] });
+          }
+        });
+        toast.error("Vui lòng kiểm tra lại thông tin");
+      } else if (error.message === "Mật khẩu hiện tại không chính xác.") {
+        toast.error("Mật khẩu hiện tại không chính xác.");
+        form.setError("currentPassword", { 
+          message: "Mật khẩu hiện tại không đúng" 
+        });
+      } else if (error.message?.includes("trùng mật khẩu hiện tại")) {
+        toast.error("Mật khẩu mới không được trùng mật khẩu cũ.");
+        form.setError("newPassword", { 
+          message: "Vui lòng chọn mật khẩu khác" 
+        });
+      } else {
+        toast.error(error.message || "Đổi mật khẩu thất bại");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -111,6 +154,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
                           type={showCurrent ? "text" : "password"}
                           placeholder="Nhập mật khẩu hiện tại"
                           className="pr-10"
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <button
@@ -146,6 +190,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
                           type={showNew ? "text" : "password"}
                           placeholder="Nhập mật khẩu mới"
                           className="pr-10"
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <button
@@ -181,6 +226,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
                           type={showConfirm ? "text" : "password"}
                           placeholder="Nhập lại mật khẩu mới"
                           className="pr-10"
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <button
@@ -205,8 +251,9 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
                 <Button
                   type="submit"
                   className="w-full bg-[#6155F5] hover:bg-[#5247E0] text-white rounded-lg"
+                  disabled={isSubmitting}
                 >
-                  Xác nhận
+                  {isSubmitting ? "Đang xử lý..." : "Xác nhận"}
                 </Button>
               </div>
             </form>

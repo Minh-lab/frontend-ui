@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { ArrowLeft, ChevronDown, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { 
   Form, 
   FormField, 
@@ -13,68 +14,141 @@ import {
   FormMessage 
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { topicService } from "@/services/faculty";
 
 // Validation schema
 const topicSchema = yup.object({
-  topicName: yup.string().required("Bắt buộc"),
-  technology: yup.string().required("Bắt buộc"),
-  description: yup.string().required("Bắt buộc"),
-  specialization: yup.string().required("Bắt buộc"),
+  topicName: yup.string().required("Tên đề tài không được để trống"),
+  technology: yup.string().required("Công nghệ không được để trống"),
+  description: yup.string().required("Mô tả không được để trống"),
+  specialization: yup.string().required("Chuyên môn không được để trống"),
 });
-
-const SPECIALIZATIONS = [
-  "AI",
-  "WEB",
-  "Cấp nước",
-  "Data Science",
-  "Frontend",
-  "Backend",
-  "Mobile",
-  "Bảo mật",
-];
-
-// Mock data - In a real app, you'd fetch this based on ID
-const MOCK_TOPICS = {
-  1: {
-    id: 1,
-    topicName: "model AI",
-    technology: "Python",
-    description: "Xây dựng mô hình AI để dự đoán xu hướng thị trường",
-    specialization: "AI",
-  },
-  2: {
-    id: 2,
-    topicName: "Bảo mật app ccj",
-    technology: "React",
-    description: "Phát triển ứng dụng với các tính năng bảo mật nâng cao",
-    specialization: "WEB",
-  },
-};
 
 export default function EditTopic() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const topicData = MOCK_TOPICS[id] || MOCK_TOPICS[1];
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [specializations, setSpecializations] = useState([]);
+  const [notFound, setNotFound] = useState(false);
 
   const form = useForm({
     resolver: yupResolver(topicSchema),
     defaultValues: {
-      topicName: topicData.topicName,
-      technology: topicData.technology,
-      description: topicData.description,
-      specialization: topicData.specialization,
+      topicName: "",
+      technology: "",
+      description: "",
+      specialization: "",
     },
   });
 
-  const onSubmit = (data) => {
-    console.log("Updating topic:", data);
-    navigate("/faculty/topics");
+  // Fetch danh sách chuyên môn và thông tin đề tài
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch song song cả 2 API
+        const [specResponse, topicResponse] = await Promise.all([
+          topicService.getSpecializations(),
+          topicService.getTopicById(id)
+        ]);
+
+        // Xử lý chuyên môn
+        if (specResponse.success) {
+          setSpecializations(specResponse.data);
+        } else {
+          toast.error(specResponse.message || "Không thể tải danh sách chuyên môn");
+        }
+
+        // Xử lý thông tin đề tài
+        if (topicResponse.success) {
+          const topic = topicResponse.data;
+          form.reset({
+            topicName: topic.topic || "",
+            technology: topic.technology || "",
+            description: topic.description || "",
+            specialization: topic.specialization || "",
+          });
+        } else {
+          setNotFound(true);
+          toast.error(topicResponse.message || "Không tìm thấy đề tài");
+        }
+      } catch (error) {
+        toast.error(error.message || "Lỗi khi tải dữ liệu");
+        setNotFound(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchData();
+    }
+  }, [id, form]);
+
+  const onSubmit = async (data) => {
+    try {
+      setSubmitting(true);
+      
+      // Chuyển đổi dữ liệu từ form sang format API
+      const topicData = {
+        topic: data.topicName,           // API dùng "topic"
+        technology: data.technology,
+        description: data.description,
+        specialization: data.specialization,
+      };
+
+      const response = await topicService.updateTopic(id, topicData);
+      
+      if (response.success) {
+        toast.success(response.message || "Cập nhật đề tài thành công!");
+        navigate("/faculty_staff/topics");
+      } else {
+        toast.error(response.message || "Không thể cập nhật đề tài");
+      }
+    } catch (error) {
+      toast.error(error.message || "Lỗi khi cập nhật đề tài");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto" />
+          <p className="mt-4 text-slate-500 font-medium">Đang tải thông tin đề tài...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="bg-red-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+            <span className="text-4xl">😢</span>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-3">Không tìm thấy đề tài</h2>
+          <p className="text-slate-500 mb-8">Đề tài bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
+          <button
+            onClick={() => navigate("/faculty_staff/topics")}
+            className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition transform hover:-translate-y-1"
+          >
+            Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 animate-in fade-in duration-500">
       <button
-        onClick={() => navigate("/faculty/topics")}
+        onClick={() => navigate("/faculty_staff/topics")}
         className="flex items-center gap-2 text-slate-500 hover:text-purple-600 font-semibold transition mb-6 group"
       >
         <ArrowLeft className="size-5 group-hover:-translate-x-1 transition-transform" />
@@ -106,7 +180,9 @@ export default function EditTopic() {
                         <FormControl>
                           <Input
                             {...field}
+                            placeholder="Nhập tên đề tài..."
                             className="border-2 rounded-xl focus:ring-4 focus:ring-purple-500/10"
+                            disabled={submitting}
                           />
                         </FormControl>
                         <FormMessage className="text-[10px] font-bold italic mt-1" />
@@ -130,7 +206,9 @@ export default function EditTopic() {
                         <FormControl>
                           <Input
                             {...field}
+                            placeholder="VD: React, Node.js, Python..."
                             className="border-2 rounded-xl focus:ring-4 focus:ring-purple-500/10"
+                            disabled={submitting}
                           />
                         </FormControl>
                         <FormMessage className="text-[10px] font-bold italic mt-1" />
@@ -154,11 +232,14 @@ export default function EditTopic() {
                         <FormControl>
                           <select
                             {...field}
-                            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl text-sm appearance-none bg-slate-50 focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all outline-none"
+                            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl text-sm appearance-none bg-slate-50 focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={submitting}
                           >
                             <option value="">Chọn chuyên môn</option>
-                            {SPECIALIZATIONS.map((spec) => (
-                              <option key={spec} value={spec}>{spec}</option>
+                            {specializations.map((spec) => (
+                              <option key={spec} value={spec}>
+                                {spec}
+                              </option>
                             ))}
                           </select>
                         </FormControl>
@@ -185,7 +266,9 @@ export default function EditTopic() {
                           <textarea
                             {...field}
                             rows={5}
-                            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all outline-none resize-none"
+                            placeholder="Nhập mô tả chi tiết về đề tài..."
+                            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={submitting}
                           />
                         </FormControl>
                         <FormMessage className="text-[10px] font-bold italic mt-1" />
@@ -198,16 +281,25 @@ export default function EditTopic() {
               <div className="flex justify-end items-center gap-6 pt-10 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => navigate("/faculty/topics")}
-                  className="px-8 py-2.5 text-sm font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest"
+                  onClick={() => navigate("/faculty_staff/topics")}
+                  className="px-8 py-2.5 text-sm font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={submitting}
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-12 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl shadow-lg shadow-purple-200 transition transform hover:-translate-y-1 active:scale-95 uppercase tracking-widest text-sm"
+                  disabled={submitting}
+                  className="px-12 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl shadow-lg shadow-purple-200 transition transform hover:-translate-y-1 active:scale-95 uppercase tracking-widest text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center gap-2"
                 >
-                  Cập nhật đề tài
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Đang cập nhật...
+                    </>
+                  ) : (
+                    "Cập nhật đề tài"
+                  )}
                 </button>
               </div>
             </form>

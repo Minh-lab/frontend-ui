@@ -4,19 +4,61 @@ import {
   LogOut, User as UserIcon 
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import useAuthStore from "@/store/useAuthStore";
+import useAuthStore from "@/stores/useAuthStore";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import logoTLU from "@/assets/logo-tlu.png";
+import useNotificationStore from "@/stores/useNotificationStore";
+import notificationService from "@/services/notificationService ";
+import authService from "@/services/authService";
+import { toast } from "sonner";
 
 export function Header() {
   const navigate = useNavigate();
   const { user, role, logout } = useAuthStore();
-  
+  const { setNotifications } = useNotificationStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   
   const dropdownRef = useRef(null);
+
+  // Fetch notifications khi component mount
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await notificationService.getNotifications();
+        if (response.success) {
+          setNotifications(response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      }
+    };
+    
+    fetchNotifications();
+  }, [setNotifications]);
+
+  // Trong Header.jsx - thêm polling
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await notificationService.getNotifications();
+        if (response.success) {
+          setNotifications(response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      }
+    };
+    
+    // Fetch ngay lập tức
+    fetchNotifications();
+    
+    // Polling mỗi 30 giây
+    const interval = setInterval(fetchNotifications, 30000);
+    
+    return () => clearInterval(interval);
+  }, [setNotifications]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -28,10 +70,25 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleConfirmLogout = () => {
-    logout();
-    setIsLogoutDialogOpen(false);
-    navigate("/login");
+  const handleConfirmLogout = async () => {
+    try {
+      // 1. Gọi API Logout của Backend
+      await authService.logout(); 
+
+      // 2. Xóa thông tin trong Zustand và LocalStorage
+      logout(); 
+      
+      setIsLogoutDialogOpen(false);
+      toast.success("Đăng xuất thành công!");
+      
+      // 3. Điều hướng về trang đăng nhập
+      navigate("/login");
+    } catch (error) {
+      // Trường hợp lỗi API vẫn thực hiện logout cục bộ để đảm bảo an toàn
+      console.error("Logout error:", error);
+      logout();
+      navigate("/login");
+    }
   };
 
   return (

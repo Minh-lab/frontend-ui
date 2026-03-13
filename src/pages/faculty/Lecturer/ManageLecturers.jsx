@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Search, 
   ChevronLeft, 
-  ChevronRight 
+  ChevronRight,
+  Loader2
 } from "lucide-react";
+import { toast } from "sonner";
 
 // Import các UI components từ thư viện hệ thống
 import { Button } from "@/components/ui/button"; 
-import { Input } from "@/components/ui/input"; 
 import { 
   Table, 
   TableHeader, 
@@ -17,35 +18,92 @@ import {
   TableRow, 
   TableCell 
 } from "@/components/ui/table"; 
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select"; 
 
-// Dữ liệu mẫu dựa trên image_b62efc.png
-const MOCK_LECTURERS = [
-  { id: "gv001", name: "Nguyễn an", specialization: "Toán tin", status: "Yêu cầu nghỉ phép" },
-  { id: "gv002", name: "nguyễn minh", specialization: "Cơ sở dữ liệu", status: "Hoạt động" },
-  { id: "gv077", name: "hoàng lân", specialization: "AI", status: "Ngưng công tác" },
-  { id: "gv088", name: "Phạm Hùng", specialization: "An toàn thông tin", status: "Hoạt động" },
-];
-
-const SPECIALIZATIONS = ["Tất cả", "Toán tin", "Cơ sở dữ liệu", "AI", "An toàn thông tin"];
-const STATUS_OPTIONS = ["Tất cả", "Hoạt động", "Yêu cầu nghỉ phép", "Ngưng công tác"];
+// Import service
+import { lecturerService } from "@/services/faculty";
 
 export default function ManageLecturers() {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  
+  // State cho dữ liệu
+  const [loading, setLoading] = useState(true);
+  const [lecturers, setLecturers] = useState([]);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_pages: 1,
+    total_items: 0,
+    items_per_page: 5
+  });
 
-  // Logic phân trang
-  const totalPages = Math.ceil(MOCK_LECTURERS.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentData = MOCK_LECTURERS.slice(startIndex, startIndex + itemsPerPage);
+  // State cho tìm kiếm
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+
+  // Fetch dữ liệu khi searchTerm hoặc current_page thay đổi
+  useEffect(() => {
+    fetchLecturers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.current_page, searchTerm]);
+
+  const fetchLecturers = async () => {
+    try {
+      setLoading(true);
+      
+      const params = {
+        page: pagination.current_page,
+        itemsPerPage: pagination.items_per_page,
+        search: searchTerm
+      };
+      
+      const response = await lecturerService.getLecturers(params);
+
+      if (response.success) {
+        setLecturers(response.data.lecturers);
+        setPagination(response.data.pagination);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error(error.message || "Lỗi khi tải danh sách giảng viên");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePageChange = (page) => {
+    setPagination(prev => ({ ...prev, current_page: page }));
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setSearchTerm(searchInput); // Cập nhật searchTerm
+    setPagination(prev => ({ ...prev, current_page: 1 })); // Reset về trang 1
+    // useEffect sẽ tự động gọi fetchLecturers vì searchTerm thay đổi
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case "Hoạt động":
+        return "text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold";
+      case "Yêu cầu nghỉ phép":
+        return "text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full text-xs font-bold";
+      case "Ngưng công tác":
+        return "text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-bold";
+      default:
+        return "text-slate-600";
+    }
+  };
+
+  if (loading && lecturers.length === 0) {
+    return (
+      <div className="p-8 min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-purple-600 animate-spin mx-auto" />
+          <p className="mt-4 text-slate-500 font-medium">Đang tải danh sách giảng viên...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
@@ -54,54 +112,33 @@ export default function ManageLecturers() {
         Danh sách giảng viên
       </h1>
 
-      {/* Thanh tìm kiếm và bộ lọc bo tròn như image_b62efc.png */}
-      <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-        <div className="relative w-full md:w-80">
+      {/* Thanh tìm kiếm - phải nhấn nút mới tìm */}
+      <form onSubmit={handleSearch} className="flex flex-col md:flex-row items-center justify-center gap-4">
+        <div className="relative w-full md:w-96">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
           <input
             type="text"
             placeholder="Tìm kiếm tên giảng viên"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all bg-white"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all bg-white"
           />
         </div>
 
-        <div className="w-full md:w-44">
-          <Select defaultValue="Tất cả">
-            <SelectTrigger className="rounded-lg bg-slate-50 border-slate-200">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent className="bg-white">
-              {STATUS_OPTIONS.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="w-full md:w-44">
-          <Select defaultValue="Tất cả">
-            <SelectTrigger className="rounded-lg bg-slate-50 border-slate-200">
-              <SelectValue placeholder="Chuyên môn" />
-            </SelectTrigger>
-            <SelectContent className="bg-white">
-              {SPECIALIZATIONS.map(spec => <SelectItem key={spec} value={spec}>{spec}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-
         <Button 
-          className="bg-[#9b59b6] hover:bg-[#8e44ad] text-white px-8 rounded-full font-bold shadow-md transition-all active:scale-95"
+          type="submit"
+          className="bg-[#9b59b6] hover:bg-[#8e44ad] text-white px-10 rounded-full font-bold shadow-md transition-all active:scale-95"
         >
           Tìm kiếm
         </Button>
-      </div>
+      </form>
 
       {/* Bảng danh sách giảng viên */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <Table>
           <TableHeader className="bg-[#e3f2fd]">
             <TableRow className="hover:bg-transparent border-b-0">
-              <TableHead className="font-bold text-slate-800 h-12 uppercase text-xs tracking-wider">Mã gv</TableHead>
+              <TableHead className="font-bold text-slate-800 h-12 uppercase text-xs tracking-wider">Mã GV</TableHead>
               <TableHead className="font-bold text-slate-800 h-12 uppercase text-xs tracking-wider">Tên giảng viên</TableHead>
               <TableHead className="font-bold text-slate-800 h-12 uppercase text-xs tracking-wider">Chuyên môn</TableHead>
               <TableHead className="font-bold text-slate-800 h-12 uppercase text-xs tracking-wider text-center">Trạng thái</TableHead>
@@ -109,68 +146,100 @@ export default function ManageLecturers() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentData.map((lecturer) => (
-              <TableRow key={lecturer.id} className="border-b border-slate-50 transition-colors">
-                <TableCell className="text-slate-600 font-medium">{lecturer.id}</TableCell>
-                <TableCell className="font-bold text-slate-700">{lecturer.name}</TableCell>
-                <TableCell className="text-slate-600">{lecturer.specialization}</TableCell>
-                <TableCell className="text-center font-medium text-slate-700">
-                  {lecturer.status}
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-center">
-                    <button 
-                      onClick={() => navigate(`/faculty/lecturers/view/${lecturer.id}`)}
-                      className="px-4 py-1.5 bg-[#7786d1] hover:bg-[#5c6bb2] text-white text-[10px] font-bold rounded-full uppercase transition-all shadow-sm active:scale-95"
-                    >
-                      xem chi tiết
-                    </button>
-                  </div>
+            {lecturers.length > 0 ? (
+              lecturers.map((lecturer) => (
+                <TableRow key={lecturer.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/50">
+                  <TableCell className="text-slate-600 font-medium">{lecturer.id}</TableCell>
+                  <TableCell className="font-bold text-slate-700 capitalize">{lecturer.name}</TableCell>
+                  <TableCell className="text-slate-600">{lecturer.specialization}</TableCell>
+                  <TableCell className="text-center">
+                    <span className={getStatusColor(lecturer.status)}>
+                      {lecturer.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-center">
+                      <button 
+                        onClick={() => navigate(`/faculty_staff/lecturers/view/${lecturer.id}`)}
+                        className="px-4 py-1.5 bg-[#7786d1] hover:bg-[#5c6bb2] text-white text-[10px] font-bold rounded-full uppercase transition-all shadow-sm active:scale-95"
+                      >
+                        xem chi tiết
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                  Không có dữ liệu giảng viên
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
 
-      {/* Điều hướng phân trang đồng bộ mẫu thiết kế */}
-      <div className="flex items-center justify-center gap-6 pt-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-          disabled={currentPage === 1}
-          className="rounded-lg border-slate-200 text-slate-600 hover:bg-slate-50"
-        >
-          <ChevronLeft className="mr-2 size-4" /> Previous
-        </Button>
+      {/* Phân trang */}
+      {pagination.total_pages > 0 && (
+        <div className="flex items-center justify-center gap-6 pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(pagination.current_page - 1)}
+            disabled={pagination.current_page === 1}
+            className="rounded-lg border-slate-200 text-slate-600 hover:bg-slate-50"
+          >
+            <ChevronLeft className="mr-2 size-4" /> Previous
+          </Button>
 
-        <div className="flex gap-1">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`w-9 h-9 rounded-lg text-sm font-bold transition-all ${
-                currentPage === page 
-                ? "bg-slate-50 text-slate-800 border border-slate-200 shadow-sm" 
-                : "text-slate-400 hover:bg-slate-50"
-              }`}
-            >
-              {page}
-            </button>
-          ))}
+          <div className="flex gap-1">
+            {Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
+              let pageNum;
+              if (pagination.total_pages <= 5) {
+                pageNum = i + 1;
+              } else if (pagination.current_page <= 3) {
+                pageNum = i + 1;
+              } else if (pagination.current_page >= pagination.total_pages - 2) {
+                pageNum = pagination.total_pages - 4 + i;
+              } else {
+                pageNum = pagination.current_page - 2 + i;
+              }
+              
+              return (
+                <button
+                  key={i}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`w-9 h-9 rounded-lg text-sm font-bold transition-all ${
+                    pagination.current_page === pageNum 
+                    ? "bg-slate-900 text-white" 
+                    : "text-slate-400 hover:bg-slate-100"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(pagination.current_page + 1)}
+            disabled={pagination.current_page === pagination.total_pages}
+            className="rounded-lg border-slate-200 text-slate-600 hover:bg-slate-50"
+          >
+            Next <ChevronRight className="ml-2 size-4" />
+          </Button>
         </div>
+      )}
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-          disabled={currentPage === totalPages}
-          className="rounded-lg border-slate-200 text-slate-600 hover:bg-slate-50"
-        >
-          Next <ChevronRight className="ml-2 size-4" />
-        </Button>
-      </div>
+      {/* Hiển thị tổng số bản ghi */}
+      {pagination.total_items > 0 && (
+        <div className="text-center text-sm text-slate-400">
+          Hiển thị {((pagination.current_page - 1) * pagination.items_per_page) + 1} - {Math.min(pagination.current_page * pagination.items_per_page, pagination.total_items)} trên tổng số {pagination.total_items} giảng viên
+        </div>
+      )}
     </div>
   );
 }

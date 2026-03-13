@@ -1,9 +1,9 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 // Import các UI components từ thư viện hệ thống
@@ -25,59 +25,153 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { planService } from "@/services/faculty";
 
 /**
  * Định nghĩa Schema Validation với Yup
  */
 const milestoneSchema = yup.object().shape({
-  name: yup.string().required("Tên giai đoạn không được để trống"),
+  phase_name: yup.string().required("Tên giai đoạn không được để trống"),
   type: yup.string().required("Vui lòng chọn loại mốc"),
   description: yup.string().required("Mô tả không được để trống"),
-  startDate: yup.date().required("Vui lòng chọn ngày bắt đầu").typeError("Ngày không hợp lệ"),
-  endDate: yup
+  start_date: yup.date().required("Vui lòng chọn ngày bắt đầu").typeError("Ngày không hợp lệ"),
+  end_date: yup
     .date()
     .required("Vui lòng chọn ngày kết thúc")
     .typeError("Ngày không hợp lệ")
-    .min(yup.ref('startDate'), "Ngày kết thúc phải sau ngày bắt đầu"),
+    .min(yup.ref('start_date'), "Ngày kết thúc phải sau ngày bắt đầu"),
 });
 
 export default function EditMilestone() {
   const navigate = useNavigate();
   const { id } = useParams(); // ID của mốc thời gian cần sửa
+  
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [phaseNames, setPhaseNames] = useState([]);
+  const [filteredPhaseNames, setFilteredPhaseNames] = useState([]);
+  const [notFound, setNotFound] = useState(false);
 
   const form = useForm({
     resolver: yupResolver(milestoneSchema),
     defaultValues: {
-      name: "",
+      phase_name: "",
       type: "",
       description: "",
-      startDate: "",
-      endDate: "",
+      start_date: "",
+      end_date: "",
     },
   });
 
-  // Giả lập lấy dữ liệu cũ từ server dựa trên ID
+  // Theo dõi sự thay đổi của type để lọc phase names
+  const watchType = form.watch("type");
+
+  // Fetch danh sách phase names khi component mount
   useEffect(() => {
-    const fetchMilestoneData = () => {
-      // Trong thực tế, đây sẽ là lệnh gọi API: axios.get(`/milestones/${id}`)
-      const mockData = {
-        name: "Nộp đề cương chi tiết",
-        type: "CAPSTONE",
-        description: "Sinh viên nộp file đề cương có chữ ký của giảng viên hướng dẫn.",
-        startDate: "2024-05-10",
-        endDate: "2024-05-20",
-      };
-      form.reset(mockData);
-    };
+    fetchPhaseNames();
+  }, []);
 
-    if (id) fetchMilestoneData();
-  }, [id, form]);
+  // Fetch dữ liệu milestone cần sửa
+  useEffect(() => {
+    if (id) {
+      fetchMilestoneData();
+    }
+  }, [id]);
 
-  const onSubmit = (data) => {
-    console.log("Cập nhật mốc thời gian:", data);
-    toast.success("Cập nhật mốc thời gian thành công!");
-    navigate(-1); // Quay lại trang chi tiết học kỳ
+  // Lọc phase names khi type thay đổi
+  useEffect(() => {
+    if (watchType && phaseNames.length > 0) {
+      const filtered = phaseNames.filter(p => p.type === watchType);
+      setFilteredPhaseNames(filtered);
+    }
+  }, [watchType, phaseNames]);
+
+  const fetchPhaseNames = async () => {
+    try {
+      const response = await planService.getPhaseNamesByType();
+      if (response.success) {
+        setPhaseNames(response.data);
+      }
+    } catch (error) {
+      console.error("Lỗi tải phase names:", error);
+    }
   };
+
+  const fetchMilestoneData = async () => {
+    try {
+      setLoading(true);
+      const response = await planService.getMilestoneById(id);
+      
+      if (response.success) {
+        const data = response.data;
+        form.reset({
+          phase_name: data.phase_name,
+          type: data.type,
+          description: data.description,
+          start_date: data.start_date,
+          end_date: data.end_date,
+        });
+      } else {
+        setNotFound(true);
+        toast.error(response.message || "Không tìm thấy mốc thời gian");
+      }
+    } catch (error) {
+      toast.error(error.message || "Lỗi khi tải thông tin mốc thời gian");
+      setNotFound(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onSubmit = async (data) => {
+    try {
+      setSubmitting(true);
+      
+      const response = await planService.updateMilestone(id, data);
+      
+      if (response.success) {
+        toast.success(response.message || "Cập nhật mốc thời gian thành công!");
+        navigate(-1); // Quay lại trang chi tiết học kỳ
+      } else {
+        toast.error(response.message || "Không thể cập nhật mốc thời gian");
+      }
+    } catch (error) {
+      toast.error(error.message || "Lỗi khi cập nhật mốc thời gian");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8 min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-purple-600 animate-spin mx-auto" />
+          <p className="mt-4 text-slate-500 font-medium">Đang tải thông tin mốc thời gian...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="p-8 min-h-[400px] flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto">
+          <div className="bg-red-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+            <span className="text-4xl">😢</span>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-3">Không tìm thấy mốc thời gian</h2>
+          <p className="text-slate-500 mb-8">Mốc thời gian bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition transform hover:-translate-y-1"
+          >
+            Quay lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
@@ -85,6 +179,7 @@ export default function EditMilestone() {
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-slate-500 hover:text-purple-600 font-semibold transition group"
+        disabled={submitting}
       >
         <ArrowLeft className="size-5 group-hover:-translate-x-1 transition-transform" />
         Hủy bỏ và quay lại
@@ -96,34 +191,12 @@ export default function EditMilestone() {
         </h1>
       </div>
 
-      {/* Card Form Chính - Giữ nguyên style bg-[#f0f4ff] */}
+      {/* Card Form Chính */}
       <div className="bg-[#f0f4ff] rounded-[32px] shadow-xl overflow-hidden border border-slate-100 px-12 py-12">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-6">
               
-              {/* Tên giai đoạn */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-4">
-                    <FormLabel className="text-lg font-bold text-[#4a5568] md:text-right">
-                      Tên giai đoạn
-                    </FormLabel>
-                    <FormItem>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          className="bg-slate-50 border-slate-200 rounded-xl py-6 focus:bg-white transition-all shadow-sm font-semibold" 
-                        />
-                      </FormControl>
-                      <FormMessage className="font-semibold italic" />
-                    </FormItem>
-                  </div>
-                )}
-              />
-
               {/* Loại mốc */}
               <FormField
                 control={form.control}
@@ -134,7 +207,11 @@ export default function EditMilestone() {
                       Loại mốc
                     </FormLabel>
                     <FormItem>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={submitting}
+                      >
                         <FormControl>
                           <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl py-6 focus:bg-white transition-all">
                             <SelectValue placeholder="Chọn loại mốc thời gian" />
@@ -143,6 +220,49 @@ export default function EditMilestone() {
                         <SelectContent className="bg-white">
                           <SelectItem value="INTERNSHIP">Thực tập</SelectItem>
                           <SelectItem value="CAPSTONE">Đồ án</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="font-semibold italic" />
+                    </FormItem>
+                  </div>
+                )}
+              />
+
+              {/* Tên giai đoạn - Combobox từ danh sách cố định */}
+              <FormField
+                control={form.control}
+                name="phase_name"
+                render={({ field }) => (
+                  <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-4">
+                    <FormLabel className="text-lg font-bold text-[#4a5568] md:text-right">
+                      Tên giai đoạn
+                    </FormLabel>
+                    <FormItem>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={!watchType || submitting}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl py-6 focus:bg-white transition-all">
+                            <SelectValue placeholder={
+                              !watchType ? "Chọn loại mốc trước" : 
+                              "Chọn tên giai đoạn"
+                            } />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-white max-h-60">
+                          {filteredPhaseNames.length > 0 ? (
+                            filteredPhaseNames.map((phase) => (
+                              <SelectItem key={phase.id} value={phase.name}>
+                                {phase.name} 
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2 text-sm text-slate-500 italic text-center">
+                              {watchType ? "Không có tên giai đoạn nào" : "Vui lòng chọn loại mốc trước"}
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage className="font-semibold italic" />
@@ -164,7 +284,8 @@ export default function EditMilestone() {
                       <FormControl>
                         <Textarea 
                           {...field} 
-                          className="bg-slate-50 border-slate-200 rounded-xl min-h-[120px] focus:bg-white transition-all resize-none shadow-sm" 
+                          className="bg-slate-50 border-slate-200 rounded-xl min-h-[120px] focus:bg-white transition-all resize-none shadow-sm"
+                          disabled={submitting}
                         />
                       </FormControl>
                       <FormMessage className="font-semibold italic" />
@@ -176,7 +297,7 @@ export default function EditMilestone() {
               {/* Ngày bắt đầu */}
               <FormField
                 control={form.control}
-                name="startDate"
+                name="start_date"
                 render={({ field }) => (
                   <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-4 pt-2">
                     <FormLabel className="text-lg font-bold text-[#4a5568] md:text-right">
@@ -187,7 +308,8 @@ export default function EditMilestone() {
                         <Input 
                           {...field} 
                           type="date"
-                          className="bg-slate-50 border-slate-200 rounded-xl py-6 focus:bg-white transition-all shadow-sm" 
+                          className="bg-slate-50 border-slate-200 rounded-xl py-6 focus:bg-white transition-all shadow-sm"
+                          disabled={submitting}
                         />
                       </FormControl>
                       <FormMessage className="font-semibold italic" />
@@ -199,7 +321,7 @@ export default function EditMilestone() {
               {/* Ngày kết thúc */}
               <FormField
                 control={form.control}
-                name="endDate"
+                name="end_date"
                 render={({ field }) => (
                   <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-4 pt-2">
                     <FormLabel className="text-lg font-bold text-[#4a5568] md:text-right">
@@ -210,7 +332,8 @@ export default function EditMilestone() {
                         <Input 
                           {...field} 
                           type="date"
-                          className="bg-slate-50 border-slate-200 rounded-xl py-6 focus:bg-white transition-all shadow-sm" 
+                          className="bg-slate-50 border-slate-200 rounded-xl py-6 focus:bg-white transition-all shadow-sm"
+                          disabled={submitting}
                         />
                       </FormControl>
                       <FormMessage className="font-semibold italic" />
@@ -220,22 +343,31 @@ export default function EditMilestone() {
               />
             </div>
 
-            {/* Action Buttons - Flex-end */}
+            {/* Action Buttons */}
             <div className="flex justify-end items-center gap-6 pt-10 border-t border-slate-200">
               <Button
                 variant="cancel"
                 type="button"
                 onClick={() => navigate(-1)}
                 className="px-10 py-6 font-bold rounded-2xl shadow-md transition transform hover:scale-105 active:scale-95"
+                disabled={submitting}
               >
                 Hủy
               </Button>
               <Button
                 variant="submit"
                 type="submit"
-                className="px-12 py-6 font-bold rounded-2xl shadow-lg transition transform hover:-translate-y-1 active:scale-95 shadow-green-200"
+                className="px-12 py-6 font-bold rounded-2xl shadow-lg transition transform hover:-translate-y-1 active:scale-95 shadow-green-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center gap-2"
+                disabled={submitting}
               >
-                Cập nhật
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Đang cập nhật...
+                  </>
+                ) : (
+                  "Cập nhật"
+                )}
               </Button>
             </div>
           </form>

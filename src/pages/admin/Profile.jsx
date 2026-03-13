@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { User, ArrowLeft, Mail, Fingerprint, Calendar, ShieldCheck, ShieldAlert } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { User, ArrowLeft, Mail, Fingerprint, Calendar, ShieldCheck, ShieldAlert, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import useAuthStore from "@/store/useAuthStore";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,32 +13,66 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
+import adminService from "@/services/adminService";
 
 export default function AdminProfile() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-
-  // Dữ liệu hiển thị
-  const profileData = {
-    usercode: user?.usercode || "ADMIN_001",
-    full_name: user?.displayName || "Quản trị viên hệ thống",
-    email: user?.email || "admin@tlu.edu.vn",
-    gender: user?.gender || "Nam",
-    dob: user?.dob || "01/01/1990",
-  };
+  const [loading, setLoading] = useState(true);
 
   const form = useForm({
-    defaultValues: profileData,
+    defaultValues: {
+      usercode: "",
+      full_name: "",
+      email: "",
+      gender: "",
+      dob: "",
+    },
   });
+
+  // Lấy dữ liệu profile từ API khi mount component
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const response = await adminService.getProfile();
+        
+        if (response.success) {
+          // Ánh xạ dữ liệu từ response.data.user vào form
+          const userData = response.data.user;
+          form.reset({
+            usercode: userData.usercode,
+            full_name: userData.full_name,
+            email: userData.email,
+            gender: userData.gender,
+            dob: userData.dob,
+          });
+        }
+      } catch (error) {
+        toast.error(error.message || "Không thể tải thông tin cá nhân");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [form]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f8fafc]">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 animate-in fade-in duration-500">
       <div className="max-w-3xl mx-auto space-y-6">
-        
+       
         {/* Nút quay lại */}
-        <button 
-          onClick={() => navigate(-1)} 
+        <button
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-colors group"
         >
           <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
@@ -46,7 +80,7 @@ export default function AdminProfile() {
         </button>
 
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-          {/* Header Bar - Tông màu Indigo đậm chất Admin */}
+          {/* Header Bar - Indigo Admin */}
           <div className="h-32 bg-indigo-600 relative">
              <div className="absolute -bottom-12 left-10 p-2 bg-white rounded-3xl shadow-lg">
                 <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
@@ -65,7 +99,7 @@ export default function AdminProfile() {
                 </h1>
                 <p className="text-sm text-slate-400 font-medium">Quyền hạn tối cao trên hệ thống quản lý thực tập</p>
               </div>
-              <Button 
+              <Button
                 onClick={() => setShowPasswordModal(true)}
                 className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold px-6 rounded-xl border-none shadow-none transition-all active:scale-95"
               >
@@ -75,7 +109,7 @@ export default function AdminProfile() {
 
             <Form {...form}>
               <form className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                
+               
                 {/* Mã Quản trị viên */}
                 <FormField
                   control={form.control}
@@ -159,9 +193,8 @@ export default function AdminProfile() {
           </div>
         </div>
 
-
-        <ChangePasswordModal 
-          isOpen={showPasswordModal} 
+        <ChangePasswordModal
+          isOpen={showPasswordModal}
           onClose={() => setShowPasswordModal(false)}
         />
       </div>

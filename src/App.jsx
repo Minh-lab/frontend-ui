@@ -1,9 +1,11 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useEffect } from "react";
 import { BrowserRouter } from "react-router-dom";
-import useAuthStore from "@/store/useAuthStore";
+import useAuthStore from "@/stores/useAuthStore";
 import AppRouter from "@/routes"; // Đường dẫn đến file routes/index.jsx tổng
 
 import { Toaster } from "@/components/ui/sonner";
+// eslint-disable-next-line no-unused-vars
 import { business } from "./data/businessData";
 
 /**
@@ -13,6 +15,7 @@ import { business } from "./data/businessData";
  * 3. Sử dụng useEffect để giả lập dữ liệu đăng nhập cho mục đích kiểm thử.
  */
 function App() {
+  // eslint-disable-next-line no-unused-vars
   const setAuth = useAuthStore((state) => state.setAuth);
 
   // ==========================================================
@@ -20,17 +23,17 @@ function App() {
   // Bạn hãy thay đổi giá trị 'role' để kiểm tra các giao diện khác nhau:
   // 'student', 'lecturer', 'faculty', 'admin', 'company'
   // ==========================================================
-  useEffect(() => {
-    setAuth(
-      { 
-        displayName: business.tenDN, 
-        usercode: business.maST,
-        email: business.email
-      },
-      "dummy-access-token",
-      "faculty" // Test với vai trò Company
-    );
-  }, [setAuth]);
+  // useEffect(() => {
+  //   setAuth(
+  //     { 
+  //       displayName: business.tenDN, 
+  //       usercode: business.maST,
+  //       email: business.email
+  //     },
+  //     "dummy-access-token",
+  //     "faculty" // Test với vai trò Company
+  //   );
+  // }, [setAuth]);
 
   return (
     <BrowserRouter>
