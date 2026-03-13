@@ -4,9 +4,12 @@ import StatusBadge from "../../components/StatusBadge";
 import FileUpload from "../../components/FileUpload";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup"
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { getStudentAccess } from "@/lib/studentAccess";
 
 const schema = yup.object({
   ten: yup
@@ -172,7 +175,12 @@ function DeXuatMoiForm({ onBack,onDangKy }) {
             Hủy
           </Button>
           <Button 
-            onClick={handleSubmit(onSubmit)}
+              onClick={handleSubmit((data) => {
+                onSubmit(data); // xử lý form
+                toast.success("Hành động đã được ghi nhận", {
+                  className: "!bg-[#AAFAB8] !text-[#24AD47]",
+                });
+              })}
            className="bg-[#3b3f8c] hover:bg-[#2e3278] text-white ">
             Gửi đề xuất
           </Button>
@@ -249,7 +257,13 @@ function NganHangView({ onBack, onDangKy }) {
                 <td className="px-4 py-3 text-xs text-gray-400 max-w-[200px] leading-relaxed">{dt.moTa}</td>
                 <td className="px-4 py-3">
                   <Button
-                    onClick={() => onDangKy(dt) }
+                    onClick={() => {onDangKy(dt);
+                      toast.success("Hạnh động đã được ghi nhận", {
+                            className: "!bg-[#AAFAB8] !text-[#24AD47]",
+                      })
+                    }
+    
+                     }
                     className={`
                       ${dt.daDangKy
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -324,8 +338,29 @@ function DaDangKy({ onDeXuatMoi, onNganHang ,topic}) {
 }
 
 export default function DangKyDeTaiPage() {
+  const navigate = useNavigate();
+  const [access] = useState(() => getStudentAccess());
   const [view, setView] = useState("");
   const [topic, setTopic] = useState(null);
+  if (!access.projectEnabled) {
+    return (
+      <div className="p-6">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm max-w-2xl mx-auto">
+          <div className="bg-[#5c60c0] text-white px-5 py-3 rounded-t-xl font-semibold">
+            Đăng ký đề tài
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-3 rounded-lg">
+              Bạn chưa mở đợt đồ án nên chưa thể sử dụng chức năng này.
+            </div>
+            <Button onClick={() => navigate("/student/dashboard")} className="bg-[#5c60c0] hover:bg-[#4a4ea8] text-white">
+              Quay về trang chủ
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (view === "form-moi") return <div className="p-6"><DeXuatMoiForm onBack={() => setView("empty")} onDangKy={(dt) => {setView("registered");setTopic(dt)} } /></div>;
   if (view === "ngan-hang") return <div className="p-6"><NganHangView onBack={() => setView("empty")} onDangKy={(dt) => {setView("registered");setTopic(dt)} } /></div>;
   if (view === "registered") return <div className="p-6"><DaDangKy topic={topic} onDeXuatMoi={() => setView("form-moi")} onNganHang={() => setView("ngan-hang")} /></div>;
