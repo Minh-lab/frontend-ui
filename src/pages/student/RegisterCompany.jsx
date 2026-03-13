@@ -1,9 +1,12 @@
-﻿import { useState } from "react";
+import { useEffect, useState } from "react";
 import StatusBadge from "../../components/StatusBadge";
 import FileUpload from "../../components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { getStudentAccess } from "@/lib/studentAccess";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 
 const defaultForm = {
   tenCongTy: "Cong ty co phan ABC",
@@ -13,7 +16,48 @@ const defaultForm = {
   file: "",
 };
 
-function ChuaDangKy({ form, setForm, onSubmit }) {
+const schema = yup.object({
+  tenCongTy: yup
+    .string()
+    .required("Vui lòng nhập tên công ty")
+    .min(3, "Tên công ty phải ít nhất 3 ký tự"),
+  maSoThue: yup
+    .string()
+    .required("Vui lòng nhập mã số thuế")
+    .matches(/^\d{10,13}$/, "Mã số thuế phải gồm 10-13 chữ số"),
+  email: yup
+    .string()
+    .required("Vui lòng nhập email")
+    .email("Email không hợp lệ"),
+  diaChi: yup
+    .string()
+    .required("Vui lòng nhập địa chỉ"),
+  file: yup
+    .mixed()
+    .required("Vui lòng upload giấy giới thiệu")
+    .test("fileSize", "File tối đa 3MB", (value) => {
+      if (!value) return false;
+      if (typeof value === "string") return value.trim().length > 0;
+      return value.size <= 3 * 1024 * 1024;
+    }),
+});
+
+
+function ChuaDangKy({ defaultValues, onSubmit }) {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+    defaultValues,
+  });
+  useEffect(() => {
+    register("file");
+  }, [register]);
+  const file = watch("file");
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm max-w-2xl mx-auto">
       <div className="bg-[#5c60c0] text-white px-5 py-3 rounded-t-xl flex items-center justify-between">
@@ -21,27 +65,66 @@ function ChuaDangKy({ form, setForm, onSubmit }) {
         <StatusBadge status="Chưa đăng ký" />
       </div>
       <div className="p-6 space-y-4">
-        {[
-          ["Tên công ty *:", "tenCongTy", "text"],
-          ["Mã số thuế *:", "maSoThue", "text"],
-          ["Email:", "email", "email"],
-          ["Địa chỉ:", "diaChi", "text"],
-        ].map(([lbl, key, type]) => (
-          <div key={key} className="flex items-center gap-4">
-            <label className="w-44 text-sm font-semibold text-[#5c60c0] text-right flex-shrink-0">{lbl}</label>
+        <div className="flex items-start gap-4">
+          <label className="w-44 text-sm font-semibold text-[#5c60c0] text-right flex-shrink-0 mt-2">Tên công ty *:</label>
+          <div className="flex-1">
             <input
-              type={type}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]"
-              value={form[key]}
-              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+              type="text"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]"
+              {...register("tenCongTy")}
             />
+            {errors.tenCongTy && (
+              <p className="text-red-500 text-xs mt-1">{errors.tenCongTy.message}</p>
+            )}
           </div>
-        ))}
+        </div>
+        <div className="flex items-start gap-4">
+          <label className="w-44 text-sm font-semibold text-[#5c60c0] text-right flex-shrink-0 mt-2">Mã số thuế *:</label>
+          <div className="flex-1">
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]"
+              {...register("maSoThue")}
+            />
+            {errors.maSoThue && (
+              <p className="text-red-500 text-xs mt-1">{errors.maSoThue.message}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-start gap-4">
+          <label className="w-44 text-sm font-semibold text-[#5c60c0] text-right flex-shrink-0 mt-2">Email *:</label>
+          <div className="flex-1">
+            <input
+              type="email"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]"
+              {...register("email")}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-start gap-4">
+          <label className="w-44 text-sm font-semibold text-[#5c60c0] text-right flex-shrink-0 mt-2">Địa chỉ *:</label>
+          <div className="flex-1">
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]"
+              {...register("diaChi")}
+            />
+            {errors.diaChi && (
+              <p className="text-red-500 text-xs mt-1">{errors.diaChi.message}</p>
+            )}
+          </div>
+        </div>
 
         <div className="flex items-start gap-4">
           <label className="w-44 text-sm font-semibold text-[#5c60c0] text-right flex-shrink-0 mt-2">Giấy giới thiệu (tối đa 3MB):</label>
           <div className="flex-1">
-            <FileUpload value={form.file} onChange={(v) => setForm({ ...form, file: v })} />
+            <FileUpload value={file} onChange={(v) => setValue("file", v, { shouldValidate: true })} />
+            {errors.file && (
+              <p className="text-red-500 text-xs mt-1">{errors.file.message}</p>
+            )}
           </div>
         </div>
 
@@ -54,7 +137,7 @@ function ChuaDangKy({ form, setForm, onSubmit }) {
         </div>
 
         <div className="flex justify-end">
-          <button onClick={onSubmit} className="bg-[#3b3f8c] hover:bg-[#2e3278] text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition shadow">
+          <button onClick={handleSubmit(onSubmit)} className="bg-[#3b3f8c] hover:bg-[#2e3278] text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition shadow">
             Đăng ký doanh nghiệp
           </button>
         </div>
@@ -94,7 +177,7 @@ function DaDangKy({ form }) {
               <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
-              <span>Gioi-thieu_ca_nhan.pdf</span>
+              <span>{form.file?.name ?? form.file ?? "—"}</span>
             </div>
           </div>
         </div>
@@ -127,5 +210,19 @@ export default function DangKyDoanhNghiepPage() {
       </div>
     );
   }
-  return <div className="p-6">{submitted ? <DaDangKy form={form} /> : <ChuaDangKy form={form} setForm={setForm} onSubmit={() => setSubmitted(true)} />}</div>;
+  return (
+    <div className="p-6">
+      {submitted ? (
+        <DaDangKy form={form} />
+      ) : (
+        <ChuaDangKy
+          defaultValues={form}
+          onSubmit={(data) => {
+            setForm(data);
+            setSubmitted(true);
+          }}
+        />
+      )}
+    </div>
+  );
 }

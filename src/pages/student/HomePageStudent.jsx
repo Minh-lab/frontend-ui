@@ -141,7 +141,10 @@ export default function HomePageStudent() {
       </div>
 
       <button
-        onClick={() => access.projectEnabled && navigate("/student/register-topic")}
+        onClick={() =>
+          access.projectEnabled &&
+          navigate("/student/register-topic", { state: { view: "ngan-hang" } })
+        }
         disabled={!access.projectEnabled}
         className={`w-full rounded-xl p-6 flex flex-col items-center gap-2 transition group ${
           access.projectEnabled

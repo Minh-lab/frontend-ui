@@ -4,7 +4,7 @@ import StatusBadge from "../../components/StatusBadge";
 import FileUpload from "../../components/FileUpload";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup"
 import { useForm } from "react-hook-form";
@@ -191,7 +191,76 @@ function DeXuatMoiForm({ onBack,onDangKy }) {
 }
 
 function NganHangView({ onBack, onDangKy }) {
-  const [search, setSearch] = useState("Mo hinh du doan|");
+  const [search, setSearch] = useState("");
+  const [filterCongNghe, setFilterCongNghe] = useState("");
+  const [filterLinhVuc, setFilterLinhVuc] = useState("");
+  const [filterTrangThai, setFilterTrangThai] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: "",
+    congNghe: "",
+    linhVuc: "",
+    trangThai: "",
+  });
+  const normalizeText = (value) =>
+    value
+      ?.toString()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .trim();
+  const query = normalizeText(appliedFilters.search);
+  const filteredTopics = nganHangDeTai.filter((dt) => {
+    const haystack = [
+      dt.ma,
+      dt.ten,
+      dt.linhVuc,
+      dt.congNghe,
+      dt.moTa,
+    ]
+      .map(normalizeText)
+      .join(" ");
+    const matchSearch = !query || haystack.includes(query);
+    const matchCongNghe =
+      !appliedFilters.congNghe ||
+      normalizeText(dt.congNghe).includes(
+        normalizeText(appliedFilters.congNghe)
+      );
+    const matchLinhVuc =
+      !appliedFilters.linhVuc ||
+      normalizeText(dt.linhVuc).includes(
+        normalizeText(appliedFilters.linhVuc)
+      );
+    const matchTrangThai =
+      !appliedFilters.trangThai ||
+      (appliedFilters.trangThai === "Da dang ky" ? dt.daDangKy : !dt.daDangKy);
+    return matchSearch && matchCongNghe && matchLinhVuc && matchTrangThai;
+  });
+
+  const congNgheOptions = Array.from(
+    new Set(
+      nganHangDeTai
+        .flatMap((dt) => dt.congNghe.split(","))
+        .map((v) => v.trim())
+        .filter(Boolean)
+    )
+  );
+  const linhVucOptions = Array.from(
+    new Set(
+      nganHangDeTai
+        .flatMap((dt) => dt.linhVuc.split(","))
+        .map((v) => v.trim())
+        .filter(Boolean)
+    )
+  );
+
+  const handleSearch = () => {
+    setAppliedFilters({
+      search,
+      congNghe: filterCongNghe,
+      linhVuc: filterLinhVuc,
+      trangThai: filterTrangThai,
+    });
+  };
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
       <div className="bg-[#5c60c0] text-white px-5 py-3 rounded-t-xl flex items-center gap-3">
@@ -220,16 +289,36 @@ function NganHangView({ onBack, onDangKy }) {
             </button>
           )}
         </div>
-        <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
-          <option>Công nghệ ▾</option>
+        <select
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none"
+          value={filterCongNghe}
+          onChange={(e) => setFilterCongNghe(e.target.value)}
+        >
+          <option value="">Công nghệ ▾</option>
+          {congNgheOptions.map((cn) => (
+            <option key={cn} value={cn}>{cn}</option>
+          ))}
         </select>
-        <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
-          <option>Lĩnh vực ▾</option>
+        <select
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none"
+          value={filterLinhVuc}
+          onChange={(e) => setFilterLinhVuc(e.target.value)}
+        >
+          <option value="">Lĩnh vực ▾</option>
+          {linhVucOptions.map((lv) => (
+            <option key={lv} value={lv}>{lv}</option>
+          ))}
         </select>
-        <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
-          <option>Trạng thái ▾</option>
+        <select
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none"
+          value={filterTrangThai}
+          onChange={(e) => setFilterTrangThai(e.target.value)}
+        >
+          <option value="">Trạng thái ▾</option>
+          <option value="Da dang ky">Đã đăng ký</option>
+          <option value="Chua dang ky">Chưa đăng ký</option>
         </select>
-        <Button className="bg-[#5c60c0] text-white hover:bg-[#4a4ea8]">
+        <Button onClick={handleSearch} className="bg-[#5c60c0] text-white hover:bg-[#4a4ea8]">
           Tìm kiếm
         </Button>
       </div>
@@ -244,39 +333,47 @@ function NganHangView({ onBack, onDangKy }) {
             </tr>
           </thead>
           <tbody>
-            {nganHangDeTai.map((dt) => (
-              <tr key={dt.ma} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                <td className="px-4 py-3 font-mono text-xs text-gray-500">{dt.ma}</td>
-                <td className="px-4 py-3 font-medium text-gray-800 max-w-[160px]">{dt.ten}</td>
-                <td className="px-4 py-3 max-w-[120px]">
-                  {dt.linhVuc.split(",").map((lv, i) => (
-                    <span key={i} className="inline-block text-[#5c60c0] text-xs mr-1">{lv.trim()}</span>
-                  ))}
-                </td>
-                <td className="px-4 py-3 text-xs text-gray-500 max-w-[140px]">{dt.congNghe}</td>
-                <td className="px-4 py-3 text-xs text-gray-400 max-w-[200px] leading-relaxed">{dt.moTa}</td>
-                <td className="px-4 py-3">
-                  <Button
-                    onClick={() => {onDangKy(dt);
-                      toast.success("Hạnh động đã được ghi nhận", {
-                            className: "!bg-[#AAFAB8] !text-[#24AD47]",
-                      })
-                    }
-    
-                     }
-                    className={`
-                      ${dt.daDangKy
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-green-500 hover:bg-green-600 text-white"
-                      }`}
-                      size="sm"
-                      disabled = {dt.daDangKy}
-                  >     
-                    {dt.daDangKy ? "Đã đăng ký" : "Đăng ký"}
-                  </Button>
+            {filteredTopics.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-6 text-center text-sm text-gray-400">
+                  Không tìm thấy đề tài phù hợp.
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredTopics.map((dt) => (
+                <tr key={dt.ma} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{dt.ma}</td>
+                  <td className="px-4 py-3 font-medium text-gray-800 max-w-[160px]">{dt.ten}</td>
+                  <td className="px-4 py-3 max-w-[120px]">
+                    {dt.linhVuc.split(",").map((lv, i) => (
+                      <span key={i} className="inline-block text-[#5c60c0] text-xs mr-1">{lv.trim()}</span>
+                    ))}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-500 max-w-[140px]">{dt.congNghe}</td>
+                  <td className="px-4 py-3 text-xs text-gray-400 max-w-[200px] leading-relaxed">{dt.moTa}</td>
+                  <td className="px-4 py-3">
+                    <Button
+                      onClick={() => {onDangKy(dt);
+                        toast.success("Hạnh động đã được ghi nhận", {
+                              className: "!bg-[#AAFAB8] !text-[#24AD47]",
+                        })
+                      }
+      
+                       }
+                      className={`
+                        ${dt.daDangKy
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-green-500 hover:bg-green-600 text-white"
+                        }`}
+                        size="sm"
+                        disabled = {dt.daDangKy}
+                    >     
+                      {dt.daDangKy ? "Đã đăng ký" : "Đăng ký"}
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -339,9 +436,13 @@ function DaDangKy({ onDeXuatMoi, onNganHang ,topic}) {
 
 export default function DangKyDeTaiPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [access] = useState(() => getStudentAccess());
-  const [view, setView] = useState("");
+  const [view, setView] = useState(() => location.state?.view ?? "");
   const [topic, setTopic] = useState(null);
+  useEffect(() => {
+    if (location.state?.view) setView(location.state.view);
+  }, [location.state?.view]);
   if (!access.projectEnabled) {
     return (
       <div className="p-6">

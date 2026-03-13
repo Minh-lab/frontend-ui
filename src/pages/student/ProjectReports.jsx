@@ -1,4 +1,7 @@
-﻿import { useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { doAn, baoCaoDoAnList } from "../../data/studentData";
 import Modal from "../../components/Modal";
 import StatusBadge from "../../components/StatusBadge";
@@ -48,36 +51,75 @@ function ModalXemChiTiet({ bc, onClose }) {
   );
 }
 
+const reportSchema = yup.object().shape({
+  file: yup
+    .mixed()
+    .required("Vui lòng tải lên file báo cáo")
+    .test("file-present", "Vui lòng tải lên file báo cáo", (value) => {
+      if (!value) return false;
+      if (typeof value === "string") return value.trim().length > 0;
+      return true;
+    }),
+  link: yup
+    .string()
+    .required("Vui lòng nhập link source code")
+    .test("is-github", "Link source code phải là link GitHub hợp lệ", (value) => {
+      if (!value) return false;
+      const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+(\/.*)?$/;
+      return githubRegex.test(value);
+    }),
+});
+
 function ModalNopBaoCao({ bc, onClose }) {
-  const [file, setFile] = useState("bao_cao_doan3.pdf");
-  const [link, setLink] = useState("https://github.com/username/project");
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(reportSchema),
+    mode: "onChange",
+    defaultValues: {
+      file: "",
+      link: "",
+    },
+  });
+
+  const fileValue = watch("file");
+
+  const onSubmit = (data) => {
+    onClose();
+    bc.trangThai = "Cho duyet";
+    toast.success("Hạnh động đã được ghi nhận", {
+      className: "!bg-[#AAFAB8] !text-[#24AD47]",
+    });
+    console.log("Submit report data:", data);
+  };
 
   return (
     <Modal title={`${bc.ten} (Nộp báo cáo)`} onClose={onClose} size="md">
       <div className="space-y-4">
         <div>
           <p className="text-sm font-semibold text-gray-700 mb-2">Nộp báo cáo:</p>
-          <FileUpload value={file} onChange={setFile} />
+          <FileUpload value={fileValue} onChange={(v) => setValue("file", v, { shouldValidate: true })} />
+          {errors.file && <p className="text-red-500 text-xs mt-1">{errors.file.message}</p>}
         </div>
         <div>
           <p className="text-sm font-semibold text-gray-700 mb-2">Link source code:</p>
           <input
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]"
-            value={link} onChange={(e) => setLink(e.target.value)}
+            className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0] ${errors.link ? "border-red-500" : "border-gray-300"}`}
+            {...register("link")}
           />
+          {errors.link && <p className="text-red-500 text-xs mt-1">{errors.link.message}</p>}
         </div>
         <div className="flex justify-center gap-4 pt-2">
           <Button onClick={onClose} className="bg-red-500 hover:bg-red-600 text-white ">
             Hủy
           </Button>
-          <Button 
+          <Button
             className="bg-green-500 hover:bg-green-600 text-white "
-            onClick={()=> {
-              onClose();
-              toast.success("Hạnh động đã được ghi nhận", {
-                    className: "!bg-[#AAFAB8] !text-[#24AD47]",
-              })
-            }}
+            onClick={handleSubmit(onSubmit)}
           >
             Nộp
           </Button>
@@ -85,7 +127,6 @@ function ModalNopBaoCao({ bc, onClose }) {
       </div>
     </Modal>
   );
-  
 }
 
 export default function BaoCaoDoAnPage() {
@@ -168,11 +209,11 @@ export default function BaoCaoDoAnPage() {
                           Xem chi tiết
                         </Button>
                         <Button
-                          onClick={() => {setModal({ type: "nop", bc }); bc.trangThai = "Cho duyet"}}
+                          onClick={() => setModal({ type: "nop", bc })}
                           className={`text-white 
                             ${bc.trangThai === "Da hoan thanh" || bc.trangThai === "Cho duyet" ? "bg-gray-300 cursor-default" : "bg-green-500 hover:bg-green-600"}`}
-                            size="sm"
-                          disabled = {bc.trangThai  === "Da hoan thanh" || bc.trangThai === "Cho duyet"}
+                          size="sm"
+                          disabled={bc.trangThai === "Da hoan thanh" || bc.trangThai === "Cho duyet"}
                         >
                           Nộp
                         </Button>

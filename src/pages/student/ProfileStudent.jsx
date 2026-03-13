@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { student } from "../../data/studentData";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
 

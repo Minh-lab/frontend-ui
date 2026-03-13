@@ -2,9 +2,12 @@ import Modal from '@/components/Modal'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { sinhvienTT } from '@/data/businessData'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import tlu from "../../assets/logo-tlu.png"
 import { toast } from 'sonner'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 function PreviewBaoCao() {
   return (
     <Card className=" bg-white text-center ">
@@ -18,18 +21,51 @@ function PreviewBaoCao() {
   );
 }
 
+const reviewSchema = yup.object().shape({
+  diem: yup
+    .number()
+    .typeError("Điểm phải là một số")
+    .required("Vui lòng nhập điểm")
+    .min(0, "Điểm không được nhỏ hơn 0")
+    .max(10, "Điểm không được lớn hơn 10"),
+  comment: yup.string().required("Vui lòng nhập nhận xét chi tiết"),
+});
+
 const ManageInterns = () => {
   const [interns, setInterns] = useState(sinhvienTT)
   const [selectedSv, setSelectedSv] = useState(null)
-  const [comment, setComment] = useState("");
-  const [diem, setDiem] = useState("");
-  const [isGra,setIsGra] = useState();
-  const handleSaveReview = (comment,diem) => {
+  const [isGra, setIsGra] = useState();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(reviewSchema),
+    mode: "onChange",
+    defaultValues: {
+      diem: "",
+      comment: "",
+    },
+  });
+
+  useEffect(() => {
+    if (selectedSv) {
+      reset({
+        diem: selectedSv.diem > 0 ? selectedSv.diem : "",
+        comment: selectedSv.nhanXet || "",
+      });
+    }
+  }, [selectedSv, reset]);
+
+  const handleSaveReview = (data) => {
     if (!selectedSv) return
 
     setInterns((prevInterns) =>
       prevInterns.map((sv) =>
-        sv.id === selectedSv.id ? { ...sv, trangthai: "da danh gia" , diem: Number(diem),nhanXet:comment } : sv
+        sv.id === selectedSv.id ? { ...sv, trangthai: "da danh gia", diem: Number(data.diem), nhanXet: data.comment } : sv
       )
     )
     setSelectedSv(null)
@@ -107,7 +143,7 @@ const ManageInterns = () => {
                         <td className='px-4 py-3'>
                             <div className='flex gap-5'>
                               <Button
-                                onClick={() => {setSelectedSv(sv);setComment(sv.nhanXet);setDiem(sv.diem); setIsGra(sv.trangthai === "da danh gia")}}
+                                onClick={() => { setSelectedSv(sv); setIsGra(sv.trangthai === "da danh gia") }}
                                 className="disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 Xem chi tiết
@@ -142,30 +178,30 @@ const ManageInterns = () => {
                   
                   <div className='flex gap-3 items-center'>
                     <span className='font-bold p-1'>Điểm doanh nghiệp chấm: </span>
-                   <input
-                      
-                      type="number"
-                      step="0.25"
-                      value={diem}
-                      onChange={(e) => setDiem(e.target.value)}
-                      className='bg-[#DBF7E4] text-[#0FB245] flex-1 border border-gray-400 p-1 h-[50px]'
-                    />
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        step="0.25"
+                        {...register("diem")}
+                        className={`bg-[#DBF7E4] text-[#0FB245] w-full border p-1 h-[50px] ${errors.diem ? "border-red-500" : "border-gray-400"}`}
+                      />
+                      {errors.diem && <p className="text-red-500 text-xs mt-1">{errors.diem.message}</p>}
+                    </div>
                   </div><br />
 
                   <span className='font-bold'>Nhận xét chi tiết:</span>
-                  <div className='flex'>
-                   <textarea
-                      
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      className='flex-1 bg-[#FCFCFC] border border-gray-500 p-1 h-[80px]'
+                  <div className='flex flex-col'>
+                    <textarea
+                      {...register("comment")}
+                      className={`flex-1 bg-[#FCFCFC] border p-1 h-[80px] ${errors.comment ? "border-red-500" : "border-gray-500"}`}
                     />
+                    {errors.comment && <p className="text-red-500 text-xs mt-1">{errors.comment.message}</p>}
                   </div>
-                  
-                    <div className='flex gap-4 pt-4 justify-end'>
-                      <Button  onClick = {() => setSelectedSv(null) } className="bg-[#FF0000] hover:bg-[#cc0000] text-white w-[60px] h-9 p-0">Hủy</Button>
-                      <Button  onClick={() => handleSaveReview(comment, diem)} className="bg-[#24AD47] hover:bg-[#1f933d] text-white w-[80px] h-9 p-0">Lưu</Button>
-                    </div>
+
+                  <div className='flex gap-4 pt-4 justify-end'>
+                    <Button onClick={() => setSelectedSv(null)} className="bg-[#FF0000] hover:bg-[#cc0000] text-white w-[60px] h-9 p-0">Hủy</Button>
+                    <Button onClick={handleSubmit(handleSaveReview)} className="bg-[#24AD47] hover:bg-[#1f933d] text-white w-[80px] h-9 p-0">Lưu</Button>
+                  </div>
                   
                 </div>
             </Modal>

@@ -9,11 +9,41 @@ import React, { useMemo, useState } from 'react'
 import { visibleTaskLimit } from '@/lib/data'
 import Modal from '@/components/Modal'
 import { toast } from 'sonner'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+
+const reportSchema = yup.object().shape({
+    comment: yup.string().required('Vui lòng nhập nhận xét'),
+})
 
 
-function PheDuyetBaoCao({ item, onBack, onApprove }) {
-    const isGraded = item.trangthai === 'da duyet'
-    const [comment, setComment] = useState(item.nhanXet ?? "")
+function PheDuyetBaoCao({ item, onBack, onApprove, onReject }) {
+    const isGraded = item.trangthai === 'da duyet' || item.trangthai === 'tu choi'
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm({
+        resolver: yupResolver(reportSchema),
+        defaultValues: {
+            comment: item.nhanXet ?? "",
+        }
+    })
+
+    const onApproveSubmit = (data) => {
+        onApprove(item.id, data.comment)
+    }
+
+    const onRejectSubmit = (data) => {
+        if (onReject) {
+            onReject(item.id, data.comment)
+        } else {
+            toast.error('Chức năng từ chối chưa được cấu hình')
+        }
+    }
+
     return (
         <div>
             <div className='flex gap-2 items-center justify-center'>
@@ -23,55 +53,73 @@ function PheDuyetBaoCao({ item, onBack, onApprove }) {
                     <ChevronLeft></ChevronLeft>
                     Quay lại
                 </Button>
-                <span>Báo cáo thực tập</span>
+                <span className="text-lg font-bold">Báo cáo thực tập</span>
             </div>
 
-            <div className='flex flex-col sm:flex-row gap-3 pt-3'>
-                <Card className="overflow-hidden border border-slate-200 bg-[#f6f0df] p-5">
-                    <div className="flex h-[620px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-center text-slate-500">
-                        <FileText className="mb-4 size-14 text-slate-500" />
-                        <p className="text-xl font-medium">Bản xem trước tài liệu PDF sẽ hiện thị tại đây</p>
-
+            <div className='flex flex-col sm:flex-row gap-4 pt-4'>
+                <Card className="overflow-hidden border border-slate-200 bg-[#f6f0df] p-5 lg:w-2/3">
+                    <div className="flex h-[600px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-center text-slate-500">
+                        <FileText className="mb-4 size-14 text-slate-300" />
+                        <p className="text-lg font-medium">Bản xem trước tài liệu PDF sẽ hiện thị tại đây</p>
                     </div>
                 </Card>
-                <div className='flex flex-col gap-3 flex-1 '>
-                    <Card>
-                        <div className='px-4'>
-                            <div className='flex flex-col sm:flex-row gap-10 items-center'>
-                                <span className="text-[16px] font-semibold leading-[25.6px]">Thông tin báo cáo thực tập</span>
-                                <span className='bg-[#f9f5ff] border border-[#e9d7fe] text[#6941b6] rounded-xl p-1'>{item.trangthai}</span>
-                            </div> <hr />
-                            <div>
-                                <span className="text-sm text-slate-500">Sinh viên thực hiện</span> <br />
-                                <span className="text-[16px] font-semibold leading-[25.6px]">{item.hoTen}</span><br /> <br />
-                                <span className="text-sm text-slate-500">Công ty</span> <br />
-                                <span className='text-[#2563eb]'> {item.congty}</span><br /> <br />
-                                <span className="text-sm text-slate-500">Vị trí đăng ký</span> <br />
-                                <span className='text-[#2563eb]'>{item.vitri}</span>
-
+                <div className='flex flex-col gap-4 flex-1'>
+                    <Card className="p-6">
+                        <div className='flex flex-col gap-4'>
+                            <div className='flex justify-between items-center'>
+                                <span className="text-base font-bold text-slate-800">Thông tin báo cáo thực tập</span>
+                                <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${item.trangthai === 'da duyet' ? 'bg-[#f0fdf4] text-[#16a34a] border-[#bbf7d0]' : item.trangthai === 'tu choi' ? 'bg-[#fef2f2] text-[#dc2626] border-[#fecaca]' : 'bg-[#fffbeb] text-[#d97706] border-[#fde68a]'}`}>
+                                    {item.trangthai}
+                                </span>
+                            </div>
+                            <div className="space-y-4 pt-2">
+                                <div>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Sinh viên thực hiện</span>
+                                    <p className="text-[15px] font-bold text-slate-800">{item.hoTen}</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Công ty</span>
+                                    <p className="text-[15px] font-bold text-[#2563eb]">{item.congty}</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Vị trí đăng ký</span>
+                                    <p className="text-[15px] font-bold text-[#2563eb]">{item.vitri}</p>
+                                </div>
                             </div>
                         </div>
                     </Card>
-                    <Card>
-                        <div className='px-4'>
+                    <Card className="p-6">
+                        <div className='space-y-4'>
                             <div>
-                                <span>Nhận xét</span><br />
+                                <label className="text-sm font-bold text-slate-700 block mb-2">Nhận xét <span className="text-red-500">*</span></label>
                                 <textarea
-                                    value={comment}
-                                    onChange={(event) => setComment(event.target.value)}
+                                    {...register('comment')}
                                     disabled={isGraded}
-                                    className="w-full border border-gray-300 rounded-lg p-3 text-sm 
-                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                                hover:border-gray-400 transition resize-none"
-                                    placeholder="Nhập nội dung..."
+                                    className={`w-full border ${errors.comment ? 'border-red-500' : 'border-gray-200'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/50 focus:border-[#7c3aed] transition resize-none min-h-[150px]`}
+                                    placeholder="Nhập nội dung nhận xét..."
                                 ></textarea>
+                                {errors.comment && <p className="text-xs text-red-500 mt-1 font-medium">{errors.comment.message}</p>}
                             </div>
-                            <div className='flex gap-10'>
-                                <Button disabled={isGraded} onClick={onBack} className="bg-white-500 border border-red-300 text-red-500 hover:bg-[#F4F4F4]">Từ chối</Button>
-                                <Button disabled={isGraded} onClick={() => onApprove(item.id, comment)}>Duyệt</Button>
+                            <div className='flex gap-4 pt-2'>
+                                <Button 
+                                    type="button"
+                                    disabled={isGraded} 
+                                    onClick={handleSubmit(onRejectSubmit)} 
+                                    className="flex-1 bg-white border border-red-200 text-red-500 hover:bg-red-50 font-bold rounded-xl"
+                                >
+                                    Từ chối
+                                </Button>
+                                <Button 
+                                    type="button"
+                                    disabled={isGraded} 
+                                    onClick={handleSubmit(onApproveSubmit)}
+                                    className="flex-1 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold rounded-xl shadow-md shadow-purple-100"
+                                >
+                                    Duyệt
+                                </Button>
                             </div>
                         </div>
-                    </Card  >
+                    </Card>
                 </div>
             </div>
         </div>
@@ -256,9 +304,35 @@ const InternReports = () => {
 
         setTtSV(null)
     }
+
+    const handleReject = (reportId, comment) => {
+        setReports((prev) =>
+            prev.map((report) =>
+                report.id === reportId
+                    ? { ...report, trangthai: "tu choi", nhanXet: comment }
+                    : report
+            )
+        )
+
+        toast.error('Đã từ chối báo cáo thực tập', {
+            className: '!bg-[#fef2f2] !text-[#991b1b]',
+        })
+
+        setTtSV(null)
+    }
+
     return (
         <div>
-            {ttSV ? <PheDuyetBaoCao onApprove={handleApprove} item={ttSV} onBack={() => setTtSV(null)} /> : <BaoCaoThucTap report={reports} onChon={(item) => setTtSV(item)} />}
+            {ttSV ? (
+                <PheDuyetBaoCao 
+                    onApprove={handleApprove} 
+                    onReject={handleReject}
+                    item={ttSV} 
+                    onBack={() => setTtSV(null)} 
+                />
+            ) : (
+                <BaoCaoThucTap report={reports} onChon={(item) => setTtSV(item)} />
+            )}
         </div>
     )
 }

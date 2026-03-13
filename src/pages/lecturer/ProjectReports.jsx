@@ -8,6 +8,13 @@ import { visibleTaskLimit } from '@/lib/data'
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+
+const reportSchema = yup.object().shape({
+  comment: yup.string().required('Vui lòng nhập nhận xét'),
+})
 
 function ReportStatusBadge({ status }) {
   const isApproved = status === 'da duyet'
@@ -25,8 +32,26 @@ function ReportStatusBadge({ status }) {
 }
 
 function ReportDetailModal({ item, onClose, onApprove, onReject }) {
-  const [comment, setComment] = useState(item.nhanXet ?? '')
   const isApproved = item.trangthai === 'da duyet'
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(reportSchema),
+    defaultValues: {
+      comment: item.nhanXet ?? '',
+    },
+  })
+
+  const onApproveSubmit = (data) => {
+    onApprove(item.id, data.comment)
+  }
+
+  const onRejectSubmit = (data) => {
+    onReject(item.id, data.comment)
+  }
 
   return (
     <Modal
@@ -66,36 +91,38 @@ function ReportDetailModal({ item, onClose, onApprove, onReject }) {
               </div>
             </Card>
 
-            <div className="mt-5">
+            <form className="mt-5">
               <label className="mb-2 block text-xs font-bold uppercase text-slate-500">
-                Nhận xét chuyên môn
+                Nhận xét chuyên môn <span className="text-red-500">*</span>
               </label>
               <textarea
-                value={comment}
+                {...register('comment')}
                 disabled={isApproved}
-                onChange={(event) => setComment(event.target.value)}
-                className="min-h-[130px] w-full rounded-lg border border-slate-200 p-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100"
+                className={`min-h-[130px] w-full rounded-lg border ${errors.comment ? 'border-red-500' : 'border-slate-200'} p-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100`}
                 placeholder="Nhap nhan xet chi tiet..."
               />
-            </div>
+              {errors.comment && <p className="mt-1 text-xs text-red-500">{errors.comment.message}</p>}
 
-            <div className="mt-5 flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => onReject(item.id, comment)}
-                disabled={isApproved}
-                className="border-red-300 text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Từ chối báo cáo
-              </Button>
-              <Button
-                onClick={() => onApprove(item.id, comment)}
-                disabled={isApproved}
-                className="bg-[#7c3aed] text-white hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Duyệt
-              </Button>
-            </div>
+              <div className="mt-5 flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSubmit(onRejectSubmit)}
+                  disabled={isApproved}
+                  className="border-red-300 text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Từ chối báo cáo
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSubmit(onApproveSubmit)}
+                  disabled={isApproved}
+                  className="bg-[#7c3aed] text-white hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Duyệt
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

@@ -1,7 +1,11 @@
 import React, { useState } from "react";
-import { X } from "lucide-react";
+import { X, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { lecturerProfileData } from "@/data/lecturerData";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { toast } from "sonner";
 
 export default function LecturerProfile() {
     const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
@@ -160,7 +164,46 @@ export default function LecturerProfile() {
 }
 
 // ----- Modals Components -----
+
+const leaveSchema = yup.object().shape({
+    title: yup.string().required("Vui lòng nhập tiêu đề yêu cầu"),
+    description: yup.string().required("Vui lòng mô tả chi tiết lý do"),
+    startDate: yup.string().required("Vui lòng chọn ngày bắt đầu"),
+    endDate: yup
+        .string()
+        .required("Vui lòng chọn ngày kết thúc")
+        .test("is-after", "Ngày kết thúc phải sau ngày bắt đầu", function (val) {
+            const { startDate } = this.parent;
+            return !startDate || !val || new Date(val) >= new Date(startDate);
+        }),
+    file: yup
+        .mixed()
+        .test("fileSize", "Dung lượng file không được vượt quá 3MB", (value) => {
+            if (!value || (value instanceof FileList && value.length === 0)) return true;
+            return value[0].size <= 3 * 1024 * 1024;
+        }),
+});
+
 function LeaveModal({ onClose }) {
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        watch,
+    } = useForm({
+        resolver: yupResolver(leaveSchema),
+        mode: "onChange",
+    });
+
+    const file = watch("file");
+    const fileName = file && file[0] ? file[0].name : "No file chosen";
+
+    const onSubmit = (data) => {
+        console.log("Leave Request Data:", data);
+        toast.success("Gửi yêu cầu nghỉ phép thành công", { className: "!bg-[#dcfce7] !text-[#047857]" });
+        onClose();
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
             <div
@@ -179,96 +222,115 @@ function LeaveModal({ onClose }) {
                 </div>
 
                 {/* Form Body */}
-                <div className="p-6 space-y-5">
-                    <div>
-                        <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Tiêu đề (TITLE)</label>
-                        <input
-                            type="text"
-                            placeholder="Nhập tiêu đề yêu cầu..."
-                            className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent transition-all placeholder:text-gray-400 text-gray-700"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Mô tả lý do (DESCRIPTION)</label>
-                        <textarea
-                            rows={3}
-                            placeholder="Mô tả chi tiết lý do nghỉ phép..."
-                            className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent resize-none transition-all placeholder:text-gray-400 text-gray-700"
-                        ></textarea>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div className="p-6 space-y-5">
                         <div>
-                            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Ngày bắt đầu (START_DATE)</label>
-                            <input
-                                type="date"
-                                className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent transition-all text-gray-700 font-medium"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Ngày kết thúc (END_DATE)</label>
-                            <input
-                                type="date"
-                                className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent transition-all text-gray-700 font-medium"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Đơn nghỉ phép (FILE_PATH: ẢNH/PDF &lt; 3MB)</label>
-                        <div className="border border-gray-200 rounded-lg flex items-center bg-white p-1 hover:border-gray-300 transition-colors">
-                            <label className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md border border-gray-300 text-xs font-semibold cursor-pointer transition-colors shadow-sm">
-                                Choose File
-                                <input type="file" className="hidden" accept=".pdf,image/*" />
+                            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+                                Tiêu đề (TITLE) <span className="text-red-500">*</span>
                             </label>
-                            <span className="ml-3 text-sm text-gray-500 font-medium">No file chosen</span>
+                            <input
+                                {...register("title")}
+                                type="text"
+                                placeholder="Nhập tiêu đề yêu cầu..."
+                                className={`w-full border ${errors.title ? "border-red-500" : "border-gray-200"} rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent transition-all placeholder:text-gray-400 text-gray-700`}
+                            />
+                            {errors.title && <p className="text-red-500 text-[10px] mt-1">{errors.title.message}</p>}
                         </div>
-                        <p className="text-[#EF4444] text-xs mt-2 font-medium">Dung lượng file không vượt quá 3MB.</p>
-                    </div>
-                </div>
 
-                {/* Actons */}
-                <div className="bg-[#F9FAFB] px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
-                    <Button variant="outline" onClick={onClose} className="bg-[#E5E7EB] hover:bg-[#D1D5DB] text-gray-700 font-semibold border-0 rounded-lg px-6">
-                        Hủy
-                    </Button>
-                    <Button className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold rounded-lg px-6 shadow-md shadow-purple-200">
-                        Gửi yêu cầu
-                    </Button>
-                </div>
+                        <div>
+                            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+                                Mô tả lý do (DESCRIPTION) <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                {...register("description")}
+                                rows={3}
+                                placeholder="Mô tả chi tiết lý do nghỉ phép..."
+                                className={`w-full border ${errors.description ? "border-red-500" : "border-gray-200"} rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent resize-none transition-all placeholder:text-gray-400 text-gray-700`}
+                            ></textarea>
+                            {errors.description && <p className="text-red-500 text-[10px] mt-1">{errors.description.message}</p>}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+                                    Ngày bắt đầu (START_DATE) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    {...register("startDate")}
+                                    type="date"
+                                    className={`w-full border ${errors.startDate ? "border-red-500" : "border-gray-200"} rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent transition-all text-gray-700 font-medium`}
+                                />
+                                {errors.startDate && <p className="text-red-500 text-[10px] mt-1">{errors.startDate.message}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+                                    Ngày kết thúc (END_DATE) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    {...register("endDate")}
+                                    type="date"
+                                    className={`w-full border ${errors.endDate ? "border-red-500" : "border-gray-200"} rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent transition-all text-gray-700 font-medium`}
+                                />
+                                {errors.endDate && <p className="text-red-500 text-[10px] mt-1">{errors.endDate.message}</p>}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Đơn nghỉ phép (FILE_PATH: ẢNH/PDF &lt; 3MB)</label>
+                            <div className={`border ${errors.file ? "border-red-500" : "border-gray-200"} rounded-lg flex items-center bg-white p-1 hover:border-gray-300 transition-colors`}>
+                                <label className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md border border-gray-300 text-xs font-semibold cursor-pointer transition-colors shadow-sm">
+                                    Choose File
+                                    <input {...register("file")} type="file" className="hidden" accept=".pdf,image/*" />
+                                </label>
+                                <span className={`ml-3 text-sm font-medium ${errors.file ? "text-red-500" : "text-gray-500"}`}>
+                                    {fileName}
+                                </span>
+                            </div>
+                            {errors.file ? (
+                                <p className="text-[#EF4444] text-xs mt-2 font-medium">{errors.file.message}</p>
+                            ) : (
+                                <p className="text-gray-400 text-[10px] mt-2 font-medium italic">Dung lượng file không vượt quá 3MB.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Actons */}
+                    <div className="bg-[#F9FAFB] px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
+                        <Button type="button" variant="outline" onClick={onClose} className="bg-[#E5E7EB] hover:bg-[#D1D5DB] text-gray-700 font-semibold border-0 rounded-lg px-6">
+                            Hủy
+                        </Button>
+                        <Button type="submit" className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold rounded-lg px-6 shadow-md shadow-purple-200">
+                            Gửi yêu cầu
+                        </Button>
+                    </div>
+                </form>
             </div>
         </div>
     );
 }
 
 function SpecModal({ options, currentSpecs, onClose, onSave }) {
-    // We map currentSpecs to existing options if possible, otherwise we leave them so they might 
-    // be shown somewhere else, but for now we'll match by name string
-    const [selected, setSelected] = useState(() => {
+    const [selected, setSelected] = React.useState(() => {
         const initialSelected = new Set();
         currentSpecs.forEach(spec => {
-            // Very simple partial match for initial render if names differ slightly
             const match = options.find(o => o.includes(spec) || spec.includes(o));
             if (match) initialSelected.add(match);
-            else initialSelected.add(spec); // It might be a custom spec
+            else initialSelected.add(spec);
         });
         return initialSelected;
     });
 
-    const [customSpec, setCustomSpec] = useState("");
+    const [customSpec, setCustomSpec] = React.useState("");
+    const [error, setError] = React.useState("");
 
     const toggleSelection = (option) => {
         const next = new Set(selected);
-        // Delete if exact match or if there's a loose match
         let found = false;
-        
-        // Check exact
+
         if (next.has(option)) {
             next.delete(option);
             found = true;
         } else {
-            // Check loose match
             Array.from(next).forEach(item => {
                 if (item.includes(option) || option.includes(item)) {
                     next.delete(item);
@@ -276,20 +338,30 @@ function SpecModal({ options, currentSpecs, onClose, onSave }) {
                 }
             });
         }
-        
+
         if (!found) {
             next.add(option);
         }
         setSelected(next);
+        if (next.size > 0 || customSpec.trim() !== "") setError("");
     };
 
     const handleSave = () => {
-        // combine the selected checkboxes with whatever is in the custom input
         let finalSpecs = Array.from(selected);
-        if (customSpec.trim() !== '') {
-            finalSpecs.push(customSpec.trim());
+        const trimmedCustom = customSpec.trim();
+
+        if (finalSpecs.length === 0 && trimmedCustom === "") {
+            setError("Vui lòng chọn ít nhất một chuyên môn hoặc nhập chuyên môn mới.");
+            return;
         }
+
+        if (trimmedCustom !== "") {
+            finalSpecs.push(trimmedCustom);
+        }
+
         onSave(finalSpecs);
+        toast.success("Cập nhật chuyên môn thành công", { className: "!bg-[#dcfce7] !text-[#047857]" });
+        onClose(); // Added onClose here
     };
 
     return (
@@ -338,10 +410,19 @@ function SpecModal({ options, currentSpecs, onClose, onSave }) {
                         <input
                             type="text"
                             value={customSpec}
-                            onChange={(e) => setCustomSpec(e.target.value)}
+                            onChange={(e) => {
+                                setCustomSpec(e.target.value);
+                                if (e.target.value.trim() !== "" || selected.size > 0) setError("");
+                            }}
                             placeholder="Nhập chuyên môn không có trong danh sách..."
-                            className="w-full border border-gray-200 rounded-lg px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent transition-all placeholder:text-gray-400 text-gray-700"
+                            className={`w-full border ${error ? "border-red-500" : "border-gray-200"} rounded-lg px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent transition-all placeholder:text-gray-400 text-gray-700`}
                         />
+                        {error && (
+                            <div className="flex items-center gap-1.5 mt-2 text-red-500">
+                                <TriangleAlert size={14} strokeWidth={2.5} />
+                                <p className="text-[11px] font-bold uppercase tracking-wider">{error}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

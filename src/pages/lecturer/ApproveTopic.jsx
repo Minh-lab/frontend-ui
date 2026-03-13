@@ -4,6 +4,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+
+const approveSchema = yup.object().shape({
+    comment: yup.string().required('Vui lòng nhập nhận xét hoặc lý do từ chối'),
+});
 
 const initialData = [
     { id: 1, msv: '2351170101', name: 'Nguyễn Thị Hải Anh', class: '65KTPM', topicName: 'Ứng dụng AI nhận diện khuôn mặt sinh viên', tech: 'Python, OpenCV, YOLOv8', desc: 'Xây dựng hệ thống camera nhận diện khuôn mặt điểm danh sinh viên khi vào lớp, tự động cập nhật lên hệ thống quản lý.' },
@@ -18,7 +25,15 @@ const ApproveTopic = () => {
     const [data, setData] = useState(initialData);
     const [page, setPage] = useState(1);
     const [selectedTopic, setSelectedTopic] = useState(null);
-    const [comment, setComment] = useState('');
+    
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm({
+        resolver: yupResolver(approveSchema),
+    });
     const itemsPerPage = 5;
 
     const totalPages = Math.max(1, Math.ceil(data.length / itemsPerPage));
@@ -34,22 +49,25 @@ const ApproveTopic = () => {
         pageItems.push(i);
     }
 
-    const handleApprove = () => {
+    const handleOpenTopic = (topic) => {
+        setSelectedTopic(topic);
+        reset({ comment: '' });
+    };
+
+    const onApproveSubmit = (dataInput) => {
         setData((prev) => prev.filter((item) => item.id !== selectedTopic.id));
         toast.success(`Đã duyệt đề tài cho sinh viên ${selectedTopic.name}`, {
             className: '!bg-[#dcfce7] !text-[#047857]',
         });
         setSelectedTopic(null);
-        setComment('');
     };
 
-    const handleReject = () => {
+    const onRejectSubmit = (dataInput) => {
         setData((prev) => prev.filter((item) => item.id !== selectedTopic.id));
         toast.error(`Đã từ chối đề tài của sinh viên ${selectedTopic.name}`, {
             className: '!bg-[#fee2e2] !text-[#b91c1c]',
         });
         setSelectedTopic(null);
-        setComment('');
     };
 
     return (
@@ -95,7 +113,7 @@ const ApproveTopic = () => {
                                                 variant="ghost"
                                                 size="sm"
                                                 className="text-[#3b82f6] hover:text-[#2563eb] hover:bg-blue-50 font-medium h-8"
-                                                onClick={() => setSelectedTopic(item)}
+                                                onClick={() => handleOpenTopic(item)}
                                             >
                                                 <span className="mr-1 inline-block w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></span>
                                                 Xem chi tiết
@@ -167,7 +185,6 @@ const ApproveTopic = () => {
                             <button
                                 onClick={() => {
                                     setSelectedTopic(null);
-                                    setComment('');
                                 }}
                                 className="bg-red-500 hover:bg-red-600 text-white p-1.5 rounded transition-colors"
                             >
@@ -222,14 +239,14 @@ const ApproveTopic = () => {
 
                                 <div className="mt-6">
                                     <label className="text-xs font-bold text-slate-600 block mb-2">
-                                        Nhận xét / Lý do từ chối (Gửi cho sinh viên):
+                                        Nhận xét / Lý do từ chối (Gửi cho sinh viên): <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
-                                        value={comment}
-                                        onChange={(e) => setComment(e.target.value)}
+                                        {...register('comment')}
                                         placeholder="Nhập nhận xét chi tiết cho sinh viên tại đây..."
-                                        className="w-full min-h-[100px] p-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6d28d9] focus:border-transparent resize-y"
+                                        className={`w-full min-h-[100px] p-3 text-sm border ${errors.comment ? 'border-red-500' : 'border-slate-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6d28d9] focus:border-transparent resize-y`}
                                     ></textarea>
+                                    {errors.comment && <p className="text-xs text-red-500 mt-1">{errors.comment.message}</p>}
                                 </div>
                             </div>
                         </div>
@@ -238,13 +255,13 @@ const ApproveTopic = () => {
                         <div className="p-4 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50">
                             <Button
                                 variant="outline"
-                                onClick={handleReject}
+                                onClick={handleSubmit(onRejectSubmit)}
                                 className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 px-6 font-semibold"
                             >
                                 Từ chối
                             </Button>
                             <Button
-                                onClick={handleApprove}
+                                onClick={handleSubmit(onApproveSubmit)}
                                 className="bg-[#6d28d9] hover:bg-[#5b21b6] text-white px-6 font-semibold"
                             >
                                 Duyệt đề tài
