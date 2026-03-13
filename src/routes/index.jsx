@@ -10,7 +10,6 @@ import useAuthStore from "@/store/useAuthStore";
 import { studentRoutes } from "./student.routes";
 import { lecturerRoutes } from "./lecturer.routes";
 // import { adminRoutes } from "./admin.routes";
-// import { lecturerRoutes } from "./lecturer.routes";
 import { adminRoutes } from "./admin.routes";
 import { facultyRoutes } from "./faculty.routes";
 import { companyRoutes } from "./company.routes";
@@ -41,14 +40,14 @@ export default function AppRouter() {
     {
       path: "/",
       // Lớp bảo vệ 1: Phải đăng nhập mới được vào AppLayout
-      element: <ProtectedRoute />, 
+      element: <ProtectedRoute />,
       children: [
         {
           element: <AppLayout />, // Bộ khung Header/Footer/Sidebar
           children: [
             // Tự động điều hướng khi vào trang chủ "/"
             { index: true, element: <RoleRedirect /> },
-            
+
 
             // // --- MODULE SINH VIÊN ---
             {

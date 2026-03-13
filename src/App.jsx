@@ -14,7 +14,7 @@ import { student } from "./data/studentData";
  */
 function App() {
   const setAuth = useAuthStore((state) => state.setAuth);
-  
+
   // ==========================================================
   // GIẢ LẬP ĐĂNG NHẬP (MOCK AUTH)
   // Bạn hãy thay đổi giá trị 'role' để kiểm tra các giao diện khác nhau:
@@ -22,11 +22,11 @@ function App() {
   // ==========================================================
   useEffect(() => {
     setAuth(
-      { 
-        name: student.hoTen, 
+      {
+        name: student.hoTen,
       },
       "dummy-access-token",
-      "student" // Đang để vai trò VPK theo yêu cầu của bạn
+      "lecturer" // Đang để vai trò VPK theo yêu cầu của bạn
     );
   }, [setAuth]);
 
@@ -37,7 +37,7 @@ function App() {
         - position: Vị trí xuất hiện trên màn hình
       */}
       <Toaster position="bottom-right" richColors closeButton />
-      
+
       {/* AppRouter: Chứa toàn bộ logic định tuyến lồng nhau (Nested Routes), 
         phân quyền (ProtectedRoute) và bộ khung giao diện (AppLayout).
       */}
