@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Search,
   Plus,
@@ -6,6 +6,7 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  TriangleAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { TOPICS } from "@/data/lecturerData";
+import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 6;
 const EMPTY_FORM = {
@@ -148,17 +150,18 @@ const Topics = () => {
         prev.map((item) =>
           item.id === editingId
             ? {
-                ...item,
-                ...formData,
-                code: formData.code.trim(),
-                name: formData.name.trim(),
-                specialization: formData.specialization.trim(),
-                technology: formData.technology.trim(),
-                description: formData.description.trim(),
-              }
+              ...item,
+              ...formData,
+              code: formData.code.trim(),
+              name: formData.name.trim(),
+              specialization: formData.specialization.trim(),
+              technology: formData.technology.trim(),
+              description: formData.description.trim(),
+            }
             : item
         )
       );
+      toast.success("Cập nhật đề tài thành công", { className: "!bg-[#dcfce7] !text-[#047857]" });
     } else {
       const nextId = topicsData.length
         ? Math.max(...topicsData.map((item) => item.id)) + 1
@@ -176,6 +179,7 @@ const Topics = () => {
           status: formData.status,
         },
       ]);
+      toast.success("Thêm đề tài thành công", { className: "!bg-[#dcfce7] !text-[#047857]" });
     }
 
     handleCloseForm();
@@ -186,6 +190,7 @@ const Topics = () => {
     setTopicsData((prev) => prev.filter((item) => item.id !== deletingId));
     if (editingId === deletingId) handleCloseForm();
     setDeletingId(null);
+    toast.success("Xóa đề tài thành công", { className: "!bg-[#dcfce7] !text-[#047857]" });
   };
 
   return (
@@ -381,85 +386,168 @@ const Topics = () => {
           else handleCloseForm();
         }}
       >
-        <AlertDialogContent className="max-w-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{editingId ? "Sửa đề tài" : "Thêm đề tài mới"}</AlertDialogTitle>
-            <AlertDialogDescription>
-              Nhập đầy đủ thông tin trước khi lưu.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Input
-              value={formData.code}
-              onChange={(event) => handleFormChange("code", event.target.value)}
-              placeholder="Mã đề tài"
-            />
-            <Input
-              value={formData.name}
-              onChange={(event) => handleFormChange("name", event.target.value)}
-              placeholder="Tên đề tài"
-            />
-            <select
-              value={formData.specialization}
-              onChange={(event) => handleFormChange("specialization", event.target.value)}
-              className="h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/20"
-            >
-              <option value="">Chuyên môn</option>
-              {specializations.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-            <select
-              value={formData.technology}
-              onChange={(event) => handleFormChange("technology", event.target.value)}
-              className="h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/20"
-            >
-              <option value="">Công nghệ</option>
-              {technologies.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-            <Input
-              value={formData.description}
-              onChange={(event) => handleFormChange("description", event.target.value)}
-              placeholder="Mô tả"
-            />
-            <select
-              value={formData.status}
-              onChange={(event) => handleFormChange("status", event.target.value)}
-              className="h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/20"
-            >
-              <option value="">Trạng thái</option>
-              <option value="Khả dụng">Khả dụng</option>
-              <option value="Đã được đăng ký">Đã được đăng ký</option>
-            </select>
+        <AlertDialogContent className="max-w-[500px] p-0 overflow-hidden border-0 shadow-xl rounded-2xl">
+          <div className="bg-[#6d28d9] px-6 py-4 flex flex-col items-center">
+            <h2 className="text-white text-[15px] font-bold uppercase tracking-wider w-full text-left">
+              {editingId ? "CHỈNH SỬA ĐỀ TÀI" : "THÊM ĐỀ TÀI MỚI"}
+            </h2>
           </div>
+          <div className="px-6 py-6 pb-4 bg-white max-h-[80vh] overflow-y-auto">
+            {editingId && (
+              <p className="text-xs text-slate-500 font-medium mb-4">
+                Đang chỉnh sửa: <span className="font-bold text-slate-700">{formData.code}</span>
+              </p>
+            )}
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                    MÃ ĐỀ TÀI {editingId ? "" : "*"}
+                  </label>
+                  <Input
+                    value={formData.code}
+                    onChange={(event) => handleFormChange("code", event.target.value)}
+                    placeholder="Mã đề tài"
+                    className="h-10 rounded-lg border-slate-200 focus:border-[#6d28d9] focus:ring-[#6d28d9]/20"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                    TRẠNG THÁI {editingId ? "" : "*"}
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(event) => handleFormChange("status", event.target.value)}
+                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-[#6d28d9] focus:ring-[3px] focus:ring-[#6d28d9]/20"
+                  >
+                    <option value="">Trạng thái</option>
+                    <option value="Khả dụng">Khả dụng</option>
+                    <option value="Đã được đăng ký">Đã được đăng ký</option>
+                  </select>
+                </div>
+              </div>
 
-          <div className="mt-2 flex justify-end gap-2">
-            <Button variant="outline" onClick={handleCloseForm}>
-              Hủy
-            </Button>
-            <Button variant="submit" onClick={handleSaveTopic}>
-              {editingId ? "Lưu cập nhật" : "Thêm đề tài"}
-            </Button>
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  TÊN ĐỀ TÀI {editingId ? "" : "*"}
+                </label>
+                <Input
+                  value={formData.name}
+                  onChange={(event) => handleFormChange("name", event.target.value)}
+                  placeholder="Nhập tên đề tài (Không ký tự đặc biệt)"
+                  className="h-10 rounded-lg border-slate-200 focus:border-[#6d28d9] focus:ring-[#6d28d9]/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                    CHUYÊN MÔN {editingId ? "" : "*"}
+                  </label>
+                  <select
+                    value={formData.specialization}
+                    onChange={(event) => handleFormChange("specialization", event.target.value)}
+                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-[#6d28d9] focus:ring-[3px] focus:ring-[#6d28d9]/20"
+                  >
+                    <option value="">Chuyên môn</option>
+                    {specializations.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                    CÔNG NGHỆ {editingId ? "" : "*"}
+                  </label>
+                  <select
+                    value={formData.technology}
+                    onChange={(event) => handleFormChange("technology", event.target.value)}
+                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-[#6d28d9] focus:ring-[3px] focus:ring-[#6d28d9]/20"
+                  >
+                    <option value="">Công nghệ</option>
+                    {technologies.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  MÔ TẢ CHI TIẾT
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(event) => handleFormChange("description", event.target.value)}
+                  placeholder={editingId ? "Mô tả cũ của đề tài được đổ vào đây để chỉnh sửa..." : "Mô tả mục tiêu và yêu cầu đề tài..."}
+                  className="w-full min-h-[100px] p-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6d28d9]/20 focus:border-[#6d28d9] resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <Button 
+                variant="outline" 
+                onClick={handleCloseForm}
+                className="rounded-lg border-slate-200 text-slate-600 hover:bg-slate-50 px-6 font-semibold"
+              >
+                {editingId ? "Hủy bỏ" : "Hủy"}
+              </Button>
+              <Button 
+                onClick={handleSaveTopic}
+                className="rounded-lg bg-[#6d28d9] hover:bg-[#5b21b6] text-white px-6 font-semibold"
+              >
+                {editingId ? "Cập nhật" : "Lưu đề tài"}
+              </Button>
+            </div>
           </div>
         </AlertDialogContent>
       </AlertDialog>
 
-      <ConfirmAction
-        isOpen={deletingId !== null}
-        onClose={() => setDeletingId(null)}
-        onConfirm={handleDeleteTopic}
-        title="Xác nhận xóa đề tài"
-        description="Hành động này không thể hoàn tác."
-        confirmText="Xóa"
-        variant="cancel"
-      />
+      <AlertDialog
+        open={deletingId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingId(null);
+        }}
+      >
+        <AlertDialogContent className="max-w-[400px] p-0 overflow-hidden border-0 shadow-xl rounded-2xl">
+          <div className="bg-[#ef4444] px-6 py-4">
+            <h2 className="text-white text-[15px] font-bold uppercase tracking-wider text-left">
+              XÁC NHẬN XÓA ĐỀ TÀI
+            </h2>
+          </div>
+          <div className="px-6 py-6 pb-5 bg-white flex flex-col items-center text-center">
+            <TriangleAlert className="w-16 h-16 text-black mb-4" strokeWidth={2.5} />
+            <p className="text-base font-bold text-slate-800 mb-2">
+              Bạn có chắc chắn muốn xóa đề tài này khỏi ngân hàng cá nhân?
+            </p>
+            <p className="text-xs text-[#ef4444] font-medium mb-6">
+              Lưu ý: Đề tài đã có sinh viên đăng ký sẽ không thể xóa.
+            </p>
+            <div className="flex justify-center gap-3 w-full">
+              <Button 
+                variant="outline" 
+                onClick={() => setDeletingId(null)}
+                className="w-full rounded-lg border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold h-10"
+              >
+                Quay lại
+              </Button>
+              <Button 
+                onClick={handleDeleteTopic}
+                className="w-full rounded-lg bg-[#ef4444] hover:bg-[#dc2626] text-white font-semibold h-10"
+              >
+                Xóa vĩnh viễn
+              </Button>
+            </div>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

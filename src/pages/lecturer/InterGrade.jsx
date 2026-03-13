@@ -13,11 +13,10 @@ function InternStatusBadge({ status }) {
 
   return (
     <span
-      className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-        isGraded
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${isGraded
           ? 'border-[#10b981] bg-[#dcfce7] text-[#10b981]'
           : 'border-[#93c5fd] bg-[#dbeafe] text-[#2563eb]'
-      }`}
+        }`}
     >
       {isGraded ? 'Da cham' : 'Da duyet'}
     </span>
@@ -53,16 +52,16 @@ function InternGradeDetail({ item, onBack, onSave }) {
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={onBack} variant="ghost" className="border border-gray-200">
           <ChevronLeft className="size-4" />
-          Quay lai
+          Quay lại
         </Button>
-        <h2 className="text-lg font-bold text-slate-800 md:text-xl">Bao cao thuc tap</h2>
+        <h2 className="text-lg font-bold text-slate-800 md:text-xl">Báo cáo thực tập</h2>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.95fr]">
         <Card className="overflow-hidden border border-slate-200 bg-[#f6f0df] p-4">
           <div className="flex h-[620px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-center text-slate-500">
             <FileText className="mb-4 size-14 text-slate-500" />
-            <p className="text-base font-medium md:text-lg">Ban xem truoc tai lieu PDF se hien thi tai day</p>
+            <p className="text-base font-medium md:text-lg">Bản xem trước tài liệu PDF sẽ hiện thị tại đây</p>
             <p className="mt-2 text-sm">{item.fileName}</p>
           </div>
         </Card>
@@ -70,29 +69,29 @@ function InternGradeDetail({ item, onBack, onSave }) {
         <div className="space-y-6">
           <Card className="rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Thong tin Bao cao Thuc tap</h3>
+              <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Thông tin Báo cáo thực tập</h3>
               <InternStatusBadge status={item.trangthai} />
             </div>
             <div className="my-4 h-px bg-slate-200" />
             <div className="space-y-4 text-sm">
               <div>
-                <p className="mb-1 text-slate-500">Sinh vien thuc hien:</p>
+                <p className="mb-1 text-slate-500">Sinh viên thực hiện:</p>
                 <p className="text-base font-semibold text-slate-800">
                   {item.hoTen} <span className="font-normal">({item.maSV})</span>
                 </p>
               </div>
               <div>
-                <p className="mb-1 text-slate-500">Cong ty:</p>
+                <p className="mb-1 text-slate-500">Công ty:</p>
                 <p className="font-medium text-[#2563eb]">{item.congty}</p>
               </div>
               <div>
-                <p className="mb-1 text-slate-500">Vi tri dang ky</p>
+                <p className="mb-1 text-slate-500">Vị trí đăng ký</p>
                 <div>
                   <PositionBadge position={item.vitri} />
                 </div>
               </div>
               <div>
-                <p className="mb-1 text-slate-500">Diem qua trinh</p>
+                <p className="mb-1 text-slate-500">Điểm quá trình</p>
                 <p className="font-medium text-slate-800">
                   {item.diemQuaTrinh === '' ? '--' : item.diemQuaTrinh}
                 </p>
@@ -101,10 +100,10 @@ function InternGradeDetail({ item, onBack, onSave }) {
           </Card>
 
           <Card className="rounded-2xl border border-slate-200 p-6">
-            <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Ket qua danh gia</h3>
+            <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Kết quả đánh giá</h3>
             <div className="mt-6 space-y-5">
               <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                <label className="text-sm font-semibold text-slate-700 md:text-base">Diem tong</label>
+                <label className="text-sm font-semibold text-slate-700 md:text-base">Điểm tổng</label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
@@ -121,7 +120,7 @@ function InternGradeDetail({ item, onBack, onSave }) {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">Nhan xet</label>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Nhận xét</label>
                 <textarea
                   value={comment}
                   disabled={isGraded}
@@ -137,7 +136,7 @@ function InternGradeDetail({ item, onBack, onSave }) {
                   disabled={isGraded}
                   className="h-11 rounded-xl bg-[#10b981] px-6 text-white hover:bg-[#059669] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Hoan tat cham diem
+                  Hoàn tất chấm điểm
                 </Button>
               </div>
             </div>
@@ -182,11 +181,11 @@ function InternGradeList({ items, onGrade, onView }) {
   return (
     <Card className="bg-white">
       <div className="p-5">
-        <h2 className="text-center text-2xl font-bold text-slate-800 md:text-3xl">CHAM DIEM THUC TAP</h2>
+        <h2 className="text-center text-2xl font-bold text-slate-800 md:text-3xl">CHẤM ĐIỂM THỰC TẬP</h2>
 
         <div className="mt-6">
           <span className="inline-flex rounded-full border border-[#8b5cf6] bg-[#eef2ff] px-4 py-1 text-sm font-medium text-[#6d28d9]">
-            Dang huong dan: 10/20
+            Đang hướng dẫn: 10/20
           </span>
         </div>
 
@@ -207,7 +206,7 @@ function InternGradeList({ items, onGrade, onView }) {
             }}
             className="sm:w-fit"
           >
-            Tim kiem
+            Tìm kiếm
           </Button>
         </div>
 
@@ -217,13 +216,13 @@ function InternGradeList({ items, onGrade, onView }) {
               <TableRow>
                 <TableHead>STT</TableHead>
                 <TableHead>MSV</TableHead>
-                <TableHead>Ho va ten</TableHead>
-                <TableHead>Vi tri dang ky</TableHead>
-                <TableHead>Cong ty</TableHead>
-                <TableHead>Trang thai</TableHead>
-                <TableHead>Diem qua trinh</TableHead>
-                <TableHead>Diem thi</TableHead>
-                <TableHead>Hanh dong</TableHead>
+                <TableHead>Họ và tên</TableHead>
+                <TableHead>Vị trí đăng ký</TableHead>
+                <TableHead>Công ty</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Điểm quá trình</TableHead>
+                <TableHead>Điểm thi</TableHead>
+                <TableHead>Hành động</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -253,7 +252,7 @@ function InternGradeList({ items, onGrade, onView }) {
                           disabled={isGraded}
                           className="rounded-full border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed] hover:bg-[#f3e8ff] disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          Cham diem
+                          Chấm điểm
                         </Button>
                         <Button
                           size="sm"
@@ -262,7 +261,7 @@ function InternGradeList({ items, onGrade, onView }) {
                           disabled={!isGraded}
                           className="rounded-full border-[#bfdbfe] bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          Xem chi tiet
+                          Xem chi tiết
                         </Button>
                       </div>
                     </TableCell>
@@ -320,11 +319,11 @@ const InterGrade = () => {
       prevInterns.map((intern) =>
         intern.id === internId
           ? {
-              ...intern,
-              diemThi: score,
-              nhanXet: comment,
-              trangthai: 'da cham',
-            }
+            ...intern,
+            diemThi: score,
+            nhanXet: comment,
+            trangthai: 'da cham',
+          }
           : intern
       )
     )

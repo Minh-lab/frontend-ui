@@ -14,11 +14,10 @@ function ReportStatusBadge({ status }) {
 
   return (
     <span
-      className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-        isApproved
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${isApproved
           ? 'border-[#93c5fd] bg-[#dbeafe] text-[#2563eb]'
           : 'border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed]'
-      }`}
+        }`}
     >
       {isApproved ? 'Da duyet' : 'Chua duyet'}
     </span>
@@ -38,7 +37,7 @@ function ReportDetailModal({ item, onClose, onApprove, onReject }) {
     >
       <div className="-m-6">
         <div className="flex items-center justify-between bg-gradient-to-r from-[#6d28d9] to-[#7c3aed] px-5 py-3 text-white">
-          <h2 className="text-sm font-bold uppercase tracking-wide">Xem chi tiet bao cao do an</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wide">Xem chi tiết báo cáo đồ án</h2>
           <button type="button" onClick={onClose} className="rounded p-1 hover:bg-white/10">
             <X className="size-4" />
           </button>
@@ -56,20 +55,20 @@ function ReportDetailModal({ item, onClose, onApprove, onReject }) {
             <Card className="border-none bg-slate-50 shadow-none">
               <div className="space-y-2 p-4 text-sm text-slate-700">
                 <p>
-                  <span className="font-semibold">Sinh vien:</span> {item.hoTen} - {item.maSV}
+                  <span className="font-semibold">Sinh viên:</span> {item.hoTen} - {item.maSV}
                 </p>
                 <p>
-                  <span className="font-semibold">De tai:</span> {item.tenDeTai}
+                  <span className="font-semibold">Đề tài:</span> {item.tenDeTai}
                 </p>
                 <p>
-                  <span className="font-semibold">Ngay nop:</span> {item.ngayNop}
+                  <span className="font-semibold">Ngày nộp:</span> {item.ngayNop}
                 </p>
               </div>
             </Card>
 
             <div className="mt-5">
               <label className="mb-2 block text-xs font-bold uppercase text-slate-500">
-                Nhan xet chuyen mon
+                Nhận xét chuyên môn
               </label>
               <textarea
                 value={comment}
@@ -87,14 +86,14 @@ function ReportDetailModal({ item, onClose, onApprove, onReject }) {
                 disabled={isApproved}
                 className="border-red-300 text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Tu choi bao cao
+                Từ chối báo cáo
               </Button>
               <Button
                 onClick={() => onApprove(item.id, comment)}
                 disabled={isApproved}
                 className="bg-[#7c3aed] text-white hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Duyet
+                Duyệt
               </Button>
             </div>
           </div>
@@ -191,9 +190,9 @@ const ProjectReports = () => {
             onChange={(event) => setStatusKeyword(event.target.value)}
             className="h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/20 lg:w-[160px]"
           >
-            <option value="">Trang thai</option>
-            <option value="chua duyet">Chua duyet</option>
-            <option value="da duyet">Da duyet</option>
+            <option value="">Trạng thái</option>
+            <option value="chua duyet">Chưa duyệt</option>
+            <option value="da duyet">Đã duyệt</option>
           </select>
 
           <select
@@ -201,9 +200,9 @@ const ProjectReports = () => {
             onChange={(event) => setTopicKeyword(event.target.value)}
             className="h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/20 lg:w-[160px]"
           >
-            <option value="">Dot</option>
-            <option value="khuon mat">Ung dung AI nhan dien khuon mat</option>
-            <option value="chay rung">Ung dung AI nhan dien chay rung</option>
+            <option value="">Đợt</option>
+            <option value="khuon mat">Ứng dụng AI nhận diện khuôn mặt</option>
+            <option value="chay rung">Ứng dụng AI nhận diện cháy rừng</option>
           </select>
 
           <Button
@@ -221,7 +220,7 @@ const ProjectReports = () => {
 
         <div className="mt-4">
           <span className="inline-flex rounded-full border border-[#8b5cf6] bg-[#eef2ff] px-4 py-1 text-xs font-medium text-[#6d28d9]">
-            Dang huong dan: 10/20
+            Đang hướng dẫn: 10/20
           </span>
         </div>
 
@@ -231,10 +230,10 @@ const ProjectReports = () => {
               <TableRow>
                 <TableHead>STT</TableHead>
                 <TableHead>MSV</TableHead>
-                <TableHead>Ho va ten</TableHead>
-                <TableHead>Ten de tai</TableHead>
-                <TableHead>Trang thai</TableHead>
-                <TableHead>Diem</TableHead>
+                <TableHead>Họ và tên</TableHead>
+                <TableHead>Tên đề tài</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Điểm</TableHead>
                 <TableHead>Hanh dong</TableHead>
               </TableRow>
             </TableHeader>
@@ -261,7 +260,7 @@ const ProjectReports = () => {
                           disabled={isApproved}
                           className="rounded-full border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed] hover:bg-[#f3e8ff] disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          Duyet
+                          Duyệt
                         </Button>
                         <Button
                           size="sm"
@@ -270,7 +269,7 @@ const ProjectReports = () => {
                           disabled={!isApproved}
                           className="rounded-full border-[#bfdbfe] bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          Xem chi tiet
+                          Xem chi tiết
                         </Button>
                       </div>
                     </TableCell>
