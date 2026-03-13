@@ -13,13 +13,13 @@ import {
 } from "@/components/ui/form";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
 import { profileService } from "@/services/faculty";
-
 import { toast } from "sonner";
 
 export default function FacultyProfile() {
   const navigate = useNavigate();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line no-unused-vars
   const [profileData, setProfileData] = useState(null);
 
   const form = useForm({
@@ -29,10 +29,6 @@ export default function FacultyProfile() {
       email: "",
       gender: "",
       dob: "",
-      phone: "",
-      address: "",
-      department: "",
-      position: "",
     },
   });
 
@@ -40,34 +36,29 @@ export default function FacultyProfile() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
   const fetchProfile = async () => {
     try {
       setLoading(true);
       const response = await profileService.getProfile();
       
-      console.log("API Response:", response); // Debug: xem cấu trúc dữ liệu
+      console.log("API Response:", response);
       
       if (response.success) {
         // API trả về: { success: true, data: { user: {...}, role: "faculty_staff" } }
-        const userData = response.data.user; // Lấy user từ response.data.user
-        // eslint-disable-next-line no-unused-vars
-        const role = response.data.role;
+        const userData = response.data.user;
         
-        console.log("User Data:", userData); // Debug: xem user data
+        console.log("User Data:", userData);
         
         setProfileData(userData);
         
-        // Cập nhật form values với userData
+        // Cập nhật form values với userData (chỉ giữ lại các trường có trong CSDL)
         form.reset({
           usercode: userData.usercode || "",
           full_name: userData.full_name || "",
           email: userData.email || "",
           gender: userData.gender || "",
           dob: userData.dob || "",
-          phone: userData.phone || "",
-          address: userData.address || "",
-          department: userData.department || "",
-          position: userData.position || "",
         });
       }
     } catch (error) {
@@ -103,7 +94,7 @@ export default function FacultyProfile() {
         </button>
 
         <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
-          {/* Header Bar - Dùng màu Indigo dịu nhẹ, không quá gắt */}
+          {/* Header Bar */}
           <div className="h-32 bg-gradient-to-r from-indigo-600 to-indigo-500 relative">
              <div className="absolute -bottom-12 left-10 p-2 bg-white rounded-3xl shadow-lg">
                 <div className="bg-indigo-50 p-4 rounded-2xl">
@@ -117,7 +108,7 @@ export default function FacultyProfile() {
               <div>
                 <h1 className="text-2xl font-bold text-slate-800">Thông tin cá nhân</h1>
                 <p className="text-sm text-slate-400 font-medium">
-                  {profileData?.department || "Văn phòng Khoa"} - Đại học Thủy Lợi
+                  Cán bộ Văn phòng Khoa - Đại học Thủy Lợi
                 </p>
               </div>
               <Button 
@@ -154,14 +145,14 @@ export default function FacultyProfile() {
                   )}
                 />
 
-                {/* Chức vụ */}
+                {/* Giới tính */}
                 <FormField
                   control={form.control}
-                  name="position"
+                  name="gender"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                        Chức vụ
+                        Giới tính
                       </FormLabel>
                       <FormControl>
                         <Input 
@@ -174,7 +165,7 @@ export default function FacultyProfile() {
                   )}
                 />
 
-                {/* Họ Tên */}
+                {/* Họ Tên - full width */}
                 <FormField
                   control={form.control}
                   name="full_name"
@@ -217,26 +208,6 @@ export default function FacultyProfile() {
                   )}
                 />
 
-                {/* Số điện thoại */}
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                        Số điện thoại
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          readOnly 
-                          className="bg-slate-50/50 border-transparent font-medium text-slate-600 h-12 rounded-xl focus-visible:ring-0 cursor-default" 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
                 {/* Ngày sinh */}
                 <FormField
                   control={form.control}
@@ -259,55 +230,10 @@ export default function FacultyProfile() {
                     </FormItem>
                   )}
                 />
-
-                {/* Giới tính */}
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                        Giới tính
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          readOnly 
-                          className="bg-slate-50/50 border-transparent font-medium text-slate-600 h-12 rounded-xl focus-visible:ring-0 cursor-default" 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Địa chỉ - Full width */}
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                        Địa chỉ
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          readOnly 
-                          className="bg-slate-50/50 border-transparent font-medium text-slate-600 h-12 rounded-xl focus-visible:ring-0 cursor-default" 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
               </form>
             </Form>
 
-            {/* Footer với thông tin cập nhật */}
-            <div className="border-t border-slate-100 pt-6">
-              <p className="text-xs text-slate-400 italic">
-                * Thông tin được cập nhật lần cuối: {new Date().toLocaleDateString('vi-VN')}
-              </p>
-            </div>
+            
           </div>
         </div>
 

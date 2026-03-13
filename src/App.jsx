@@ -7,6 +7,7 @@ import AppRouter from "@/routes"; // Đường dẫn đến file routes/index.js
 import { Toaster } from "@/components/ui/sonner";
 // eslint-disable-next-line no-unused-vars
 import { business } from "./data/businessData";
+// eslint-disable-next-line no-unused-vars
 import { student } from "./data/studentData";
 /**
  * File App.jsx hoàn chỉnh
