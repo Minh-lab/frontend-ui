@@ -13,11 +13,10 @@ function ProjectStatusBadge({ status }) {
 
   return (
     <span
-      className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-        isGraded
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${isGraded
           ? 'border-[#10b981] bg-[#dcfce7] text-[#10b981]'
           : 'border-[#93c5fd] bg-[#dbeafe] text-[#2563eb]'
-      }`}
+        }`}
     >
       {isGraded ? 'Da cham' : 'Da duyet'}
     </span>
@@ -45,16 +44,16 @@ function ProjectGradeDetail({ item, onBack, onSave }) {
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={onBack} variant="ghost" className="border border-gray-200">
           <ChevronLeft className="size-4" />
-          Quay lai
+          Quay lại
         </Button>
-        <h2 className="text-lg font-bold text-slate-800 md:text-xl">Cham Bao cao do an {item.id}</h2>
+        <h2 className="text-lg font-bold text-slate-800 md:text-xl">Chấm Báo cáo đồ án {item.id}</h2>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.95fr]">
         <Card className="overflow-hidden border border-slate-200 bg-[#f6f0df] p-5">
           <div className="flex h-[620px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-center text-slate-500">
             <FileText className="mb-4 size-14 text-slate-500" />
-            <p className="text-xl font-medium">Ban xem truoc tai lieu PDF se hien thi tai day</p>
+            <p className="text-xl font-medium">Bản xem trước tài liệu PDF sẽ hiện thị tại đây</p>
             <p className="mt-2 text-sm">{item.fileName}</p>
           </div>
         </Card>
@@ -62,29 +61,29 @@ function ProjectGradeDetail({ item, onBack, onSave }) {
         <div className="space-y-6">
           <Card className="rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Thong tin Do an</h3>
+              <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Thông tin Đồ án</h3>
               <ProjectStatusBadge status={item.trangthai} />
             </div>
             <div className="my-5 h-px bg-slate-200" />
             <div className="space-y-5">
               <div>
-                <p className="mb-2 text-sm text-slate-500">Sinh vien thuc hien:</p>
+                <p className="mb-2 text-sm text-slate-500">Sinh viên thực hiện:</p>
                 <p className="text-base font-semibold text-slate-800 md:text-lg">
                   {item.hoTen} <span className="font-normal">({item.maSV})</span>
                 </p>
               </div>
               <div>
-                <p className="mb-2 text-sm text-slate-500">De tai:</p>
+                <p className="mb-2 text-sm text-slate-500">Đề tài:</p>
                 <p className="text-base leading-relaxed text-[#2563eb] md:text-lg">{item.tenDeTai}</p>
               </div>
             </div>
           </Card>
 
           <Card className="rounded-2xl border border-slate-200 p-6">
-            <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Ket qua danh gia</h3>
+            <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Kết quả đánh giá</h3>
             <div className="mt-6 space-y-5">
               <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                <label className="text-sm font-semibold text-slate-700 md:text-base">Diem tong</label>
+                <label className="text-sm font-semibold text-slate-700 md:text-base">Điểm tổng</label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
@@ -102,7 +101,7 @@ function ProjectGradeDetail({ item, onBack, onSave }) {
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700 md:text-base">
-                  Nhan xet chi tiet cua phan bien
+                  Nhận xét chi tiết của phản biện
                 </label>
                 <textarea
                   value={comment}
@@ -119,7 +118,7 @@ function ProjectGradeDetail({ item, onBack, onSave }) {
                   disabled={isGraded}
                   className="h-11 rounded-xl bg-[#10b981] px-6 text-white hover:bg-[#059669] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Hoan tat cham diem
+                  Hoàn tất chấm điểm
                 </Button>
               </div>
             </div>
@@ -163,11 +162,11 @@ function ProjectGradeList({ items, onGrade, onView }) {
   return (
     <Card className="bg-white">
       <div className="p-5">
-        <h2 className="text-center text-2xl font-bold text-slate-800 md:text-3xl">CHAM DIEM DO AN</h2>
+        <h2 className="text-center text-2xl font-bold text-slate-800 md:text-3xl">CHẤM ĐIỂM ĐỒ ÁN</h2>
 
         <div className="mt-6">
           <span className="inline-flex rounded-full border border-[#8b5cf6] bg-[#eef2ff] px-4 py-1 text-sm font-medium text-[#6d28d9]">
-            Dang huong dan: 11/20
+            Đang hướng dẫn: 11/20
           </span>
         </div>
 
@@ -188,7 +187,7 @@ function ProjectGradeList({ items, onGrade, onView }) {
             }}
             className="sm:w-fit"
           >
-            Tim kiem
+            Tìm kiếm
           </Button>
         </div>
 
@@ -198,11 +197,11 @@ function ProjectGradeList({ items, onGrade, onView }) {
               <TableRow>
                 <TableHead>STT</TableHead>
                 <TableHead>MSV</TableHead>
-                <TableHead>Ho va ten</TableHead>
-                <TableHead>Ten de tai</TableHead>
-                <TableHead>Trang thai</TableHead>
-                <TableHead>Diem</TableHead>
-                <TableHead>Hanh dong</TableHead>
+                <TableHead>Họ và tên</TableHead>
+                <TableHead>Tên đề tài</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Điểm</TableHead>
+                <TableHead>Hành động</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -228,7 +227,7 @@ function ProjectGradeList({ items, onGrade, onView }) {
                           disabled={isGraded}
                           className="rounded-full border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed] hover:bg-[#f3e8ff] disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          Cham diem
+                          Chấm điểm
                         </Button>
                         <Button
                           size="sm"
@@ -237,7 +236,7 @@ function ProjectGradeList({ items, onGrade, onView }) {
                           disabled={!isGraded}
                           className="rounded-full border-[#bfdbfe] bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          Xem chi tiet
+                          Xem chi tiết
                         </Button>
                       </div>
                     </TableCell>
@@ -295,11 +294,11 @@ const ProjectGrade = () => {
       prevProjects.map((project) =>
         project.id === projectId
           ? {
-              ...project,
-              diem: score,
-              nhanXet: comment,
-              trangthai: 'da cham',
-            }
+            ...project,
+            diem: score,
+            nhanXet: comment,
+            trangthai: 'da cham',
+          }
           : project
       )
     )
@@ -307,11 +306,11 @@ const ProjectGrade = () => {
     setSelectedProject((prevSelected) =>
       prevSelected
         ? {
-            ...prevSelected,
-            diem: score,
-            nhanXet: comment,
-            trangthai: 'da cham',
-          }
+          ...prevSelected,
+          diem: score,
+          nhanXet: comment,
+          trangthai: 'da cham',
+        }
         : null
     )
 

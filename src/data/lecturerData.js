@@ -291,3 +291,19 @@ export const internGradeData = [
     fileName: "bao-cao-thuc-tap-6.pdf",
   },
 ]
+
+export const lecturerProfileData = {
+  usercode: "12345",
+  full_name: "Nguyễn Văn C",
+  username: "nguyenvanc",
+  gender: "Nam",
+  degree: "Tiến sĩ",
+  email: "nguyenvanc@gmail.com",
+  department: "Công nghệ phần mềm",
+  phone_number: "0987 654 321",
+  load: {
+    graduate: { current: 12, max: 20 },
+    intern: { current: 8, max: 20 }
+  },
+  specializations: ["An ninh mạng", "Trí tuệ nhân tạo", "Kỹ thuật phần mềm"]
+};
