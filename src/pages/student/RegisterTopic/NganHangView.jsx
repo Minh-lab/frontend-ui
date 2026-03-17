@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import topicService from "@/services/topic";
+import topicService from "@/services/lecturer/topic";
 
 export default function NganHangView({ onBack, onDangKy }) {
   const [search, setSearch] = useState("");

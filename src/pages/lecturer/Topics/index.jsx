@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import topicService from "@/services/topic";
+import topicService from "@/services/lecturer/topic";
 import api from "@/services/apiConfig"; // For fetching expertise list
 
 import TopicTable from "./TopicTable";
@@ -39,7 +39,7 @@ const Topics = () => {
 
   const fetchExpertises = useCallback(async () => {
     try {
-      const response = await api.get("/lecturer/expertises");
+      const response = await api.get("/expertises");
       if (response.data?.success) {
         setExpertises(response.data.data);
       }
