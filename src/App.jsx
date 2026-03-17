@@ -18,23 +18,21 @@ import { student } from "./data/studentData";
 function App() {
   // eslint-disable-next-line no-unused-vars
   const setAuth = useAuthStore((state) => state.setAuth);
-  
+
   // ==========================================================
   // GIẢ LẬP ĐĂNG NHẬP (MOCK AUTH)
   // Bạn hãy thay đổi giá trị 'role' để kiểm tra các giao diện khác nhau:
   // 'student', 'lecturer', 'faculty', 'admin', 'company'
   // ==========================================================
-  // useEffect(() => {
-  //   setAuth(
-  //     { 
-  //       displayName: business.tenDN, 
-  //       usercode: business.maST,
-  //       email: business.email
-  //     },
-  //     "dummy-access-token",
-  //     "faculty" // Test với vai trò Company
-  //   );
-  // }, [setAuth]);
+  useEffect(() => {
+    setAuth(
+      {
+        name: student.hoTen,
+      },
+      "dummy-access-token",
+      "lecturer" // Đang để vai trò VPK theo yêu cầu của bạn
+    );
+  }, [setAuth]);
 
   return (
     <BrowserRouter>
@@ -43,7 +41,7 @@ function App() {
         - position: Vị trí xuất hiện trên màn hình
       */}
       <Toaster position="bottom-right" richColors closeButton />
-      
+
       {/* AppRouter: Chứa toàn bộ logic định tuyến lồng nhau (Nested Routes), 
         phân quyền (ProtectedRoute) và bộ khung giao diện (AppLayout).
       */}

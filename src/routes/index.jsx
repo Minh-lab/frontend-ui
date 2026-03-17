@@ -9,8 +9,6 @@ import useAuthStore from "@/stores/useAuthStore";
 // Module Routes
 import { studentRoutes } from "./student.routes";
 import { lecturerRoutes } from "./lecturer.routes";
-// import { adminRoutes } from "./admin.routes";
-// import { lecturerRoutes } from "./lecturer.routes";
 import { adminRoutes } from "./admin.routes";
 import { facultyRoutes } from "./faculty.routes";
 import { companyRoutes } from "./company.routes";
@@ -52,7 +50,7 @@ export default function AppRouter() {
     // --- CÁC ROUTE BẢO VỆ (PROTECTED) ---
     {
       path: "/",
-      element: <ProtectedRoute />, 
+      element: <ProtectedRoute />,
       children: [
         {
           element: <AppLayout />, // Khung giao diện chung Header/Sidebar
@@ -98,7 +96,7 @@ export default function AppRouter() {
         },
       ],
     },
-    
+
     // Trang lỗi (Bỏ comment khi đã tạo file)
     // { path: "/unauthorized", element: <UnauthorizedPage /> },
     // { path: "*", element: <NotFoundPage /> },
@@ -106,7 +104,7 @@ export default function AppRouter() {
 
   // Kích hoạt Suspense để hiển thị trạng thái chờ khi tải các trang Lazy
   return (
-    <Suspense 
+    <Suspense
       fallback={
         <div className="flex h-screen flex-col items-center justify-center gap-4 bg-slate-50 font-sans">
           <div className="size-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
