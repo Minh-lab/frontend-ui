@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -28,6 +28,29 @@ import {
 import { planService } from "@/services/faculty";
 
 /**
+ * Danh sách các tên giai đoạn được định nghĩa sẵn
+ */
+const PREDEFINED_PHASE_NAMES = {
+  CAPSTONE: [
+    "Đăng ký đợt đồ án",
+    "Đăng ký đề tài",
+    "Đăng ký GVHDDA",
+    "Nộp báo cáo đồ án 1",
+    "Nộp báo cáo đồ án 2",
+    "Nộp báo cáo đồ án 3",
+    "Nộp báo cáo đồ án 4",
+    "Chấm điểm đồ án"
+  ],
+  INTERNSHIP: [
+    "Đăng ký đợt thực tập",
+    "Đăng ký doanh nghiệp thực tập",
+    "Nộp đề cương thực tập",
+    "Nộp báo cáo thực tập",
+    "Chấm điểm thực tập"
+  ]
+};
+
+/**
  * Định nghĩa Schema Validation với Yup
  */
 const milestoneSchema = yup.object().shape({
@@ -44,13 +67,13 @@ const milestoneSchema = yup.object().shape({
 
 export default function EditMilestone() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams(); // ID của mốc thời gian cần sửa
   
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!location.state?.milestone);
   const [submitting, setSubmitting] = useState(false);
-  const [phaseNames, setPhaseNames] = useState([]);
   const [filteredPhaseNames, setFilteredPhaseNames] = useState([]);
-  const [notFound, setNotFound] = useState(false);
+  const [notFound, setNotFound] = useState(!location.state?.milestone);
 
   const form = useForm({
     resolver: yupResolver(milestoneSchema),
@@ -66,68 +89,42 @@ export default function EditMilestone() {
   // Theo dõi sự thay đổi của type để lọc phase names
   const watchType = form.watch("type");
 
-  // Fetch danh sách phase names khi component mount
+  // Sử dụng dữ liệu milestone từ route state
   useEffect(() => {
-    fetchPhaseNames();
-  }, []);
-
-  // Fetch dữ liệu milestone cần sửa
-  useEffect(() => {
-    if (id) {
-      fetchMilestoneData();
+    if (location.state?.milestone) {
+      const data = location.state.milestone;
+      form.reset({
+        phase_name: data.phase_name,
+        type: data.type,
+        description: data.description,
+        start_date: data.start_date,
+        end_date: data.end_date,
+      });
+      setLoading(false);
+    } else {
+      setNotFound(true);
+      toast.error("Không tìm thấy dữ liệu mốc thời gian. Quay lại trang trước.");
+      setLoading(false);
     }
-  }, [id]);
+  }, [location.state?.milestone, form]);
 
   // Lọc phase names khi type thay đổi
   useEffect(() => {
-    if (watchType && phaseNames.length > 0) {
-      const filtered = phaseNames.filter(p => p.type === watchType);
+    if (watchType) {
+      const filtered = PREDEFINED_PHASE_NAMES[watchType] || [];
       setFilteredPhaseNames(filtered);
+    } else {
+      setFilteredPhaseNames([]);
     }
-  }, [watchType, phaseNames]);
-
-  const fetchPhaseNames = async () => {
-    try {
-      const response = await planService.getPhaseNamesByType();
-      if (response.success) {
-        setPhaseNames(response.data);
-      }
-    } catch (error) {
-      console.error("Lỗi tải phase names:", error);
-    }
-  };
-
-  const fetchMilestoneData = async () => {
-    try {
-      setLoading(true);
-      const response = await planService.getMilestoneById(id);
-      
-      if (response.success) {
-        const data = response.data;
-        form.reset({
-          phase_name: data.phase_name,
-          type: data.type,
-          description: data.description,
-          start_date: data.start_date,
-          end_date: data.end_date,
-        });
-      } else {
-        setNotFound(true);
-        toast.error(response.message || "Không tìm thấy mốc thời gian");
-      }
-    } catch (error) {
-      toast.error(error.message || "Lỗi khi tải thông tin mốc thời gian");
-      setNotFound(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [watchType]);
 
   const onSubmit = async (data) => {
     try {
       setSubmitting(true);
       
-      const response = await planService.updateMilestone(id, data);
+      // Use milestone_id from route state
+      const milestoneId = location.state?.milestone?.milestone_id || id;
+      const response = await planService.updateMilestone(milestoneId, data);
       
       if (response.success) {
         toast.success(response.message || "Cập nhật mốc thời gian thành công!");
@@ -253,9 +250,9 @@ export default function EditMilestone() {
                         </FormControl>
                         <SelectContent className="bg-white max-h-60">
                           {filteredPhaseNames.length > 0 ? (
-                            filteredPhaseNames.map((phase) => (
-                              <SelectItem key={phase.id} value={phase.name}>
-                                {phase.name} 
+                            filteredPhaseNames.map((phaseName) => (
+                              <SelectItem key={phaseName} value={phaseName}>
+                                {phaseName} 
                               </SelectItem>
                             ))
                           ) : (

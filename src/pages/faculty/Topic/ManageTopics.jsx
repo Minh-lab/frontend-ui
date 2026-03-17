@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export default function ManageTopics() {
   const [deleteId, setDeleteId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [topics, setTopics] = useState([]);
+  const [specializations, setSpecializations] = useState([]);
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_pages: 1,
@@ -32,6 +34,22 @@ export default function ManageTopics() {
   });
   
   const itemsPerPage = 5;
+
+  // Fetch danh sách chuyên môn khi component mount
+  useEffect(() => {
+    fetchSpecializations();
+  }, []);
+
+  const fetchSpecializations = async () => {
+    try {
+      const response = await topicService.getSpecializations();
+      if (response.success) {
+        setSpecializations(response.data);
+      }
+    } catch (error) {
+      console.warn("Không thể tải danh sách chuyên môn");
+    }
+  };
 
   // Fetch topics từ service
   const fetchTopics = async () => {
@@ -126,11 +144,14 @@ export default function ManageTopics() {
             </SelectTrigger>
             <SelectContent className="bg-white border-slate-200 shadow-xl">
               <SelectItem value="Tất cả">Tất cả</SelectItem>
-              {Array.isArray(topics) && [...new Set(topics.map(t => t.specialization))].map(spec => (
-                <SelectItem key={spec} value={spec}>
-                  {spec}
-                </SelectItem>
-              ))}
+              {specializations.map(spec => {
+                const specName = typeof spec === 'string' ? spec : spec.name;
+                return (
+                  <SelectItem key={specName} value={specName}>
+                    {specName}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
@@ -158,25 +179,20 @@ export default function ManageTopics() {
               <TableHead className="font-bold text-slate-800 h-14">Tên đề tài</TableHead>
               <TableHead className="font-bold text-slate-800 h-14">Công nghệ</TableHead>
               <TableHead className="font-bold text-slate-800 h-14">Mô tả</TableHead>
-              <TableHead className="font-bold text-slate-800 h-14">Chuyên môn</TableHead>
               <TableHead className="font-bold text-slate-800 h-14 text-center">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {topics.map((topic) => (
               <TableRow key={topic.id} className="group transition-colors">
-                <TableCell className="font-bold text-slate-700">{topic.topic}</TableCell>
+                <TableCell className="font-bold text-slate-700">{topic.topicName || topic.topic}</TableCell>
                 <TableCell className="text-slate-600 font-medium">{topic.technology}</TableCell>
                 <TableCell className="max-w-xs">
                   <p className="text-slate-500 text-sm line-clamp-2 italic leading-relaxed">
                     {topic.description}
                   </p>
                 </TableCell>
-                <TableCell>
-                  <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold">
-                    {topic.specialization}
-                  </span>
-                </TableCell>
+                
                 <TableCell>
                   <div className="flex items-center justify-center gap-2">
                     <button 

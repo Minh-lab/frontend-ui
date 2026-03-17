@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Users } from "lucide-react";
+import { toast } from "sonner";
 
 // Import các UI components từ dự án
 import { Button } from "@/components/ui/button";
@@ -13,41 +14,40 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// Import Council Service
+import { councilService } from "@/services/faculty";
+
 export default function CouncilDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [council, setCouncil] = useState(null);
+  const [members, setMembers] = useState([]);
 
-  // Giả lập lấy dữ liệu chi tiết hội đồng
+  // Lấy dữ liệu chi tiết hội đồn
   useEffect(() => {
-    const fetchDetail = async () => {
-      setLoading(true);
-      // Giả lập gọi API
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      
-      setCouncil({
-        id: id,
-        name: "Hội đồng 1",
-        members: [
-          "Giảng viên 1",
-          "Giảng viên 2",
-          "Giảng viên 3",
-          "Giảng viên 4",
-          "Giảng viên 5",
-        ],
-        semester: "2024_2025_1",
-        startDate: "15/7/2025",
-        endDate: "17/7/2025",
-        studentCount: 35,
-        building: "A1",
-        room: "302",
-      });
-      setLoading(false);
-    };
-
-    fetchDetail();
+    fetchCouncilDetail();
   }, [id]);
+
+  const fetchCouncilDetail = async () => {
+    setLoading(true);
+    try {
+      // Lấy danh sách thành viên
+      const response = await councilService.getCouncilMembers(id);
+      
+      if (response.success) {
+        setCouncil(response.data.council);
+        setMembers(response.data.members || []);
+      } else {
+        toast.error(response.message || "Lỗi khi tải chi tiết hội đồng");
+      }
+    } catch (error) {
+      toast.error(error.message || "Lỗi khi tải chi tiết hội đồng");
+      console.error("Error fetching council detail:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -96,11 +96,15 @@ export default function CouncilDetail() {
             Thành viên hội đồng
           </p>
           <div className="space-y-2 ml-2">
-            {council?.members.map((member, index) => (
-              <p key={index} className="font-bold text-slate-700">
-                {index + 1}. {member}
-              </p>
-            ))}
+            {members && members.length > 0 ? (
+              members.map((member, index) => (
+                <p key={member.lecturer_id} className="font-bold text-slate-700">
+                  {index + 1}. {member.name} - {member.degree} - {member.department}
+                </p>
+              ))
+            ) : (
+              <p className="text-slate-500 italic">Không có thành viên</p>
+            )}
           </div>
         </div>
       </div>
@@ -110,22 +114,22 @@ export default function CouncilDetail() {
         <Table>
           <TableHeader className="bg-[#E2F2FF]">
             <TableRow className="hover:bg-transparent border-none">
-              <TableHead className="font-bold text-slate-700 text-center">Học kỳ</TableHead>
               <TableHead className="font-bold text-slate-700 text-center">Ngày bắt đầu</TableHead>
               <TableHead className="font-bold text-slate-700 text-center">Ngày kết thúc</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">Số sinh viên</TableHead>
               <TableHead className="font-bold text-slate-700 text-center">Tòa</TableHead>
               <TableHead className="font-bold text-slate-700 text-center">Phòng</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow className="border-none">
-              <TableCell className="text-center font-bold text-slate-600 py-6">{council?.semester}</TableCell>
-              <TableCell className="text-center font-bold text-slate-600">{council?.startDate}</TableCell>
-              <TableCell className="text-center font-bold text-slate-600">{council?.endDate}</TableCell>
-              <TableCell className="text-center font-bold text-slate-600">{council?.studentCount}</TableCell>
-              <TableCell className="text-center font-bold text-slate-600">{council?.building}</TableCell>
-              <TableCell className="text-center font-bold text-slate-600">{council?.room}</TableCell>
+              <TableCell className="text-center font-bold text-slate-600 py-6">
+                {council?.start_date ? new Date(council.start_date).toLocaleDateString('vi-VN') : 'N/A'}
+              </TableCell>
+              <TableCell className="text-center font-bold text-slate-600">
+                {council?.end_date ? new Date(council.end_date).toLocaleDateString('vi-VN') : 'N/A'}
+              </TableCell>
+              <TableCell className="text-center font-bold text-slate-600">{council?.buildings || 'N/A'}</TableCell>
+              <TableCell className="text-center font-bold text-slate-600">{council?.rooms || 'N/A'}</TableCell>
             </TableRow>
           </TableBody>
         </Table>

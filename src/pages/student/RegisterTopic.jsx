@@ -122,7 +122,7 @@ function DeXuatMoiForm({ onBack,onDangKy }) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Lĩnh vực <span className="text-red-500">*</span></label>
-            <select className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]" {...register("linhVuc")} onChange={(e) => set("linhVuc", e.target.value)}>
+            <select className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]" {...register("linhVuc")} onChange={(e) => setValue("linhVuc", e.target.value)}>
               <option>Trí tuệ nhân tạo (AI)</option>
               <option>Phát triển Web</option>
               <option>Phát triển ứng dụng di động</option>
@@ -142,7 +142,7 @@ function DeXuatMoiForm({ onBack,onDangKy }) {
           <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Công nghệ sử dụng <span className="text-red-500">*</span></label>
           <Input
             className="text-sm "
-             onChange={(e) => set("congNghe", e.target.value)}
+             onChange={(e) => setValue("congNghe", e.target.value)}
             {...register("congNghe")}
           />
           {errors.congNghe && (
@@ -155,14 +155,14 @@ function DeXuatMoiForm({ onBack,onDangKy }) {
             rows={3}
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]"
             placeholder="Python, Scikit-learn,Python FastAPI,...."
-           onChange={(e) => set("moTa", e.target.value)}
+           onChange={(e) => setValue("moTa", e.target.value)}
             {...register("moTa")}
           />
         </div>
         <div>
           <label className="text-sm font-semibold text-gray-700 mb-1.5 block">File đề cương (PDF)</label>
           <FileUpload 
-          valua = {file}
+          value = {file}
           onChange={(file) => {
             setValue("fileDeCuong", file, { shouldValidate: true });
           }} />

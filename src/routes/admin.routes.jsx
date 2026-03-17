@@ -5,7 +5,7 @@ const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
 const ManageAccounts = lazy(() => import("@/pages/admin/ManageAccounts"));
 const AddAccount = lazy(() => import("@/pages/admin/AddAccount"));
 const DetailAccount = lazy(() => import("@/pages/admin/DetailAccount"));
-const AdminProfile = lazy(() => import("@/pages/admin/Profile"));
+const AdminProfile = lazy(() => import("@/pages/common/Profile"));
 
 
 export const adminRoutes = [

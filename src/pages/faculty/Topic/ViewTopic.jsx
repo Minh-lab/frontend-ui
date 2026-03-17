@@ -102,7 +102,7 @@ export default function ViewTopic() {
               Tên đề tài
             </label>
             <div className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-xl px-5 py-3">
-              <p className="text-slate-700 text-sm font-medium">{topic.topic}</p>
+              <p className="text-slate-700 text-sm font-medium">{topic.topicName || topic.topic}</p>
             </div>
           </div>
 
@@ -116,15 +116,15 @@ export default function ViewTopic() {
             </div>
           </div>
 
-          {/* Chuyên Môn */}
+          {/* Chuyên môn */}
           <div className="flex justify-between items-center gap-8">
             <label className="text-sm font-bold text-slate-600 whitespace-nowrap">
               Chuyên môn
             </label>
             <div className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-xl px-5 py-3">
-              <span className="inline-flex px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">
-                {topic.specialization}
-              </span>
+              <p className="text-slate-700 text-sm">
+                {topic.expertise?.name || topic.specialization || 'Chưa cập nhật'}
+              </p>
             </div>
           </div>
 
