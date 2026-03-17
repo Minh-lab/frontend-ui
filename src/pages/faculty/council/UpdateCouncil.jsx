@@ -5,91 +5,139 @@ import { Plus, Minus, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { councilService } from "@/services/faculty";
 
 export default function UpdateCouncil() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
-  // Khởi tạo loading dựa trên chế độ: Nếu sửa thì chờ load, nếu tạo thì không cần [cite: 805]
   const [loading, setLoading] = useState(isEdit);
+  const [submitting, setSubmitting] = useState(false);
   const [councilMembers, setCouncilMembers] = useState([]);
-  const [availableLecturers, setAvailableLecturers] = useState([
-    { id: 1, name: "Nguyễn Văn G" },
-    { id: 2, name: "Nguyễn Văn K" },
-    { id: 3, name: "Lê Thị C" },
-    { id: 4, name: "Trần Văn D" },
-  ]);
+  const [availableLecturers, setAvailableLecturers] = useState([]);
 
-  // Logic lấy dữ liệu an toàn để tránh lỗi render
+  // Lấy danh sách giảng viên và dữ liệu hội đồn (nếu edit)
   useEffect(() => {
-    let isMounted = true; // Biến kiểm soát để không set state khi component đã unmount
+    let isMounted = true;
 
-    const fetchCouncilData = async () => {
-      if (!isEdit) {
-        if (isMounted) setLoading(false);
-        return;
-      }
-
+    const fetchData = async () => {
       try {
-        if (isMounted) setLoading(true);
+        // Luôn lấy danh sách giảng viên
+        const lecturersResponse = await councilService.getLecturers({ per_page: 100 });
         
-        // Giả lập gọi API lấy dữ liệu hội đồng theo ID
-        await new Promise((resolve) => setTimeout(resolve, 600));
-
-        if (isMounted) {
-          setCouncilMembers([
-            { id: 10, name: "Nguyễn Văn A" },
-            { id: 11, name: "Nguyễn Văn H" },
-          ]);
+        if (isMounted && lecturersResponse.success) {
+          // API returns data directly as array
+          let lecturers = lecturersResponse.data || [];
+          
+          // Normalize lecturer data structure (full_name -> name)
+          lecturers = lecturers.map(l => ({
+            lecturer_id: l.lecturer_id,
+            name: l.full_name || l.name || 'Giảng viên'
+          }));
+          
+          // Nếu là edit, lấy members của council
+          if (isEdit) {
+            const councilResponse = await councilService.getCouncilMembers(id);
+            
+            if (isMounted && councilResponse.success) {
+              const members = councilResponse.data?.members || [];
+              
+              // Setup members
+              const selectedIds = members.map(m => m.lecturer_id);
+              const selected = lecturers.filter(l => selectedIds.includes(l.lecturer_id));
+              setCouncilMembers(selected);
+              
+              // Setup available (những không được select)
+              const available = lecturers.filter(l => !selectedIds.includes(l.lecturer_id));
+              setAvailableLecturers(available);
+            }
+          } else {
+            // Mode tạo mới - tất cả giảng viên đều available
+            setAvailableLecturers(lecturers);
+          }
+        } else {
+          console.error('Lỗi khi tải danh sách giảng viên:', lecturersResponse.message);
         }
-      // eslint-disable-next-line no-unused-vars
       } catch (error) {
-        toast.error("Không thể tải dữ liệu hội đồng");
+        if (isMounted) {
+          console.error('Error fetching data:', error);
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
     };
 
-    fetchCouncilData();
+    fetchData();
 
     return () => {
-      isMounted = false; // Dọn dẹp khi component bị hủy
+      isMounted = false;
     };
   }, [id, isEdit]);
 
-  // Thêm giảng viên vào danh sách hội đồng (Tối đa 5 người)
+  // Thêm giảng viên vào hội đồn (tối đa 5)
   const addMember = (lecturer) => {
     if (councilMembers.length >= 5) {
       toast.error("Hội đồng chỉ được tối đa 5 thành viên");
       return;
     }
     setCouncilMembers((prev) => [...prev, lecturer]);
-    setAvailableLecturers((prev) => prev.filter((l) => l.id !== lecturer.id));
+    setAvailableLecturers((prev) => prev.filter((l) => l.lecturer_id !== lecturer.lecturer_id));
   };
 
-  // Loại bỏ giảng viên khỏi hội đồng
+  // Loại bỏ giảng viên khỏi hội đồn
   const removeMember = (member) => {
     setAvailableLecturers((prev) => [...prev, member]);
-    setCouncilMembers((prev) => prev.filter((m) => m.id !== member.id));
+    setCouncilMembers((prev) => prev.filter((m) => m.lecturer_id !== member.lecturer_id));
   };
 
   const handleSave = async () => {
     if (councilMembers.length === 0) {
-      toast.error("Vui lòng chọn thành viên hội đồng");
+      toast.error("Vui lòng chọn ít nhất một thành viên hội đồn");
       return;
     }
 
+    if (councilMembers.length !== 5) {
+      toast.error("Hội đồng phải có đúng 5 thành viên");
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      // Giả lập gọi API lưu hoặc cập nhật
+      const lecturerIds = councilMembers.map(m => m.lecturer_id);
+
       if (isEdit) {
-        toast.success("Cập nhật hội đồng thành công!");
+        const response = await councilService.updateCouncil(id, {
+          lecturer_ids: lecturerIds
+        });
+
+        if (response.success) {
+          toast.success("Cập nhật hội đồng thành công!");
+          navigate("/faculty_staff/councils");
+        } else {
+          const errorMsg = response.error || response.message || "Lỗi cập nhật hội đồn";
+          toast.error(errorMsg);
+          console.error("Update council error:", response);
+        }
       } else {
-        toast.success("Đã lập hội đồng mới thành công!");
+        const response = await councilService.createCouncil({
+          lecturer_ids: lecturerIds
+        });
+
+        if (response.success) {
+          toast.success("Lập hội đồng mới thành công!");
+          navigate("/faculty_staff/councils");
+        } else {
+          const errorMsg = response.error || response.message || "Lỗi tạo hội đồn";
+          toast.error(errorMsg);
+          console.error("Create council error:", response);
+        }
       }
-      navigate("/faculty_staff/councils");
     } catch (error) {
-      toast.error("Lỗi khi lưu dữ liệu");
+      toast.error(error.message || "Lỗi khi lưu dữ liệu");
+      console.error(error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -128,10 +176,11 @@ export default function UpdateCouncil() {
           </h3>
           <div className="w-full space-y-4">
             {councilMembers.map((member) => (
-              <div key={member.id} className="flex items-center gap-4 animate-in slide-in-from-left-2 duration-300">
+              <div key={member.lecturer_id} className="flex items-center gap-4 animate-in slide-in-from-left-2 duration-300">
                 <button 
                   onClick={() => removeMember(member)}
-                  className="bg-slate-300 hover:bg-red-500 hover:text-white text-slate-700 size-8 flex items-center justify-center rounded shadow-sm transition-all"
+                  disabled={submitting}
+                  className="bg-slate-300 hover:bg-red-500 hover:text-white text-slate-700 size-8 flex items-center justify-center rounded shadow-sm transition-all disabled:opacity-50"
                 >
                   <Minus className="size-4" />
                 </button>
@@ -153,10 +202,11 @@ export default function UpdateCouncil() {
           </h3>
           <div className="w-full space-y-4">
             {availableLecturers.map((lecturer) => (
-              <div key={lecturer.id} className="flex items-center gap-4 animate-in slide-in-from-right-2 duration-300">
+              <div key={lecturer.lecturer_id} className="flex items-center gap-4 animate-in slide-in-from-right-2 duration-300">
                 <button 
                   onClick={() => addMember(lecturer)}
-                  className="bg-slate-300 hover:bg-indigo-600 hover:text-white text-slate-700 size-8 flex items-center justify-center rounded shadow-sm transition-all"
+                  disabled={submitting || councilMembers.length >= 5}
+                  className="bg-slate-300 hover:bg-indigo-600 hover:text-white text-slate-700 size-8 flex items-center justify-center rounded shadow-sm transition-all disabled:opacity-50"
                 >
                   <Plus className="size-4" />
                 </button>
@@ -165,15 +215,19 @@ export default function UpdateCouncil() {
                 </div>
               </div>
             ))}
+            {availableLecturers.length === 0 && (
+              <p className="text-slate-400 text-sm italic text-center pt-20">Tất cả giảng viên đã được chọn</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* CỤM NÚT ĐIỀU KHIỂN SỬ DỤNG VARIANT CHUẨN [cite: 926, 928] */}
+      {/* CỤM NÚT ĐIỀU KHIỂN */}
       <div className="flex justify-end gap-4 pt-4">
         <Button 
           variant="cancel"
-          onClick={() => navigate("/faculty_staff/councils")}
+          onClick={() => navigate("/faculty/council")}
+          disabled={submitting}
           className="rounded-xl px-12 h-12 font-bold shadow-lg"
         >
           Hủy bỏ
@@ -181,10 +235,17 @@ export default function UpdateCouncil() {
         <Button 
           variant="submit"
           onClick={handleSave}
-          disabled={councilMembers.length === 0}
-          className="rounded-xl px-12 h-12 font-bold shadow-lg"
+          disabled={councilMembers.length !== 5 || submitting}
+          className="rounded-xl px-12 h-12 font-bold shadow-lg flex items-center gap-2"
         >
-          {isEdit ? "Cập nhật ngay" : "Lưu hội đồng"}
+          {submitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Đang lưu...
+            </>
+          ) : (
+            isEdit ? "Cập nhật ngay" : "Lưu hội đồng"
+          )}
         </Button>
       </div>
     </div>

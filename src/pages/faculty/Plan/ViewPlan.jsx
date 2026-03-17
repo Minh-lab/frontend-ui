@@ -12,7 +12,6 @@ import {
   Table, TableHeader, TableBody, 
   TableHead, TableRow, TableCell 
 } from "@/components/ui/table";
-import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import { planService } from "@/services/faculty";
 
 export default function ViewPlan() {
@@ -29,11 +28,6 @@ export default function ViewPlan() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 5;
-  
-  // State quản lý Dialog xác nhận xóa
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedMilestoneId, setSelectedMilestoneId] = useState(null);
-  const [deleting, setDeleting] = useState(false);
 
   // Fetch dữ liệu kế hoạch và danh sách mốc
   useEffect(() => {
@@ -106,34 +100,6 @@ export default function ViewPlan() {
 
   const getTypeClass = (type) => {
     return type === "CAPSTONE" ? "bg-purple-100 text-purple-600" : "bg-blue-100 text-blue-600";
-  };
-
-  // Mở dialog và lưu lại ID cần xóa
-  const handleOpenDeleteDialog = (mId) => {
-    setSelectedMilestoneId(mId);
-    setIsDeleteDialogOpen(true);
-  };
-
-  // Thực hiện xóa sau khi xác nhận
-  const handleConfirmDelete = async () => {
-    try {
-      setDeleting(true);
-      const response = await planService.deleteMilestone(selectedMilestoneId);
-      
-      if (response.success) {
-        toast.success(response.message || "Xóa mốc thời gian thành công");
-        // Refresh danh sách mốc
-        await fetchMilestones(currentPage);
-      } else {
-        toast.error(response.message || "Không thể xóa mốc thời gian");
-      }
-    } catch (error) {
-      toast.error(error.message || "Lỗi khi xóa mốc thời gian");
-    } finally {
-      setDeleting(false);
-      setIsDeleteDialogOpen(false);
-      setSelectedMilestoneId(null);
-    }
   };
 
   // Xử lý chuyển trang
@@ -254,19 +220,13 @@ export default function ViewPlan() {
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <button 
-                          onClick={() => navigate(`/faculty_staff/milestone/view/${m.id}`)}
+                          onClick={() => navigate(`/faculty_staff/milestone/view/${m.milestone_id}`, { state: { milestone: m } })}
                           className="px-4 py-1.5 bg-[#7786d1] hover:bg-[#5c6bb2] text-white text-[10px] font-bold rounded-full uppercase transition-all active:scale-95"
                         >
                           xem chi tiết
                         </button>
                         <button 
-                          onClick={() => handleOpenDeleteDialog(m.id)}
-                          className="px-4 py-1.5 bg-[#ff4d4d] hover:bg-[#e60000] text-white text-[10px] font-bold rounded-full uppercase transition-all active:scale-95"
-                        >
-                          xóa
-                        </button>
-                        <button 
-                          onClick={() => navigate(`/faculty_staff/milestone/edit/${m.id}`)}
+                          onClick={() => navigate(`/faculty_staff/milestone/edit/${m.milestone_id}`, { state: { milestone: m } })}
                           className="px-4 py-1.5 bg-[#4fd1c5] hover:bg-[#38b2ac] text-white text-[10px] font-bold rounded-full uppercase transition-all active:scale-95"
                         >
                           sửa
@@ -328,16 +288,6 @@ export default function ViewPlan() {
         )}
       </div>
 
-      {/* COMPONENT XÁC NHẬN XÓA */}
-      <ConfirmAction 
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Xác nhận xóa mốc thời gian"
-        description="Bạn có chắc chắn muốn xóa giai đoạn này? Toàn bộ dữ liệu liên quan sẽ bị loại bỏ và không thể hoàn tác."
-        confirmText={deleting ? "Đang xóa..." : "Xác nhận xóa"}
-        variant="cancel"
-      />
     </div>
   );
 }

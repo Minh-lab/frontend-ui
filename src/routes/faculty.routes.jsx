@@ -19,7 +19,7 @@ const ManageInternships = lazy(() => import("@/pages/faculty/Internship/ManageIn
 const ApproveCompanyList = lazy(() => import("@/pages/faculty/Internship/ApproveCompanyList"));
 const ApproveCompanyDetail = lazy(() => import("@/pages/faculty/Internship/ApproveCompanyDetail"));
 const InternshipStatistics = lazy(() => import("@/pages/faculty/Internship/InternshipStatistics"));
-const Profile = lazy(() => import("@/pages/faculty/Profile"));
+const Profile = lazy(() => import("@/pages/common/Profile"));
 const ManageCapstones = lazy(() => import("@/pages/faculty/Capstone/ManageCapstones"));
 const CapstoneStatistics = lazy(() => import("@/pages/faculty/Capstone/CapstoneStatistics"));
 const ManageCouncils = lazy(() => import("@/pages/faculty/council/ManageCouncils"));

@@ -5,9 +5,10 @@ import profileService from './profileService';
 import lecturerService from './lecturerService';
 // import internshipService from './internshipService';
 import capstoneService from './capstoneService';
+import councilService from './councilService';
 
 // Flag để chuyển đổi giữa mock và real API cho tất cả faculty services
-export const USE_MOCK = true; // false khi backend đã sẵn sàng
+export const USE_MOCK = true; // Sử dụng mock data (backend lecturer chưa hoàn thiện)
 
 export {
   topicService,
@@ -15,7 +16,8 @@ export {
   profileService,
   lecturerService,
   // internshipService,
-  capstoneService
+  capstoneService,
+  councilService
 };
 
 // Export mặc định tất cả services
@@ -25,7 +27,8 @@ const facultyServices = {
   profile: profileService,
   lecturer: lecturerService,
   // internship: internshipService,
-  capstone: capstoneService
+  capstone: capstoneService,
+  council: councilService
 };
 
 export default facultyServices;
