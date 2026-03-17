@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 
 // Sử dụng lazy loading để tối ưu hiệu năng
 const StudentDashboard = lazy(() => import("@/pages/student/HomePageStudent"));
-const RegisterTopic = lazy(() => import("@/pages/student/RegisterTopic"));
+const RegisterTopic = lazy(() => import("@/pages/student/RegisterTopic/index"));
 const RegisterLecturer = lazy(() => import("@/pages/student/RegisterLecturer"));
 const ProjectReports = lazy(() => import("@/pages/student/ProjectReports"));
 const RegisterCompany = lazy(() => import("@/pages/student/RegisterCompany"));
