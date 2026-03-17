@@ -2,12 +2,12 @@ import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 
 // Sử dụng lazy loading để tối ưu hiệu năng
-const LecturerTopics = lazy(() => import("@/pages/lecturer/topics"));
+const LecturerTopics = lazy(() => import("@/pages/lecturer/Topics/index"));
 const LecturerInternReport = lazy(() => import("@/pages/lecturer/InternReports"));
 const LecturerInternGrade = lazy(() => import("@/pages/lecturer/InterGrade"));
 const LecturerProjectReport = lazy(() => import("@/pages/lecturer/ProjectReports"));
 const LecturerProjectGrade = lazy(() => import("@/pages/lecturer/ProjectGrade"));
-const LecturerProfile = lazy(() => import("@/pages/lecturer/profile"));
+const LecturerProfile = lazy(() => import("@/pages/lecturer/Profile/index"));
 const LecturerHomePage = lazy(() => import("@/pages/lecturer/homePage"));
 const ConfirmProject = lazy(() => import("@/pages/lecturer/ConfirmProject"));
 const ApproveTopic = lazy(() => import("@/pages/lecturer/ApproveTopic"));
