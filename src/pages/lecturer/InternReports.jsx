@@ -94,7 +94,7 @@ function PheDuyetBaoCao({ item, onBack, onApprove, onReject }) {
                                 <label className="text-sm font-bold text-slate-700 block mb-2">Nhận xét <span className="text-red-500">*</span></label>
                                 <textarea
                                     {...register('comment')}
-                                    disabled={isGraded}
+                                    
                                     className={`w-full border ${errors.comment ? 'border-red-500' : 'border-gray-200'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/50 focus:border-[#7c3aed] transition resize-none min-h-[150px]`}
                                     placeholder="Nhập nội dung nhận xét..."
                                 ></textarea>
@@ -103,7 +103,7 @@ function PheDuyetBaoCao({ item, onBack, onApprove, onReject }) {
                             <div className='flex gap-4 pt-2'>
                                 <Button 
                                     type="button"
-                                    disabled={isGraded} 
+                                     
                                     onClick={handleSubmit(onRejectSubmit)} 
                                     className="flex-1 bg-white border border-red-200 text-red-500 hover:bg-red-50 font-bold rounded-xl"
                                 >
@@ -111,7 +111,7 @@ function PheDuyetBaoCao({ item, onBack, onApprove, onReject }) {
                                 </Button>
                                 <Button 
                                     type="button"
-                                    disabled={isGraded} 
+                                     
                                     onClick={handleSubmit(onApproveSubmit)}
                                     className="flex-1 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold rounded-xl shadow-md shadow-purple-100"
                                 >
@@ -226,7 +226,7 @@ function BaoCaoThucTap({ onChon, report }) {
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => onChon(item)}
-                                                        disabled={isGraded}
+                                                        
                                                         className="rounded-full border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed] hover:bg-[#f3e8ff] disabled:cursor-not-allowed disabled:opacity-50"
                                                     >
                                                         Duyệt
@@ -235,7 +235,7 @@ function BaoCaoThucTap({ onChon, report }) {
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => onChon(item)}
-                                                        disabled={!isGraded}
+                                                        
                                                         className="rounded-full border-[#bfdbfe] bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-50"
                                                     >
                                                         Xem chi tiết

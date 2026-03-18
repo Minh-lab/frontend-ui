@@ -107,7 +107,7 @@ function ProjectGradeDetail({ item, onBack, onSave }) {
                       {...register('score')}
                       type="number"
                       step="0.1"
-                      disabled={isGraded}
+                      
                       className={`h-11 w-32 text-center ${errors.score ? 'border-red-500' : ''}`}
                     />
                     <span className="text-sm text-slate-500 md:text-base">/10</span>
@@ -122,7 +122,7 @@ function ProjectGradeDetail({ item, onBack, onSave }) {
                 </label>
                 <textarea
                   {...register('comment')}
-                  disabled={isGraded}
+                  
                   className={`min-h-[140px] w-full rounded-xl border ${errors.comment ? 'border-red-500' : 'border-slate-300'} p-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100`}
                   placeholder="Ghi chu cac diem manh, diem yeu va cau hoi goi y cho hoi dong..."
                 />
@@ -132,7 +132,7 @@ function ProjectGradeDetail({ item, onBack, onSave }) {
               <div className="border-t border-slate-200 pt-5 text-right">
                 <Button
                   type="submit"
-                  disabled={isGraded}
+                  
                   className="h-11 rounded-xl bg-[#10b981] px-6 text-white hover:bg-[#059669] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Hoàn tất chấm điểm
@@ -241,7 +241,7 @@ function ProjectGradeList({ items, onGrade, onView }) {
                           size="sm"
                           variant="outline"
                           onClick={() => onGrade(item)}
-                          disabled={isGraded}
+                          
                           className="rounded-full border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed] hover:bg-[#f3e8ff] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Chấm điểm
@@ -250,7 +250,7 @@ function ProjectGradeList({ items, onGrade, onView }) {
                           size="sm"
                           variant="outline"
                           onClick={() => onView(item)}
-                          disabled={!isGraded}
+                          
                           className="rounded-full border-[#bfdbfe] bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Xem chi tiết

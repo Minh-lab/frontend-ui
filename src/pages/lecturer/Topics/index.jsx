@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import topicService from "@/services/lecturer/topicService";
+import topicService from "@/services/topic";
 import api from "@/services/apiConfig"; // For fetching expertise list
 
 import TopicTable from "./TopicTable";

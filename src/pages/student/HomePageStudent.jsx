@@ -1,4 +1,4 @@
-﻿import StatusBadge from "@/components/StatusBadge";
+import StatusBadge from "@/components/StatusBadge";
 import { doAn, thucTap } from "../../data/studentData";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";

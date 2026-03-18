@@ -64,7 +64,7 @@ export default function NganHangView({ onBack, onDangKy }) {
         .filter(Boolean)
     )
   );
-
+  
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -112,7 +112,7 @@ export default function NganHangView({ onBack, onDangKy }) {
           ))}
         </select>
 
-
+          
 
         <Button
           onClick={handleSearch}
@@ -159,12 +159,7 @@ export default function NganHangView({ onBack, onDangKy }) {
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500 max-w-[140px]">{dt.technologies || "—"}</td>
                   <td className="px-4 py-3 text-xs text-gray-600">
-                    <div className="font-medium text-gray-800">{dt.lecturer?.full_name || "Chưa phân công"}</div>
-                    {dt.lecturer?.expertises && dt.lecturer.expertises.length > 0 && (
-                      <div className="text-[10px] text-gray-400 mt-0.5">
-                        {dt.lecturer.expertises.map(e => e.name).join(", ")}
-                      </div>
-                    )}
+                    {dt.lecturer?.name || "Chưa phân công"}
                   </td>
                   <td className="px-4 py-3">
                     <Button

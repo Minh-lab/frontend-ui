@@ -26,6 +26,17 @@ function App() {
   // ==========================================================
   // useEffect(() => {
   //   setAuth(
+  //     { 
+  //       displayName: business.tenDN, 
+  //       usercode: business.maST,
+  //       email: business.email
+  //     },
+  //     "dummy-access-token",
+  //     "faculty" // Test với vai trò Company
+  //   );
+  // }, [setAuth]);
+  // useEffect(() => {
+  //   setAuth(
   //     {
   //       name: student.hoTen,
   //     },
