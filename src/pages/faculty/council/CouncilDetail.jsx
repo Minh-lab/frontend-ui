@@ -99,7 +99,7 @@ export default function CouncilDetail() {
             {members && members.length > 0 ? (
               members.map((member, index) => (
                 <p key={member.lecturer_id} className="font-bold text-slate-700">
-                  {index + 1}. {member.name} - {member.degree} - {member.department}
+                  {index + 1}. {member.name} - {member.degree}
                 </p>
               ))
             ) : (

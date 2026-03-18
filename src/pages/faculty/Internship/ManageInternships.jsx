@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ChevronLeft, ChevronRight, FileCheck, UserPlus, BarChart3, Building2 } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 // Import các Dialog đã tách file
 import AssignEnterpriseDialog from "./AssignEnterpriseDialog";
 import AssignLecturerDialog from "./AssignLecturerDialog";
+import ViewInternshipDialog from "./ViewInternshipDialog";
+
+// Import fake API service
+import internshipService from "@/services/faculty/internshipService";
 
 const STATUS_MAP = {
   "Yêu cầu đăng ký công ty": "bg-amber-100 text-amber-700 border-amber-200",
@@ -22,20 +26,38 @@ const STATUS_MAP = {
   "Hoàn thành": "bg-green-100 text-green-700 border-green-200",
 };
 
-const MOCK_INTERNSHIPS = [
-  { id: "sv001", name: "Nguyễn An", class: "65KTPM1", enterprise: "FPT Software", status: "Đang thực tập", lecturer: "Nguyễn Minh", score: 8.5 },
-  { id: "sv002", name: "Nguyễn Minh", class: "63KH1", enterprise: "Viettel", status: "Yêu cầu hủy", lecturer: "Trần Hùng", score: null },
-  { id: "sv077", name: "Hoàng Lân", class: "55HT1", enterprise: "---", status: "Chưa có dữ liệu", lecturer: "", score: null },
-  { id: "sv088", name: "Lê Thu", class: "64CNTT2", enterprise: "---", status: "Chưa có dữ liệu", lecturer: "", score: null },
-];
-
 export default function ManageInternships() {
   const navigate = useNavigate();
+  const [internships, setInternships] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedRows, setSelectedRows] = useState([]);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [isAssignDNOpen, setIsAssignDNOpen] = useState(false);
   const [isAssignGVOpen, setIsAssignGVOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [targetIntern, setTargetIntern] = useState(null);
+
+  // Load internships from fake API on mount
+  useEffect(() => {
+    const loadInternships = async () => {
+      try {
+        setIsLoading(true);
+        const response = await internshipService.getInternships();
+        if (response.success) {
+          setInternships(response.data);
+        } else {
+          toast.error(response.message || "Lỗi tải danh sách thực tập");
+        }
+      } catch (error) {
+        toast.error("Lỗi tải danh sách thực tập");
+        console.error("Error loading internships:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInternships();
+  }, []);
 
   // Logic kiểm tra sinh viên đã có DN/GV chưa trước khi mở Dialog
   const handlePreCheckAssign = (type) => {
@@ -44,7 +66,7 @@ export default function ManageInternships() {
       return;
     }
 
-    const alreadyAssigned = MOCK_INTERNSHIPS.filter(s => {
+    const alreadyAssigned = internships.filter(s => {
       const isSelected = selectedRows.includes(s.id);
       if (type === "DN") return isSelected && s.enterprise !== "---";
       if (type === "GV") return isSelected && s.lecturer !== "" && s.lecturer !== "---";
@@ -66,7 +88,7 @@ export default function ManageInternships() {
   };
 
   const toggleSelectAll = (e) => {
-    if (e.target.checked) setSelectedRows(MOCK_INTERNSHIPS.map(i => i.id));
+    if (e.target.checked) setSelectedRows(internships.map(i => i.id));
     else setSelectedRows([]);
   };
 
@@ -112,7 +134,7 @@ export default function ManageInternships() {
         <Table>
           <TableHeader className="bg-[#e3f2fd]">
             <TableRow>
-              <TableHead className="w-[50px] text-center"><input type="checkbox" onChange={toggleSelectAll} checked={selectedRows.length === MOCK_INTERNSHIPS.length} className="accent-purple-600 rounded" /></TableHead>
+              <TableHead className="w-[50px] text-center"><input type="checkbox" onChange={toggleSelectAll} checked={internships.length > 0 && selectedRows.length === internships.length} className="accent-purple-600 rounded" /></TableHead>
               <TableHead className="font-bold text-slate-800 uppercase text-xs">Mã sv</TableHead>
               <TableHead className="font-bold text-slate-800 uppercase text-xs">Tên sinh viên</TableHead>
               <TableHead className="font-bold text-slate-800 uppercase text-xs text-center">DN</TableHead>
@@ -122,24 +144,38 @@ export default function ManageInternships() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {MOCK_INTERNSHIPS.map((intern) => (
-              <TableRow key={intern.id} className={`border-b border-slate-50 ${selectedRows.includes(intern.id) ? "bg-purple-50/50" : ""}`}>
-                <TableCell className="text-center"><input type="checkbox" checked={selectedRows.includes(intern.id)} onChange={() => setSelectedRows(prev => prev.includes(intern.id) ? prev.filter(i => i !== intern.id) : [...prev, intern.id])} className="accent-purple-600 rounded" /></TableCell>
-                <TableCell className="text-slate-600 font-medium">{intern.id}</TableCell>
-                <TableCell className="font-bold text-slate-700">{intern.name}</TableCell>
-                <TableCell className="text-center italic">{intern.enterprise}</TableCell>
-                <TableCell className="text-center"><span className={`px-3 py-1.5 rounded-full text-[10px] font-bold border ${STATUS_MAP[intern.status]}`}>{intern.status}</span></TableCell>
-                <TableCell className="text-center">{intern.lecturer || "---"}</TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    {intern.status === "Yêu cầu hủy" && (
-                      <button onClick={() => { setTargetIntern(intern); setIsCancelOpen(true); }} className="px-4 py-1.5 bg-orange-50 text-orange-600 text-[10px] font-bold rounded-full border border-orange-200">Duyệt yêu cầu hủy</button>
-                    )}
-                    <button onClick={() => navigate(`/faculty/intern/view/${intern.id}`)} className="px-4 py-1.5 bg-[#7786d1] text-white text-[10px] font-bold rounded-full uppercase">xem chi tiết</button>
-                  </div>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan="7" className="text-center py-8 text-slate-500">
+                  Đang tải dữ liệu...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : internships.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan="7" className="text-center py-8 text-slate-500">
+                  Không có dữ liệu
+                </TableCell>
+              </TableRow>
+            ) : (
+              internships.map((intern) => (
+                <TableRow key={intern.id} className={`border-b border-slate-50 ${selectedRows.includes(intern.id) ? "bg-purple-50/50" : ""}`}>
+                  <TableCell className="text-center"><input type="checkbox" checked={selectedRows.includes(intern.id)} onChange={() => setSelectedRows(prev => prev.includes(intern.id) ? prev.filter(i => i !== intern.id) : [...prev, intern.id])} className="accent-purple-600 rounded" /></TableCell>
+                  <TableCell className="text-slate-600 font-medium">{intern.id}</TableCell>
+                  <TableCell className="font-bold text-slate-700">{intern.name}</TableCell>
+                  <TableCell className="text-center italic">{intern.enterprise}</TableCell>
+                  <TableCell className="text-center"><span className={`px-3 py-1.5 rounded-full text-[10px] font-bold border ${STATUS_MAP[intern.status]}`}>{intern.status}</span></TableCell>
+                  <TableCell className="text-center">{intern.lecturer || "---"}</TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      {intern.status === "Yêu cầu hủy" && (
+                        <button onClick={() => { setTargetIntern(intern); setIsCancelOpen(true); }} className="px-4 py-1.5 bg-orange-50 text-orange-600 text-[10px] font-bold rounded-full border border-orange-200">Duyệt yêu cầu hủy</button>
+                      )}
+                      <button onClick={() => { setTargetIntern(intern); setIsViewOpen(true); }} className="px-4 py-1.5 bg-[#7786d1] text-white text-[10px] font-bold rounded-full uppercase">xem chi tiết</button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -149,6 +185,7 @@ export default function ManageInternships() {
         isOpen={isAssignDNOpen} 
         onClose={() => setIsAssignDNOpen(false)} 
         selectedCount={selectedRows.length} 
+        selectedIds={selectedRows}
         onSuccess={() => { setSelectedRows([]); setIsAssignDNOpen(false); }} 
       />
 
@@ -156,7 +193,15 @@ export default function ManageInternships() {
         isOpen={isAssignGVOpen} 
         onClose={() => setIsAssignGVOpen(false)} 
         selectedCount={selectedRows.length} 
+        selectedIds={selectedRows}
         onSuccess={() => { setSelectedRows([]); setIsAssignGVOpen(false); }} 
+      />
+
+      {/* VIEW INTERNSHIP DETAIL DIALOG */}
+      <ViewInternshipDialog
+        isOpen={isViewOpen}
+        onClose={() => setIsViewOpen(false)}
+        internship={targetIntern}
       />
 
       {/* CONFIRM DIALOG DUYỆT HỦY (Tối giản) */}
@@ -166,8 +211,37 @@ export default function ManageInternships() {
             <h3 className="text-lg font-bold text-slate-800 text-center">Duyệt yêu cầu hủy</h3>
             <p className="text-sm text-slate-500 text-center">Xử lý yêu cầu của sinh viên <span className="font-bold">{targetIntern?.name}</span>?</p>
             <div className="flex flex-col gap-2">
-              <Button onClick={() => { toast.success("Đã duyệt hủy"); setIsCancelOpen(false); }} className="bg-red-600 text-white font-bold rounded-xl h-11">Duyệt hủy</Button>
-              <Button onClick={() => { toast.error("Đã từ chối hủy"); setIsCancelOpen(false); }} variant="outline" className="border-slate-200 font-bold rounded-xl h-11">Không duyệt</Button>
+              <Button 
+                onClick={async () => { 
+                  const response = await internshipService.approveCancelRequest(targetIntern?.id, true);
+                  if (response.success) {
+                    toast.success(response.message);
+                    setInternships(internships.map(i => i.id === targetIntern?.id ? {...i, status: "Bị hủy", enterprise: "---", lecturer: ""} : i));
+                  } else {
+                    toast.error(response.message);
+                  }
+                  setIsCancelOpen(false); 
+                }} 
+                className="bg-red-600 text-white font-bold rounded-xl h-11"
+              >
+                Duyệt hủy
+              </Button>
+              <Button 
+                onClick={async () => { 
+                  const response = await internshipService.approveCancelRequest(targetIntern?.id, false);
+                  if (response.success) {
+                    toast.success(response.message);
+                    setInternships(internships.map(i => i.id === targetIntern?.id ? {...i, status: "Đang thực tập"} : i));
+                  } else {
+                    toast.error(response.message);
+                  }
+                  setIsCancelOpen(false); 
+                }} 
+                variant="outline" 
+                className="border-slate-200 font-bold rounded-xl h-11"
+              >
+                Không duyệt
+              </Button>
               <button onClick={() => setIsCancelOpen(false)} className="w-full py-2 text-sm font-semibold text-slate-400">Quay lại</button>
             </div>
           </div>
