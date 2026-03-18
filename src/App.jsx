@@ -24,15 +24,17 @@ function App() {
   // Bạn hãy thay đổi giá trị 'role' để kiểm tra các giao diện khác nhau:
   // 'student', 'lecturer', 'faculty', 'admin', 'company'
   // ==========================================================
-  useEffect(() => {
-    setAuth(
-      {
-        name: student.hoTen,
-      },
-      "dummy-access-token",
-      "lecturer" // Đang để vai trò VPK theo yêu cầu của bạn
-    );
-  }, [setAuth]);
+  // useEffect(() => {
+  //   setAuth(
+  //     { 
+  //       displayName: business.tenDN, 
+  //       usercode: business.maST,
+  //       email: business.email
+  //     },
+  //     "dummy-access-token",
+  //     "faculty" // Test với vai trò Company
+  //   );
+  // }, [setAuth]);
 
   return (
     <BrowserRouter>

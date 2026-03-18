@@ -3,8 +3,9 @@ import { Card } from '@/components/ui/card'
 import ChangePasswordModal from '@/components/ChangePasswordModal'
 import { business } from '@/data/businessData'
 import { User } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import profileCompany from '@/services/company/profileCompany'
 function Field({ label = "sd", value }) {
   return (
     <div className='flex items-center gap-6 px-10 flex-col sm:flex-row'>
@@ -15,13 +16,24 @@ function Field({ label = "sd", value }) {
       <div className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 bg-white">
         {value}
       </div>
-    </div> 
+    </div>
   )
 }
 
 const ProfilePageBusiness = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false)
-
+  const [profile, setProfile] = useState(null);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await profileCompany.getProfile();
+        setProfile(data.data);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+    fetchProfile();
+  }, []);
   return (
     <div className='p-6'>
       <Card className="p-0">
@@ -40,19 +52,19 @@ const ProfilePageBusiness = () => {
         {/* Body */}
         <div className="p-6 space-y-4 bg-[#FCFCFC]">
 
-          <Field label="Mã số thuế:" value={business.maST} />
-          <Field label="Tên doanh nghiệp:" value={business.tenDN} />
-          <Field label="Địa chỉ:" value={business.diachi} />
-          <Field label="Email:" value={business.email} />
-          <Field label="Website:" value={business.website} />
-          <div className = "flex items-center justify-center">
-            <Button onClick = {() => setShowPasswordModal(true)}>Đổi mật khẩu</Button>
+          <Field label="Mã số thuế:" value={profile?.user?.usercode} />
+          <Field label="Tên doanh nghiệp:" value={profile?.user?.name} />
+          <Field label="Địa chỉ:" value={profile?.user?.address} />
+          <Field label="Email:" value={profile?.user?.email} />
+          <Field label="Website:" value={profile?.user?.website} />
+          <div className="flex items-center justify-center">
+            <Button onClick={() => setShowPasswordModal(true)}>Đổi mật khẩu</Button>
           </div>
         </div>
       </Card>
 
-      <ChangePasswordModal 
-        isOpen={showPasswordModal} 
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
       />
     </div>

@@ -1,38 +1,48 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-// import internshipService from "@/services/internship"; // Assuming this service exists or will be created
+import internshipService from "@/services/internship";
 
 export default function NganHangView({ onBack, onDangKy }) {
   const [search, setSearch] = useState("");
+  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [companies, setCompanies] = useState([
-    { id: 1, name: "FPT Software", tax_code: "0100111000", address: "Duy Tân, Cầu Giấy, Hà Nội", industry: "IT", slots: 20 },
-    { id: 2, name: "Viettel Solutions", tax_code: "0100109106", address: "Giang Văn Minh, Ba Đình, Hà Nội", industry: "Telecom", slots: 15 },
-    { id: 3, name: "NashTech Vietnam", tax_code: "0106820579", address: "Trần Duy Hưng, Cầu Giấy, Hà Nội", industry: "IT", slots: 10 },
-    { id: 5, name: "Sun* Inc. Vietnam", tax_code: "0105678901", address: "Tôn Đức Thắng, Đống Đa, Hà Nội", industry: "IT", slots: 12 },
-  ]);
 
-  // Mock fetch
-  useEffect(() => {
-    // fetchData();
+  const fetchCompanies = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await internshipService.getAvailableCompanies();
+      // Backend returns CompanySlotResource collection
+      if (response && response.data) {
+        setCompanies(response.data);
+      }
+    } catch (error) {
+      console.error("Fetch companies error:", error);
+      toast.error("Không thể tải danh sách doanh nghiệp đối tác");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
 
   const handleDangKy = (company) => {
     onDangKy({
       tenCongTy: company.name,
       maSoThue: company.tax_code,
-      email: "hr@" + company.name.toLowerCase().replace(/\s/g, '') + ".com",
-      diaChi: company.address,
+      email: "hr@" + (company.name || "company").toLowerCase().replace(/\s/g, '') + ".com",
+      diaChi: company.address || "Liên hệ doanh nghiệp để biết chi tiết",
       type: "OFFICIAL"
     });
-    toast.success(`Đã chọn doanh nghiệp ${company.name} thành công`);
+    // Lưu ý: Đây mới là cập nhật UI, bạn cần gọi API register-company để lưu vào DB giống như bên DeXuatMoiForm
   };
 
-  const filtered = companies.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase()) || 
-    c.tax_code.includes(search)
+  const filtered = companies.filter(c =>
+    (c.name?.toLowerCase().includes(search.toLowerCase())) ||
+    (c.tax_code?.includes(search))
   );
 
   return (
@@ -43,7 +53,7 @@ export default function NganHangView({ onBack, onDangKy }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="font-semibold">Ngân hàng doanh nghiệp đã liên kết</span>
+        <span className="font-semibold">Ngân hàng doanh nghiệp đối tác</span>
       </div>
 
       <div className="p-4 border-b border-gray-100 bg-gray-50/50">
@@ -53,7 +63,7 @@ export default function NganHangView({ onBack, onDangKy }) {
           </svg>
           <Input
             className="pl-9 bg-white border-gray-300"
-            placeholder="Tìm theo tên công ty hoặc mã số thuế..."
+            placeholder="Tìm tên công ty hoặc mã số thuế..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -66,37 +76,44 @@ export default function NganHangView({ onBack, onDangKy }) {
             <tr className="bg-gray-50/80 border-b border-gray-100">
               <th className="text-left px-4 py-3 font-bold text-gray-500 text-xs uppercase">Doanh nghiệp</th>
               <th className="text-left px-4 py-3 font-bold text-gray-500 text-xs uppercase">Mã số thuế</th>
-              <th className="text-left px-4 py-3 font-bold text-gray-500 text-xs uppercase">Địa chỉ</th>
-              <th className="text-center px-4 py-3 font-bold text-gray-500 text-xs uppercase">Chỉ tiêu</th>
+              <th className="text-center px-4 py-3 font-bold text-gray-500 text-xs uppercase">Còn trống</th>
               <th className="text-center px-4 py-3 font-bold text-gray-500 text-xs uppercase">Hành động</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {loading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-gray-400">Không tìm thấy doanh nghiệp nào phù hợp.</td>
+                <td colSpan={4} className="px-4 py-12 text-center text-gray-400">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-6 h-6 border-2 border-[#5c60c0] border-t-transparent rounded-full animate-spin"></div>
+                    <span>Đang tải danh sách...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-4 py-12 text-center text-gray-400">Không có dữ liệu phù hợp.</td>
               </tr>
             ) : (
               filtered.map((c) => (
-                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                <tr key={c.company_id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
                   <td className="px-4 py-4">
                     <div className="font-bold text-gray-800">{c.name}</div>
-                    <div className="text-[10px] text-gray-400 uppercase font-semibold">{c.industry}</div>
                   </td>
                   <td className="px-4 py-4 text-gray-600 font-mono text-xs">{c.tax_code}</td>
-                  <td className="px-4 py-4 text-gray-500 text-xs max-w-[200px] truncate">{c.address}</td>
                   <td className="px-4 py-4 text-center">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {c.slots}
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${c.available > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {c.available} / {c.max_slots}
                     </span>
                   </td>
                   <td className="px-4 py-4 text-center">
-                    <Button 
+                    <Button
                       onClick={() => handleDangKy(c)}
+                      disabled={c.available <= 0}
                       size="sm"
-                      className="bg-green-500 hover:bg-green-600 text-white shadow-sm"
+                      className={`${c.available > 0 ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-300'} text-white shadow-sm`}
                     >
-                      Chọn nhanh
+                      {c.available > 0 ? 'Đăng ký nhanh' : 'Hết chỗ'}
                     </Button>
                   </td>
                 </tr>
