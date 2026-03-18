@@ -97,7 +97,7 @@ function ReportDetailModal({ item, onClose, onApprove, onReject }) {
               </label>
               <textarea
                 {...register('comment')}
-                disabled={isApproved}
+                
                 className={`min-h-[130px] w-full rounded-lg border ${errors.comment ? 'border-red-500' : 'border-slate-200'} p-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100`}
                 placeholder="Nhap nhan xet chi tiet..."
               />
@@ -108,7 +108,7 @@ function ReportDetailModal({ item, onClose, onApprove, onReject }) {
                   type="button"
                   variant="outline"
                   onClick={handleSubmit(onRejectSubmit)}
-                  disabled={isApproved}
+                  
                   className="border-red-300 text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Từ chối báo cáo
@@ -116,7 +116,7 @@ function ReportDetailModal({ item, onClose, onApprove, onReject }) {
                 <Button
                   type="button"
                   onClick={handleSubmit(onApproveSubmit)}
-                  disabled={isApproved}
+                  
                   className="bg-[#7c3aed] text-white hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Duyệt
@@ -284,7 +284,7 @@ const ProjectReports = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => setSelectedReport(item)}
-                          disabled={isApproved}
+                          
                           className="rounded-full border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed] hover:bg-[#f3e8ff] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Duyệt
@@ -293,7 +293,7 @@ const ProjectReports = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => setSelectedReport(item)}
-                          disabled={!isApproved}
+                          
                           className="rounded-full border-[#bfdbfe] bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Xem chi tiết
