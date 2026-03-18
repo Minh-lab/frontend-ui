@@ -8,16 +8,59 @@ import DeXuatMoiForm from "./DeXuatMoiForm";
 import NganHangView from "./NganHangView";
 import DaDangKy from "./DaDangKy";
 
+const STORAGE_KEY = "student_registered_topic";
+
 export default function DangKyDeTaiPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [access] = useState(() => getStudentAccess());
-  const [view, setView] = useState(() => location.state?.view ?? "");
-  const [topic, setTopic] = useState(null);
+
+  // Initialize state from localStorage
+  const [view, setView] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const { view: savedView } = JSON.parse(saved);
+      return savedView;
+    }
+    return location.state?.view ?? "empty";
+  });
+
+  const [topic, setTopic] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const { topic: savedTopic } = JSON.parse(saved);
+      return savedTopic;
+    }
+    return null;
+  });
 
   useEffect(() => {
-    if (location.state?.view) setView(location.state.view);
+    if (location.state?.view) {
+      setView(location.state.view);
+    }
   }, [location.state?.view]);
+
+  // Function to handle registration and persistence
+  const handleDangKy = (dt) => {
+    const nextView = "registered";
+
+    // Convert File object to string name for serialization
+    const serializableTopic = { ...dt };
+    if (dt.fileDeCuong instanceof File) {
+      serializableTopic.fileDeCuong = dt.fileDeCuong.name;
+    }
+
+    setView(nextView);
+    setTopic(serializableTopic);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ view: nextView, topic: serializableTopic }));
+  };
+
+  const handleUpdateView = (nextView) => {
+    setView(nextView);
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const existingTopic = saved ? JSON.parse(saved).topic : null;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ view: nextView, topic: existingTopic }));
+  };
 
 
 
@@ -43,11 +86,11 @@ export default function DangKyDeTaiPage() {
   }
 
   if (view === "form-moi")
-    return <div className="p-6"><DeXuatMoiForm onBack={() => setView("empty")} onDangKy={(dt) => { setView("registered"); setTopic(dt) }} /></div>;
+    return <div className="p-6"><DeXuatMoiForm onBack={() => handleUpdateView("empty")} onDangKy={handleDangKy} /></div>;
   if (view === "ngan-hang")
-    return <div className="p-6"><NganHangView onBack={() => setView("empty")} onDangKy={(dt) => { setView("registered"); setTopic(dt) }} /></div>;
+    return <div className="p-6"><NganHangView onBack={() => handleUpdateView("empty")} onDangKy={handleDangKy} /></div>;
   if (view === "registered")
-    return <div className="p-6"><DaDangKy topic={topic} onDeXuatMoi={() => setView("form-moi")} onNganHang={() => setView("ngan-hang")} /></div>;
+    return <div className="p-6"><DaDangKy topic={topic} onDeXuatMoi={() => handleUpdateView("form-moi")} onNganHang={() => handleUpdateView("ngan-hang")} /></div>;
 
-  return <div className="p-6"><ChuaDangKy onDeXuatMoi={() => setView("form-moi")} onNganHang={() => setView("ngan-hang")} /></div>;
+  return <div className="p-6"><ChuaDangKy onDeXuatMoi={() => handleUpdateView("form-moi")} onNganHang={() => handleUpdateView("ngan-hang")} /></div>;
 }
