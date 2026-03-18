@@ -35,9 +35,9 @@ const transformTopicToAPI = (formData, expertise_id = null) => {
 
 const topicService = {
   // Lấy danh sách đề tài (có phân trang và lọc)
-  // API: GET /api/v1/faculty_staff/topics?keyword=&page=&per_page=
+  // API: GET /api/v1/topics (route chung cho tất cả, faculty_staff có thể xem danh sách)
   getTopics: async ({ page = 1, itemsPerPage = 5, search = "", specialization = "Tất cả", expertise_id = null } = {}) => {
-    const response = await api.get("/faculty_staff/topics", {
+    const response = await api.get("/topics", {
       params: { 
         keyword: search,
         page,
@@ -69,9 +69,9 @@ const topicService = {
   },
 
   // Lấy chi tiết đề tài theo ID từ danh sách
-  // API: GET /api/v1/faculty_staff/topics?page=1&per_page=100 (sử dụng index như yêu cầu)
+  // API: GET /api/v1/topics (sử dụng index như yêu cầu)
   getTopicById: async (id) => {
-    const response = await api.get("/faculty_staff/topics", {
+    const response = await api.get("/topics", {
       params: { 
         page: 1,
         per_page: 100

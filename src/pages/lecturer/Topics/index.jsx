@@ -1,10 +1,11 @@
+/* eslint-disable no-unused-vars */
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import topicService from "@/services/lecturer/topic";
+import topicService from "@/services/lecturer/topicService";
 import api from "@/services/apiConfig"; // For fetching expertise list
 
 import TopicTable from "./TopicTable";
