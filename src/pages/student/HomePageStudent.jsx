@@ -1,10 +1,12 @@
-﻿import StatusBadge from "@/components/StatusBadge";
+import StatusBadge from "@/components/StatusBadge";
 import { doAn, thucTap } from "../../data/studentData";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStudentAccess, setStudentAccess } from "@/lib/studentAccess";
 import { toast } from "sonner";
+import { ConfirmAction } from "@/components/ui/ConfirmAction";
+
 const steps = [
   { label: "Dang ky", done: true },
   { label: "Cho duyet", done: true },
@@ -22,6 +24,7 @@ function StepIcon({ done, failed, num }) {
 export default function HomePageStudent() {
   const navigate = useNavigate();
   const [access, setAccess] = useState(() => getStudentAccess());
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null });
 
   const handleEnableProject = () => {
     setAccess(setStudentAccess({ projectEnabled: true }));
@@ -31,10 +34,7 @@ export default function HomePageStudent() {
   };
 
   const handleDisableProject = () => {
-    setAccess(setStudentAccess({ projectEnabled: false }));
-    toast.success("Đã hủy đợt đồ án", {
-      className: "!bg-[#AAFAB8] !text-[#24AD47]",
-    });
+    setConfirmModal({ isOpen: true, type: "project" });
   };
 
   const handleEnableIntern = () => {
@@ -45,11 +45,24 @@ export default function HomePageStudent() {
   };
 
   const handleDisableIntern = () => {
-    setAccess(setStudentAccess({ internEnabled: false }));
-    toast.success("Đã hủy đợt thực tập", {
-      className: "!bg-[#AAFAB8] !text-[#24AD47]",
-    });
+    setConfirmModal({ isOpen: true, type: "intern" });
   };
+
+  const processConfirm = () => {
+    if (confirmModal.type === "project") {
+      setAccess(setStudentAccess({ projectEnabled: false }));
+      toast.success("Đã hủy đợt đồ án", {
+        className: "!bg-[#AAFAB8] !text-[#24AD47]",
+      });
+    } else if (confirmModal.type === "intern") {
+      setAccess(setStudentAccess({ internEnabled: false }));
+      toast.success("Đã hủy đợt thực tập", {
+        className: "!bg-[#AAFAB8] !text-[#24AD47]",
+      });
+    }
+    setConfirmModal({ isOpen: false, type: null });
+  };
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex flex-wrap gap-3 justify-end">
@@ -96,11 +109,10 @@ export default function HomePageStudent() {
             <button
               onClick={() => access.internEnabled && navigate("/student/intern-reports")}
               disabled={!access.internEnabled}
-              className={`mt-3 w-full border text-sm font-medium py-2 rounded-lg transition ${
-                access.internEnabled
-                  ? "bg-[#e6ecff] border-indigo-300 text-[#5c60c0] hover:bg-indigo-50"
-                  : "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
+              className={`mt-3 w-full border text-sm font-medium py-2 rounded-lg transition ${access.internEnabled
+                ? "bg-[#e6ecff] border-indigo-300 text-[#5c60c0] hover:bg-indigo-50"
+                : "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
             >
               Truy cap =&gt;
             </button>
@@ -113,9 +125,8 @@ export default function HomePageStudent() {
             <button
               onClick={() => access.projectEnabled && navigate("/student/project-reports")}
               disabled={!access.projectEnabled}
-              className={`text-xs underline ${
-                access.projectEnabled ? "text-blue-200 hover:text-white" : "text-blue-100/60 cursor-not-allowed"
-              }`}
+              className={`text-xs underline ${access.projectEnabled ? "text-blue-200 hover:text-white" : "text-blue-100/60 cursor-not-allowed"
+                }`}
             >
               Xem chi tiet
             </button>
@@ -146,21 +157,29 @@ export default function HomePageStudent() {
           navigate("/student/register-topic", { state: { view: "ngan-hang" } })
         }
         disabled={!access.projectEnabled}
-        className={`w-full rounded-xl p-6 flex flex-col items-center gap-2 transition group ${
-          access.projectEnabled
-            ? "bg-[#ecf9ff] border border-[#ecf9ff] hover:border-indigo-400"
-            : "bg-gray-100 border border-gray-100 cursor-not-allowed"
-        }`}
+        className={`w-full rounded-xl p-6 flex flex-col items-center gap-2 transition group ${access.projectEnabled
+          ? "bg-[#ecf9ff] border border-[#ecf9ff] hover:border-indigo-400"
+          : "bg-gray-100 border border-gray-100 cursor-not-allowed"
+          }`}
       >
         <p
-          className={`text-base font-semibold transition ${
-            access.projectEnabled ? "text-gray-700 group-hover:text-[#5c60c0]" : "text-gray-400"
-          }`}
+          className={`text-base font-semibold transition ${access.projectEnabled ? "text-gray-700 group-hover:text-[#5c60c0]" : "text-gray-400"
+            }`}
         >
           Ngan hang de tai
         </p>
         <p className="text-sm text-gray-400">Tham khao 200+ de tai co san</p>
       </button>
+
+      <ConfirmAction
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, type: null })}
+        onConfirm={processConfirm}
+        title="Xác nhận yêu cầu"
+        description={`Bạn có chắc chắn muốn gửi yêu cầu hủy đợt ${confirmModal.type === "project" ? "đồ án" : "thực tập"} này không? Hành động này không thể hoàn tác.`}
+        confirmText="Xác nhận hủy"
+        variant="destructive"
+      />
     </div>
   );
 }

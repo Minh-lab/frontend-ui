@@ -230,7 +230,7 @@ const ReviewGrade = () => {
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    disabled={isGraded}
+                                                    
                                                     onClick={() => handleGoToGrade(item)}
                                                     className={`h-7 px-3 text-[11px] rounded-full font-bold transition-all ${
                                                         !isGraded 
@@ -243,7 +243,7 @@ const ReviewGrade = () => {
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    disabled={!isGraded}
+                                                    
                                                     onClick={() => handleGoToView(item)}
                                                     className={`h-7 px-3 text-[11px] rounded-full font-bold transition-all ${
                                                         isGraded 

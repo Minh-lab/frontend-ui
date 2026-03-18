@@ -1,4 +1,4 @@
-import { use, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -9,29 +9,33 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { getStudentAccess } from "@/lib/studentAccess";
+import lecturerApi from "@/services/lecturerApi";
 
 function DanhSachGV({ listGV, onChon, isRegister }) {
-  const [search, setSearch] = useState("Tran Thi Huong|");
   const [keyword, setKeyword] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [statusKeyword, setStatusKeyword] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [topicKeyword, setTopicKeyword] = useState('')
   const [topicFilter, setTopicFilter] = useState('')
+
   const filteredGV = useMemo(() => {
+    if (!listGV) return [];
     return listGV.filter((gv) => {
+      const gvName = gv.full_name || "";
       const matchesKeyword =
         !searchTerm ||
-        gv.ten.toLowerCase().includes(searchTerm.toLowerCase())
+        gvName.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
-        !statusFilter || gv.conNhan === (statusFilter === "true");
-      const matchesTopic = !topicFilter || gv.chuyenMon.some(mon => mon.toLowerCase().includes(topicFilter.toLowerCase()));
+        !statusFilter || (gv.is_active ? statusFilter === "true" : statusFilter === "false");
+      
+      const gvExpertises = gv.expertises || [];
+      const matchesTopic = !topicFilter || gvExpertises.some(mon => mon.toLowerCase().includes(topicFilter.toLowerCase()));
 
-      return matchesKeyword && matchesStatus && matchesTopic
+      return matchesKeyword && matchesStatus && matchesTopic;
     })
   }, [listGV, searchTerm, statusFilter, topicFilter])
-
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -47,8 +51,8 @@ function DanhSachGV({ listGV, onChon, isRegister }) {
             className="pl-9 "
 
           />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+          {keyword && (
+            <button onClick={() => setKeyword("")} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -92,21 +96,25 @@ function DanhSachGV({ listGV, onChon, isRegister }) {
 
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm divide-y divide-gray-100">
         {filteredGV.map((gv) => {
-          const full = gv.daDangKy >= gv.max;
+          const initials = gv.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || "GV";
+          const daDangKy = gv.da_dang_ky || 0;
+          const max = gv.max_assignment || 10;
+          const full = daDangKy >= max;
+
           return (
-            <div key={gv.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition">
+            <div key={gv.lecturer_id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition">
               {/* Avatar */}
               <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-[#3b3f8c] font-bold text-sm flex-shrink-0">
-                {gv.initials}
+                {initials}
               </div>
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-semibold text-gray-800 text-sm">{gv.ten}</p>
+                  <p className="font-semibold text-gray-800 text-sm">{gv.full_name}</p>
                 </div>
-                <p className="text-xs text-gray-500">Ngành đào tạo: {gv.nganh}</p>
+                <p className="text-xs text-gray-500">Bộ môn: {gv.department}</p>
                 <div className="flex flex-wrap gap-1.5 mt-1">
-                  {gv.chuyenMon.map((cm) => (
+                  {gv.expertises?.map((cm) => (
                     <span key={cm} className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded">
                       {cm}
                     </span>
@@ -116,7 +124,7 @@ function DanhSachGV({ listGV, onChon, isRegister }) {
               {/* Status + Action */}
               <div className="flex flex-col items-end gap-2 flex-shrink-0">
                 <span className={`text-xs font-semibold ${full ? "text-red-500" : "text-green-600"}`}>
-                  Đã đăng ký: {gv.daDangKy}/{gv.max}
+                  Đã đăng ký: {daDangKy}/{max}
                 </span>
                 <Button
                   onClick={() => onChon(gv)}
@@ -181,21 +189,21 @@ function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
           <p className="text-sm font-bold text-gray-700 mb-3">Thông tin giảng viên:</p>
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-[#3b3f8c] font-bold text-lg flex-shrink-0">
-              {gv.initials}
+              {gv.full_name?.split(' ').map(n => n[0]).join('').toUpperCase()}
             </div>
             <div className="flex-1">
               <div className="flex items-start justify-between flex-wrap gap-2">
                 <div>
-                  <p className="font-bold text-gray-800">{gv.ten}</p>
-                  <p className="text-sm text-gray-500">Ngành đào tạo: Công nghệ thông tin ({gv.nganh})</p>
+                  <p className="font-bold text-gray-800">{gv.full_name}</p>
+                  <p className="text-sm text-gray-500">Bộ môn: {gv.department}</p>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {gv.chuyenMon.map((cm) => (
+                    {gv.expertises?.map((cm) => (
                       <span key={cm} className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full border border-gray-200">{cm}</span>
                     ))}
                   </div>
                 </div>
                 <div className="text-right">
-                  {gv.conNhan && (
+                  {gv.is_active && (
                     <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded-full border border-green-200 mb-1">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -203,7 +211,7 @@ function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
                       Còn nhận
                     </span>
                   )}
-                  <p className="text-xs text-green-600 font-medium">Đã đăng ký: {gv.daDangKy}/{gv.max}</p>
+                  <p className="text-xs text-green-600 font-medium">Đã đăng ký: {gv.da_dang_ky || 0}/{gv.max_assignment || 10}</p>
                 </div>
               </div>
             </div>
@@ -269,9 +277,27 @@ function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
 export default function DangKyGVHDPage() {
   const navigate = useNavigate();
   const [access] = useState(() => getStudentAccess());
-  const [listGV, setListGV] = useState(giangVienList);
+  const [listGV, setListGV] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [selectedGV, setSelectedGV] = useState(null);
   const [isRegister, setIsRegister] = useState(false);
+
+  useEffect(() => {
+    const fetchLecturers = async () => {
+      setLoading(true);
+      try {
+        const response = await lecturerApi.getLecturers();
+        setListGV(response.data);
+      } catch (error) {
+        console.error(error);
+        toast.error("Không thể tải danh sách giảng viên");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLecturers();
+  }, []);
+
   if (!access.projectEnabled) {
     return (
       <div className="p-6">
@@ -291,5 +317,14 @@ export default function DangKyGVHDPage() {
       </div>
     );
   }
+
+  if (loading && listGV.length === 0) {
+    return (
+      <div className="p-6 flex justify-center">
+        <div className="w-8 h-8 border-2 border-[#5c60c0] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return <div className="p-6">{selectedGV ? <FormDangKyGVHD setIsRegister={setIsRegister} gv={selectedGV} onBack={() => setSelectedGV(null)} /> : <DanhSachGV listGV={listGV} onChon={(gv) => setSelectedGV(gv)} isRegister={isRegister} />}</div>;
 }

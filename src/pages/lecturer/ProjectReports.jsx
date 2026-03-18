@@ -260,7 +260,6 @@ const ProjectReports = () => {
                 <TableHead>Họ và tên</TableHead>
                 <TableHead>Tên đề tài</TableHead>
                 <TableHead>Trạng thái</TableHead>
-                <TableHead>Điểm</TableHead>
                 <TableHead>Hanh dong</TableHead>
               </TableRow>
             </TableHeader>
@@ -277,7 +276,6 @@ const ProjectReports = () => {
                     <TableCell>
                       <ReportStatusBadge status={item.trangthai} />
                     </TableCell>
-                    <TableCell>{item.diem}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
                         <Button
