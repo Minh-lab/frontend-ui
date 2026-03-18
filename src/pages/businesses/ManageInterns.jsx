@@ -83,7 +83,7 @@ const ManageInterns = () => {
           </div>
           <Card className="mx-6  p-0">
            <div className="overflow-x-auto">
-              <table className='text-x font-normal'>
+              <table className='text-x font-normal w-full'>
               <thead >
                 <tr className='bg-gray-50 border-b border-gray-200'>
                   <th className="px-4 py-2.5 text-left font-normal font-inter">

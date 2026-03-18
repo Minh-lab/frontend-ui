@@ -59,7 +59,7 @@ export default function LecturerProfile() {
                         <div className="grid grid-cols-2 gap-y-6 gap-x-4">
                             <div>
                                 <p className="text-gray-400 text-xs font-semibold mb-1 uppercase">Mã Giảng viên (usercode)</p>
-                                <p className="font-bold text-gray-800">{profile?.user?.usercode}</p>
+                                <p className="font-bold text-gray-800">{profile?.user?.lecturer_code}</p>
                             </div>
                             <div>
                                 <p className="text-gray-400 text-xs font-semibold mb-1 uppercase">Tên đăng nhập (username)</p>
