@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+/* eslint-disable no-unused-vars */
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -22,25 +23,59 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 
+// Import Council Service
+import { councilService } from "@/services/faculty";
+
 export default function GradeCouncil() {
   const { id } = useParams();
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   
   // State điều khiển Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
 
-  // Dữ liệu mẫu sinh viên trong hội đồng
-  const [students, setStudents] = useState([
-    { id: 1, code: "sv001", name: "Nguyễn an", order: 3, topic: "Dự án giá vàng", grade: "8.8" },
-    { id: 2, code: "sv002", name: "nguyễn minh", order: 33, topic: "Web tài xỉu", grade: "" },
-    { id: 3, code: "sv077", name: "hoàng lân", order: 12, topic: "App dự báo thời tiết", grade: "" },
-  ]);
+  // Data states
+  const [loading, setLoading] = useState(true);
+  const [students, setStudents] = useState([]);
+  const [councilInfo, setCouncilInfo] = useState(null);
+
+  // Lấy danh sách sinh viên trong hội đồn
+  useEffect(() => {
+    fetchCouncilCapstones();
+  }, [id]);
+
+  const fetchCouncilCapstones = async () => {
+    setLoading(true);
+    try {
+      const response = await councilService.getCouncilCapstones(id);
+      
+      if (response.success) {
+        setCouncilInfo(response.data.council);
+        setStudents(response.data.capstones || []);
+      } else {
+        toast.error(response.message || "Lỗi khi tải danh sách sinh viên");
+      }
+    } catch (error) {
+      toast.error(error.message || "Lỗi khi tải danh sách sinh viên");
+      console.error("Error fetching capstones:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOpenModal = (student) => {
     setSelectedStudent(student);
     setIsModalOpen(true);
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-[500px] items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-[1200px] mx-auto space-y-10 animate-in fade-in duration-700 font-sans">
@@ -63,47 +98,34 @@ export default function GradeCouncil() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {students.map((student) => (
-              <TableRow key={student.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-50">
-                <TableCell className="font-medium text-slate-700">{student.code}</TableCell>
-                <TableCell className="font-bold text-slate-700">{student.name}</TableCell>
-                <TableCell className="text-center font-medium text-slate-600">{student.order}</TableCell>
-                <TableCell className="text-slate-600 font-medium">{student.topic}</TableCell>
-                <TableCell className="text-center font-black text-slate-800">{student.grade}</TableCell>
-                <TableCell className="text-center">
-                  <Button 
-                    size="sm"
-                    onClick={() => handleOpenModal(student)}
-                    className="bg-[#6D83CD] hover:bg-[#5C72BC] text-white rounded-full px-6 h-8 text-xs font-bold shadow-sm"
-                  >
-                    Cập nhật điểm
-                  </Button>
+            {students && students.length > 0 ? (
+              students.map((student) => (
+                <TableRow key={student.capstone_id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-50">
+                  <TableCell className="font-medium text-slate-700">{student.student_code}</TableCell>
+                  <TableCell className="font-bold text-slate-700">{student.student_name}</TableCell>
+                  <TableCell className="text-center font-medium text-slate-600">{student.defense_order}</TableCell>
+                  <TableCell className="text-slate-600 font-medium">{student.topic_name}</TableCell>
+                  <TableCell className="text-center font-black text-slate-800">{student.council_grade || '-'}</TableCell>
+                  <TableCell className="text-center">
+                    <Button 
+                      size="sm"
+                      onClick={() => handleOpenModal(student)}
+                      className="bg-[#6D83CD] hover:bg-[#5C72BC] text-white rounded-full px-6 h-8 text-xs font-bold shadow-sm"
+                    >
+                      Cập nhật điểm
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan="6" className="text-center py-8 text-slate-500">
+                  Không có sinh viên cần chấm điểm
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
-
-        {/* Phân trang */}
-        <div className="p-6 border-t border-slate-50 flex items-center justify-center relative">
-          <div className="absolute left-8">
-             <button className="flex items-center gap-2 text-xs font-bold text-slate-500 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50">
-                <ChevronLeft className="size-4" /> Previous
-             </button>
-          </div>
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, "...", 8, 9, 10].map((p, i) => (
-              <button key={i} className={`size-8 rounded-lg text-xs font-bold ${p === 1 ? "bg-slate-100 text-indigo-600" : "text-slate-400"}`}>
-                {p}
-              </button>
-            ))}
-          </div>
-          <div className="absolute right-8">
-             <button className="flex items-center gap-2 text-xs font-bold text-slate-500 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50">
-                Next <ChevronRight className="size-4" />
-             </button>
-          </div>
-        </div>
       </div>
 
       {/* Modal cập nhật điểm */}
@@ -111,6 +133,11 @@ export default function GradeCouncil() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         student={selectedStudent}
+        councilId={id}
+        onSuccess={() => {
+          setIsModalOpen(false);
+          fetchCouncilCapstones(); // Refresh danh sách
+        }}
       />
     </div>
   );
@@ -119,19 +146,52 @@ export default function GradeCouncil() {
 /**
  * Component Modal Cập nhật điểm
  */
-function UpdateGradeModal({ isOpen, onClose, student }) {
+function UpdateGradeModal({ isOpen, onClose, student, councilId, onSuccess }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm({
-    values: {
-      grade: student?.grade || "",
+    defaultValues: {
+      grade: student?.council_grade?.toString() || "",
     }
   });
 
+  // Update form values khi student thay đổi
+  React.useEffect(() => {
+    if (student) {
+      form.reset({
+        grade: student?.council_grade?.toString() || ""
+      });
+    }
+  }, [student, form]);
+
   if (!isOpen) return null;
 
-  const onSubmit = (data) => {
-    console.log(`Cập nhật điểm cho ${student.name}:`, data.grade);
-    toast.success("Cập nhật điểm thành công!");
-    onClose();
+  const onSubmit = async (data) => {
+    if (!student?.capstone_id || !councilId) {
+      toast.error("Thông tin sinh viên không hợp lệ");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await councilService.updateGrade(
+        councilId,
+        student.capstone_id,
+        data.grade
+      );
+
+      if (response.success) {
+        toast.success("Cập nhật điểm thành công!");
+        if (onSuccess) onSuccess();
+      } else {
+        toast.error(response.message || "Lỗi khi cập nhật điểm");
+      }
+    } catch (error) {
+      toast.error(error.message || "Lỗi khi cập nhật điểm");
+      console.error("Error updating grade:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -153,6 +213,11 @@ function UpdateGradeModal({ isOpen, onClose, student }) {
                   <FormControl>
                     <Input 
                       {...field} 
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="10"
+                      disabled={isSubmitting}
                       className="bg-white rounded-xl border-slate-200 h-14 w-64 text-center text-2xl font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-indigo-200" 
                       placeholder="0.0"
                     />
@@ -165,15 +230,24 @@ function UpdateGradeModal({ isOpen, onClose, student }) {
               <Button 
                 type="button"
                 onClick={onClose}
-                className="bg-[#ff4d4d] hover:bg-[#e60000] text-white rounded-xl px-12 h-12 font-bold text-lg shadow-lg shadow-red-100 transition-all active:scale-95"
+                disabled={isSubmitting}
+                className="bg-[#ff4d4d] hover:bg-[#e60000] text-white rounded-xl px-12 h-12 font-bold text-lg shadow-lg shadow-red-100 transition-all active:scale-95 disabled:opacity-50"
               >
                 Hủy
               </Button>
               <Button 
                 type="submit"
-                className="bg-[#2ecc71] hover:bg-[#27ae60] text-white rounded-xl px-10 h-12 font-bold text-lg shadow-lg shadow-green-100 transition-all active:scale-95"
+                disabled={isSubmitting}
+                className="bg-[#2ecc71] hover:bg-[#27ae60] text-white rounded-xl px-10 h-12 font-bold text-lg shadow-lg shadow-green-100 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
               >
-                Cập nhật điểm
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  "Cập nhật điểm"
+                )}
               </Button>
             </div>
           </form>

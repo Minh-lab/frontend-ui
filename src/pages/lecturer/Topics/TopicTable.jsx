@@ -54,7 +54,7 @@ const TopicTable = ({ topics, expertises, safePage, totalPages, onPageChange, on
                   <TableCell>#{item.topic_id}</TableCell>
                   <TableCell className="font-medium">{item.title}</TableCell>
                   <TableCell>
-                    {expertises?.find((e) => e.expertise_id === item.expertise_id)?.name || "—"}
+                    {item.expertise?.name || expertises?.find((e) => e.expertise_id === item.expertise_id)?.name || "—"}
                   </TableCell>
                   <TableCell className="text-xs">{item.technologies || "—"}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{item.description}</TableCell>

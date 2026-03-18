@@ -19,7 +19,7 @@ export default function DaDangKy({ onDeXuatMoi, onNganHang, topic }) {
           <div className="space-y-3">
             {[
               ["Tên đề tài:", topic?.title],
-              ["Lĩnh vực:", topic?.linhVuc],
+              ["Lĩnh vực:", topic?.expertise?.name],
               ["Giảng viên hướng dẫn:", topic?.lecturer?.name || "Chưa phân công"],
               ["Công nghệ sử dụng:", topic?.technologies],
             ].map(([lbl, val]) => (

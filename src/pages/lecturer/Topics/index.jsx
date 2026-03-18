@@ -39,7 +39,7 @@ const Topics = () => {
 
   const fetchExpertises = useCallback(async () => {
     try {
-      const response = await api.get("/lecturer/expertises");
+      const response = await api.get("/expertises");
       if (response.data?.success) {
         setExpertises(response.data.data);
       }

@@ -17,9 +17,8 @@ import { companyRoutes } from "./company.routes";
 const LoginPage = lazy(() => import("@/pages/auth/Login"));
 const ForgotPasswordPage = lazy(() => import("@/pages/auth/ForgotPassword")); // Bước 1 & 2: Email & OTP
 const ResetPasswordPage = lazy(() => import("@/pages/auth/ResetPassword"));   // Bước 3: Mật khẩu mới
-
-// const UnauthorizedPage = lazy(() => import("@/pages/errors/UnauthorizedPage"));
-// const NotFoundPage = lazy(() => import("@/pages/errors/NotFoundPage"));
+const UnauthorizedPage = lazy(() => import("@/pages/errors/UnauthorizedPage"));
+const NotFoundPage = lazy(() => import("@/pages/errors/NotFoundPage"));
 
 /**
  * Điều hướng thông minh dựa trên Role
@@ -97,9 +96,9 @@ export default function AppRouter() {
       ],
     },
 
-    // Trang lỗi (Bỏ comment khi đã tạo file)
-    // { path: "/unauthorized", element: <UnauthorizedPage /> },
-    // { path: "*", element: <NotFoundPage /> },
+    // Trang lỗi
+    { path: "/unauthorized", element: <UnauthorizedPage /> },
+    { path: "*", element: <NotFoundPage /> },
   ]);
 
   // Kích hoạt Suspense để hiển thị trạng thái chờ khi tải các trang Lazy

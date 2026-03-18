@@ -35,6 +35,15 @@ function App() {
   //     "faculty" // Test với vai trò Company
   //   );
   // }, [setAuth]);
+  // useEffect(() => {
+  //   setAuth(
+  //     {
+  //       name: student.hoTen,
+  //     },
+  //     "dummy-access-token",
+  //     "lecturer" // Đang để vai trò VPK theo yêu cầu của bạn
+  //   );
+  // }, [setAuth]);
 
   return (
     <BrowserRouter>

@@ -28,6 +28,29 @@ import {
 import { planService } from "@/services/faculty";
 
 /**
+ * Danh sách các tên giai đoạn được định nghĩa sẵn
+ */
+const PREDEFINED_PHASE_NAMES = {
+  CAPSTONE: [
+    "Đăng ký đợt đồ án",
+    "Đăng ký đề tài",
+    "Đăng ký GVHDDA",
+    "Nộp báo cáo đồ án 1",
+    "Nộp báo cáo đồ án 2",
+    "Nộp báo cáo đồ án 3",
+    "Nộp báo cáo đồ án 4",
+    "Chấm điểm đồ án"
+  ],
+  INTERNSHIP: [
+    "Đăng ký đợt thực tập",
+    "Đăng ký doanh nghiệp thực tập",
+    "Nộp đề cương thực tập",
+    "Nộp báo cáo thực tập",
+    "Chấm điểm thực tập"
+  ]
+};
+
+/**
  * Định nghĩa Schema Validation với Yup
  */
 const milestoneSchema = yup.object().shape({
@@ -46,9 +69,7 @@ export default function AddMilestone() {
   const navigate = useNavigate();
   const { id: planId } = useParams();
   
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [phaseNames, setPhaseNames] = useState([]);
   const [filteredPhaseNames, setFilteredPhaseNames] = useState([]);
 
   const form = useForm({
@@ -65,45 +86,22 @@ export default function AddMilestone() {
   // Theo dõi sự thay đổi của type để lọc phase names
   const watchType = form.watch("type");
 
-  // Fetch danh sách phase names khi component mount
-  useEffect(() => {
-    fetchPhaseNames();
-  }, []);
-
   // Lọc phase names khi type thay đổi
   useEffect(() => {
     if (watchType) {
-      const filtered = phaseNames.filter(p => p.type === watchType);
+      const filtered = PREDEFINED_PHASE_NAMES[watchType] || [];
       setFilteredPhaseNames(filtered);
       
-      // Tự động chọn phase name mặc định nếu có
-      const defaultPhase = filtered.find(p => p.default);
-      if (defaultPhase) {
-        form.setValue("phase_name", defaultPhase.name);
+      // Tự động chọn phase name đầu tiên từ danh sách
+      if (filtered.length > 0) {
+        form.setValue("phase_name", filtered[0]);
       } else {
         form.setValue("phase_name", "");
       }
     } else {
       setFilteredPhaseNames([]);
     }
-  }, [watchType, phaseNames, form]);
-
-  const fetchPhaseNames = async () => {
-    try {
-      setLoading(true);
-      const response = await planService.getPhaseNamesByType();
-      
-      if (response.success) {
-        setPhaseNames(response.data);
-      } else {
-        toast.error(response.message || "Không thể tải danh sách tên giai đoạn");
-      }
-    } catch (error) {
-      toast.error(error.message || "Lỗi khi tải danh sách tên giai đoạn");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [watchType, form]);
 
   const onSubmit = async (data) => {
     try {
@@ -199,12 +197,11 @@ export default function AddMilestone() {
                       <Select 
                         onValueChange={field.onChange} 
                         value={field.value}
-                        disabled={!watchType || submitting || loading}
+                        disabled={!watchType || submitting}
                       >
                         <FormControl>
                           <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl py-6 focus:bg-white transition-all">
                             <SelectValue placeholder={
-                              loading ? "Đang tải..." : 
                               !watchType ? "Chọn loại mốc trước" : 
                               "Chọn tên giai đoạn"
                             } />
@@ -212,9 +209,9 @@ export default function AddMilestone() {
                         </FormControl>
                         <SelectContent className="bg-white max-h-60">
                           {filteredPhaseNames.length > 0 ? (
-                            filteredPhaseNames.map((phase) => (
-                              <SelectItem key={phase.id} value={phase.name}>
-                                {phase.name} 
+                            filteredPhaseNames.map((phaseName) => (
+                              <SelectItem key={phaseName} value={phaseName}>
+                                {phaseName} 
                               </SelectItem>
                             ))
                           ) : (

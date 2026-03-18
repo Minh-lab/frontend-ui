@@ -1,5 +1,7 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -14,42 +16,25 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { planService } from "@/services/faculty";
 
 export default function ViewMilestone() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
   // State lưu trữ dữ liệu mốc thời gian
-  const [milestone, setMilestone] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const [milestone, setMilestone] = useState(location.state?.milestone || null);
+  const [loading, setLoading] = useState(!milestone);
+  const [notFound, setNotFound] = useState(!milestone);
 
-  // Fetch dữ liệu từ API
+  // Fetch dữ liệu từ route state (không cần gọi API)
   useEffect(() => {
-    const fetchMilestone = async () => {
-      try {
-        setLoading(true);
-        const response = await planService.getMilestoneById(id);
-        
-        if (response.success) {
-          setMilestone(response.data);
-        } else {
-          setNotFound(true);
-          toast.error(response.message || "Không tìm thấy mốc thời gian");
-        }
-      } catch (error) {
-        toast.error(error.message || "Lỗi khi tải thông tin mốc thời gian");
-        setNotFound(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchMilestone();
+    if (!location.state?.milestone) {
+      setNotFound(true);
+      toast.error("Không tìm thấy dữ liệu mốc thời gian. Quay lại trang trước.");
     }
-  }, [id]);
+    setLoading(false);
+  }, [location.state, navigate]);
 
   // Format date từ YYYY-MM-DD sang DD/MM/YYYY
   const formatDate = (dateString) => {
@@ -73,9 +58,7 @@ export default function ViewMilestone() {
     return (
       <div className="p-8 min-h-[400px] flex items-center justify-center">
         <div className="text-center max-w-md mx-auto">
-          <div className="bg-red-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-            <span className="text-4xl">😢</span>
-          </div>
+        
           <h2 className="text-2xl font-bold text-slate-800 mb-3">Không tìm thấy mốc thời gian</h2>
           <p className="text-slate-500 mb-8">Mốc thời gian bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
           <button
@@ -176,9 +159,9 @@ export default function ViewMilestone() {
         </div>
 
         {/* Thông tin thêm (nếu có) */}
-        {milestone.id && (
+        {(milestone.milestone_id || milestone.id) && (
           <div className="text-xs text-slate-400 italic pt-4 border-t border-slate-200/50">
-            Mã mốc: #{milestone.id}
+            Mã mốc: #{milestone.milestone_id || milestone.id}
           </div>
         )}
       </div>

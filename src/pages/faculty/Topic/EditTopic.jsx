@@ -65,7 +65,7 @@ export default function EditTopic() {
         if (topicResponse.success) {
           const topic = topicResponse.data;
           form.reset({
-            topicName: topic.topic || "",
+            topicName: topic.topicName || topic.topic || "",
             technology: topic.technology || "",
             description: topic.description || "",
             specialization: topic.specialization || "",
@@ -91,15 +91,24 @@ export default function EditTopic() {
     try {
       setSubmitting(true);
       
-      // Chuyển đổi dữ liệu từ form sang format API
+      // Tìm expertise_id dựa trên tên specialization
+      const selectedExpertise = specializations.find(spec => {
+        const specName = typeof spec === 'string' ? spec : spec.name;
+        return specName === data.specialization;
+      });
+      
+      const expertise_id = selectedExpertise?.id;
+      
+      // Chuyển đổi dữ liệu từ form
       const topicData = {
-        topic: data.topicName,           // API dùng "topic"
+        topicName: data.topicName,
         technology: data.technology,
         description: data.description,
         specialization: data.specialization,
+        expertise_id: expertise_id
       };
 
-      const response = await topicService.updateTopic(id, topicData);
+      const response = await topicService.updateTopic(id, topicData, expertise_id);
       
       if (response.success) {
         toast.success(response.message || "Cập nhật đề tài thành công!");
@@ -236,11 +245,14 @@ export default function EditTopic() {
                             disabled={submitting}
                           >
                             <option value="">Chọn chuyên môn</option>
-                            {specializations.map((spec) => (
-                              <option key={spec} value={spec}>
-                                {spec}
-                              </option>
-                            ))}
+                            {specializations.map((spec) => {
+                              const specName = typeof spec === 'string' ? spec : spec.name;
+                              return (
+                                <option key={specName} value={specName}>
+                                  {specName}
+                                </option>
+                              );
+                            })}
                           </select>
                         </FormControl>
                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
