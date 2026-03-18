@@ -65,5 +65,12 @@ export {
   getLecturerStatistics
 } from './lecturerData';
 
+// Export từ internshipData
+export {
+  internshipsData,
+  enterprisesData,
+  lecturersData
+} from './internshipData';
+
 // Export riêng hàm simulateApiDelay (chỉ 1 lần)
 export const simulateApiDelay = () => new Promise(resolve => setTimeout(resolve, 500));

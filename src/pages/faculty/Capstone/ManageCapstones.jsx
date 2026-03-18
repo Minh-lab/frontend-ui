@@ -204,15 +204,7 @@ export default function ManageCapstones() {
     await fetchCapstones();
   };
 
-  // Reset filters
-  const handleResetFilters = () => {
-    setSearchTerm("");
-    setSelectedStatus("");
-    setSelectedLecturer("");
-    setSelectedCouncil("");
-    setPagination(prev => ({ ...prev, current_page: 1 }));
-  };
-
+  
   // Hiển thị loading
   if (loading && capstones.length === 0) {
     return (
@@ -307,13 +299,7 @@ export default function ManageCapstones() {
         >
           Tìm kiếm
         </Button>
-        <Button 
-          onClick={handleResetFilters}
-          variant="outline"
-          className="px-6 rounded-full font-bold border-slate-200"
-        >
-          Làm mới
-        </Button>
+        
       </div>
 
       {/* 2. Nút chức năng nhanh */}
