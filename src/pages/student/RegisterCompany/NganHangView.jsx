@@ -36,11 +36,10 @@ export default function NganHangView({ onBack, onDangKy }) {
     onDangKy({
       tenCongTy: company.name,
       maSoThue: company.tax_code,
-      email: "hr@" + (company.name || "company").toLowerCase().replace(/\s/g, '') + ".com",
+      email: company.email,
       diaChi: company.address || "Liên hệ doanh nghiệp để biết chi tiết",
       type: "OFFICIAL"
     });
-    // Lưu ý: Đây mới là cập nhật UI, bạn cần gọi API register-company để lưu vào DB giống như bên DeXuatMoiForm
   };
 
   const filtered = companies.filter(c =>
@@ -56,7 +55,7 @@ export default function NganHangView({ onBack, onDangKy }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="font-semibold">Ngân hàng doanh nghiệp đối tác</span>
+        <span className="font-semibold text-sm sm:text-base">Ngân hàng doanh nghiệp đối tác</span>
       </div>
 
       <div className="p-4 border-b border-gray-100 bg-gray-50/50">
@@ -77,16 +76,17 @@ export default function NganHangView({ onBack, onDangKy }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50/80 border-b border-gray-100">
-              <th className="text-left px-4 py-3 font-bold text-gray-500 text-xs uppercase">Doanh nghiệp</th>
-              <th className="text-left px-4 py-3 font-bold text-gray-500 text-xs uppercase">Mã số thuế</th>
-              <th className="text-center px-4 py-3 font-bold text-gray-500 text-xs uppercase">Còn trống</th>
-              <th className="text-center px-4 py-3 font-bold text-gray-500 text-xs uppercase">Hành động</th>
+              <th className="text-left px-4 py-3 font-bold text-gray-500 text-[10px] uppercase whitespace-nowrap">Doanh nghiệp</th>
+              <th className="text-left px-4 py-3 font-bold text-gray-500 text-[10px] uppercase whitespace-nowrap">Email & Địa chỉ</th>
+              <th className="text-left px-4 py-3 font-bold text-gray-500 text-[10px] uppercase whitespace-nowrap">Website</th>
+              <th className="text-center px-4 py-3 font-bold text-gray-500 text-[10px] uppercase whitespace-nowrap">Còn trống</th>
+              <th className="text-center px-4 py-3 font-bold text-gray-500 text-[10px] uppercase whitespace-nowrap">Hành động</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-12 text-center text-gray-400">
+                <td colSpan={5} className="px-4 py-12 text-center text-gray-400">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-6 h-6 border-2 border-[#5c60c0] border-t-transparent rounded-full animate-spin"></div>
                     <span>Đang tải danh sách...</span>
@@ -95,17 +95,47 @@ export default function NganHangView({ onBack, onDangKy }) {
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-12 text-center text-gray-400">Không có dữ liệu phù hợp.</td>
+                <td colSpan={5} className="px-4 py-12 text-center text-gray-400">Không có dữ liệu phù hợp.</td>
               </tr>
             ) : (
               filtered.map((c) => (
                 <tr key={c.company_id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                  <td className="px-4 py-4">
-                    <div className="font-bold text-gray-800">{c.name}</div>
+                  <td className="px-4 py-4 min-w-[200px]">
+                    <div className="font-bold text-gray-800 leading-tight">{c.name}</div>
+                    <div className="text-[10px] font-mono text-gray-400 mt-1">MST: {c.tax_code}</div>
                   </td>
-                  <td className="px-4 py-4 text-gray-600 font-mono text-xs">{c.tax_code}</td>
+                  <td className="px-4 py-4 min-w-[250px] space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      {c.email}
+                    </div>
+                    <div className="flex items-start gap-1.5 text-[11px] text-gray-500 leading-relaxed capitalize">
+                      <svg className="w-3 h-3 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {c.address || "Chưa cập nhật"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    {c.website ? (
+                      <a
+                        href={c.website.startsWith('http') ? c.website : `https://${c.website}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#5c60c0] hover:underline text-xs flex items-center gap-1"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        {c.website.replace(/^https?:\/\//, '').split('/')[0]}
+                      </a>
+                    ) : "-"}
+                  </td>
                   <td className="px-4 py-4 text-center">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${c.available > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${c.available > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                       {c.available} / {c.max_slots}
                     </span>
                   </td>
@@ -114,9 +144,9 @@ export default function NganHangView({ onBack, onDangKy }) {
                       onClick={() => handleDangKy(c)}
                       disabled={c.available <= 0}
                       size="sm"
-                      className={`${c.available > 0 ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-300'} text-white shadow-sm`}
+                      className={`h-8 px-4 text-xs font-bold transition-all ${c.available > 0 ? 'bg-[#5c60c0] hover:bg-[#4a4ea8] text-white' : 'bg-gray-100 text-gray-400'}`}
                     >
-                      {c.available > 0 ? 'Đăng ký nhanh' : 'Hết chỗ'}
+                      {c.available > 0 ? 'Đăng ký' : 'Hết chỗ'}
                     </Button>
                   </td>
                 </tr>

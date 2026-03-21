@@ -36,10 +36,10 @@ const schema = yup.object({
     }),
 });
 
-export default function DeXuatMoiForm({ onBack, onDangKy }) {
+export default function DeXuatMoiForm({ onBack, onDangKy, initialData = null, internshipId }) {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [isReadonly, setIsReadonly] = useState(false);
+  const [isReadonly, setIsReadonly] = useState(!!initialData);
 
   const {
     register,
@@ -52,10 +52,10 @@ export default function DeXuatMoiForm({ onBack, onDangKy }) {
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      tenCongTy: "",
-      maSoThue: "",
-      email: "",
-      diaChi: "",
+      tenCongTy: initialData?.name || initialData?.tenCongTy || "",
+      maSoThue: initialData?.tax_code || initialData?.maSoThue || "",
+      email: initialData?.email || "",
+      diaChi: initialData?.address || initialData?.diaChi || "",
       position: "",
       file: "",
     },
@@ -104,9 +104,8 @@ export default function DeXuatMoiForm({ onBack, onDangKy }) {
     formData.append("position", data.position);
     formData.append("file", data.file);
 
-    // Lưu ý: internship_id cần được lấy từ context hoặc state đợt đăng ký
-    // Tạm thời để 1 để kiểm tra API
-    formData.append("internship_id", 1);
+    // Sử dụng internship_id từ prop truyền vào, fallback là 1 để DEV test
+    formData.append("internship_id", internshipId || 1);
 
     try {
       const resp = await internshipService.registerCompany(formData);

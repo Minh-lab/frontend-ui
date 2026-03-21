@@ -12,6 +12,7 @@ const LecturerHomePage = lazy(() => import("@/pages/lecturer/homePage"));
 const ConfirmProject = lazy(() => import("@/pages/lecturer/ConfirmProject"));
 const ApproveTopic = lazy(() => import("@/pages/lecturer/ApproveTopic"));
 const ReviewGrade = lazy(() => import("@/pages/lecturer/ReviewGrade"));
+const CancelRequests = lazy(() => import("@/pages/lecturer/CancelRequests"));
 
 
 export const lecturerRoutes = [
@@ -26,6 +27,7 @@ export const lecturerRoutes = [
   { path: "confirm-project", element: <ConfirmProject /> },
   { path: "approve-topic", element: <ApproveTopic /> },
   { path: "review-grade", element: <ReviewGrade /> },
+  { path: "cancel-requests", element: <CancelRequests /> },
   { path: "profile", element: <LecturerProfile /> },
   //   { path: "lecturers", element: <ManageLecturers /> },
   // Các path này phải khớp chính xác với path trong menu.config.js

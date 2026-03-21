@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -7,27 +7,35 @@ import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import lecturerApi from '@/services/lecturerApi';
 
 const confirmSchema = yup.object().shape({
     comment: yup.string().required('Vui lòng nhập lời nhắn cho sinh viên'),
 });
 
-const initialData = [
-    { id: 1, msv: '2351170101', name: 'Nguyễn Thị Hải Anh', class: '65KTPM', date: '19/02/2026' },
-    { id: 2, msv: '2351170102', name: 'Trần Thị Kiều Anh', class: '65CNPM', date: '20/02/2026' },
-    { id: 3, msv: '2351170674', name: 'Lê Văn Bình', class: '65CNTT', date: '20/02/2026' },
-    { id: 4, msv: '2351170675', name: 'Đào Văn Hùng', class: '65KTPM', date: '20/02/2026' },
-    { id: 5, msv: '2351170712', name: 'Trần Thị Thu Huyền', class: '65KTPM', date: '21/02/2026' },
-    { id: 6, msv: '2351170782', name: 'Lê Thị Kiều', class: '65KTPM', date: '21/02/2026' },
-    { id: 7, msv: '2351170782', name: 'Lê Thị Kiều', class: '65KTPM', date: '21/02/2026' },
-    { id: 8, msv: '2351170782', name: 'Lê Thị Kiều', class: '65KTPM', date: '21/02/2026' },
-];
+
+
+
 
 const ConfirmProject = () => {
-    const [data, setData] = useState(initialData);
+    const [data, setData] = useState([]);
     const [page, setPage] = useState(1);
     const [selectedStudent, setSelectedStudent] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
     const itemsPerPage = 5;
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await lecturerApi.getStudentRegister();
+                setData(Array.isArray(response?.data) ? response.data : []);
+            } catch (error) {
+                console.error("Error fetching student:", error);
+                toast.error(error?.message || 'Khong the tai danh sach dang ky');
+            }
+        };
+        fetchData();
+    },[]);
 
     const {
         register,
@@ -56,20 +64,44 @@ const ConfirmProject = () => {
         reset({ comment: '' });
     };
 
-    const onApproveSubmit = (dataInput) => {
-        setData((prev) => prev.filter((item) => item.id !== selectedStudent.id));
-        toast.success(`Đã chấp nhận sinh viên ${selectedStudent.name}`, {
-            className: '!bg-[#dcfce7] !text-[#047857]',
-        });
-        setSelectedStudent(null);
+    const onApproveSubmit = async (dataInput) => {
+        try {
+            setSubmitting(true);
+            const response = await lecturerApi.confirmStudentRegister(selectedStudent.request_id, {
+                action: 'APPROVE',
+                feedback: dataInput.comment,
+            });
+
+            setData((prev) => prev.filter((item) => item.request_id !== selectedStudent.request_id));
+            toast.success(response?.message || `Đã chấp nhận sinh viên ${selectedStudent.student_name}`, {
+                className: '!bg-[#dcfce7] !text-[#047857]',
+            });
+            setSelectedStudent(null);
+        } catch (error) {
+            toast.error(error?.message || 'Khong the chap nhan dang ky');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    const onRejectSubmit = (dataInput) => {
-        setData((prev) => prev.filter((item) => item.id !== selectedStudent.id));
-        toast.error(`Đã từ chối sinh viên ${selectedStudent.name}`, {
-            className: '!bg-[#fee2e2] !text-[#b91c1c]',
-        });
-        setSelectedStudent(null);
+    const onRejectSubmit = async (dataInput) => {
+        try {
+            setSubmitting(true);
+            const response = await lecturerApi.confirmStudentRegister(selectedStudent.request_id, {
+                action: 'REJECT',
+                feedback: dataInput.comment,
+            });
+
+            setData((prev) => prev.filter((item) => item.request_id !== selectedStudent.request_id));
+            toast.success(response?.message || `Đã từ chối sinh viên ${selectedStudent.student_name}`, {
+                className: '!bg-[#fee2e2] !text-[#b91c1c]',
+            });
+            setSelectedStudent(null);
+        } catch (error) {
+            toast.error(error?.message || 'Khong the tu choi dang ky');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -102,14 +134,14 @@ const ConfirmProject = () => {
                         </TableHeader>
                         <TableBody>
                             {visibleData.map((item, index) => (
-                                <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                <TableRow key={item?.request_id} className="hover:bg-slate-50/50 transition-colors">
                                     <TableCell className="font-medium text-slate-600">
                                         {(currentPage - 1) * itemsPerPage + index + 1}
                                     </TableCell>
-                                    <TableCell className="text-slate-600">{item.msv}</TableCell>
-                                    <TableCell className="font-semibold text-slate-800">{item.name}</TableCell>
-                                    <TableCell className="font-medium text-slate-600">{item.class}</TableCell>
-                                    <TableCell className="text-slate-500">{item.date}</TableCell>
+                                    <TableCell className="text-slate-600">{item?.student_code}</TableCell>
+                                    <TableCell className="font-semibold text-slate-800">{item?.student_name}</TableCell>
+                                    <TableCell className="font-medium text-slate-600">{item?.class}</TableCell>
+                                    <TableCell className="text-slate-500">{item?.registration_at}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center justify-center">
                                             <Button
@@ -201,7 +233,7 @@ const ConfirmProject = () => {
                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
                                             MÃ SINH VIÊN
                                         </label>
-                                        <p className="font-bold text-slate-800">{selectedStudent.msv}</p>
+                                        <p className="font-bold text-slate-800">{selectedStudent.student_code}</p>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
@@ -214,13 +246,19 @@ const ConfirmProject = () => {
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
                                         HỌ TÊN SINH VIÊN
                                     </label>
-                                    <p className="font-bold text-slate-800 text-lg">{selectedStudent.name}</p>
+                                    <p className="font-bold text-slate-800 text-lg">{selectedStudent.student_name}</p>
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
                                         THỜI GIAN ĐĂNG KÝ
                                     </label>
-                                    <p className="font-medium text-slate-600">{selectedStudent.date}</p>
+                                    <p className="font-medium text-slate-600">{selectedStudent.registration_at}</p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                                        Loi nhan sinh vien
+                                    </label>
+                                    <p className="font-medium text-slate-600">{selectedStudent.student_message || 'KhĂ´ng cĂ³ lá»i nháº¯n'}</p>
                                 </div>
 
                                 <div className="mt-6">
@@ -242,6 +280,7 @@ const ConfirmProject = () => {
                             <Button
                                 variant="outline"
                                 onClick={handleSubmit(onRejectSubmit)}
+                                disabled={submitting}
                                 className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 px-6 font-semibold"
                             >
                                 <XCircle className="w-4 h-4 mr-2" />
@@ -249,6 +288,7 @@ const ConfirmProject = () => {
                             </Button>
                             <Button
                                 onClick={handleSubmit(onApproveSubmit)}
+                                disabled={submitting}
                                 className="bg-[#9333ea] hover:bg-[#7e22ce] text-white px-6 font-semibold"
                             >
                                 <CheckCircle2 className="w-4 h-4 mr-2" />

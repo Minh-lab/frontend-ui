@@ -3,19 +3,20 @@ import StatusBadge from "../../../components/StatusBadge";
 
 export default function DaDangKy({ registration, onDeXuatMoi, onNganHang }) {
   // If no registration data passed, use some placeholder or handle empty state
-  const data = registration || {
-    tenCongTy: "Chưa cập nhật",
-    maSoThue: "Chưa cập nhật",
-    email: "Chưa cập nhật",
-    diaChi: "Chưa cập nhật",
-    type: "PROPOSAL"
+  const data = {
+    tenCongTy: registration?.company?.name || registration?.latest_request?.company_name || registration?.tenCongTy || "Chưa cập nhật",
+    maSoThue: registration?.company?.tax_code || registration?.maSoThue || "Chưa cập nhật",
+    email: registration?.company?.email || registration?.email || "Chưa cập nhật",
+    diaChi: registration?.company?.address || registration?.diaChi || "Chưa cập nhật",
+    status: registration?.latest_request?.status || registration?.status || "PENDING_FACULTY",
+    type: registration?.company ? "OFFICIAL" : "PROPOSAL"
   };
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm max-w-2xl mx-auto overflow-hidden">
       <div className="bg-[#5c60c0] text-white px-5 py-3 flex items-center justify-between">
         <span className="font-semibold">Đăng ký doanh nghiệp thực tập</span>
-        <StatusBadge status="Chờ duyệt" />
+        <StatusBadge status={data.status} />
       </div>
 
       <div className="p-6">
