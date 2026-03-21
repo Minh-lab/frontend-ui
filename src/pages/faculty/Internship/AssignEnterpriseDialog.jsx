@@ -1,16 +1,70 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { toast } from "sonner";
 
-const MOCK_ENTERPRISES = [
-  { id: 1, name: "CTY TNHH CJJ", tax_code: "902482", current_slots: 5, max_slots: 20 },
-  { id: 2, name: "WWC", tax_code: "034yr232", current_slots: 3, max_slots: 15 },
-  { id: 3, name: "WORKS JJ", tax_code: "3274983", current_slots: 12, max_slots: 12 },
-];
+// Import fake API service
+import internshipService from "@/services/faculty/internshipService";
 
-export default function AssignEnterpriseDialog({ isOpen, onClose, selectedCount, onSuccess }) {
+export default function AssignEnterpriseDialog({ isOpen, onClose, selectedCount, onSuccess, selectedIds = [] }) {
+  const [enterprises, setEnterprises] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isAssigning, setIsAssigning] = useState(false);
+
+  // Load enterprises when dialog opens
+  const loadEnterprises = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await internshipService.getEnterprises(searchQuery);
+      if (response.success) {
+        setEnterprises(response.data);
+      } else {
+        toast.error(response.message || "Lỗi tải danh sách doanh nghiệp");
+      }
+    } catch (error) {
+      toast.error("Lỗi tải danh sách doanh nghiệp");
+      console.error("Error loading enterprises:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadEnterprises();
+    }
+  }, [isOpen, loadEnterprises]);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    await loadEnterprises();
+  };
+
+  const handleAssign = async (enterpriseId) => {
+    if (!selectedIds || selectedIds.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một sinh viên");
+      return;
+    }
+
+    try {
+      setIsAssigning(true);
+      const response = await internshipService.assignEnterprise(selectedIds, enterpriseId);
+      if (response.success) {
+        toast.success(response.message);
+        onSuccess();
+      } else {
+        toast.error(response.message || "Lỗi phân công doanh nghiệp");
+      }
+    } catch (error) {
+      toast.error("Lỗi phân công doanh nghiệp");
+      console.error("Error assigning enterprise:", error);
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -23,13 +77,19 @@ export default function AssignEnterpriseDialog({ isOpen, onClose, selectedCount,
         </div>
 
         <div className="p-10 space-y-8">
-          <div className="flex justify-center items-center gap-4">
+          <form onSubmit={handleSearch} className="flex justify-center items-center gap-4">
             <div className="relative w-96">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-              <input placeholder="Tìm kiếm tên doanh nghiệp" className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-full text-sm bg-white focus:outline-none" />
+              <input 
+                type="text"
+                placeholder="Tìm kiếm tên doanh nghiệp" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-full text-sm bg-white focus:outline-none" 
+              />
             </div>
-            <Button className="bg-[#9b59b6] text-white px-10 rounded-full font-bold">Tìm kiếm</Button>
-          </div>
+            <Button type="submit" disabled={isLoading} className="bg-[#9b59b6] text-white px-10 rounded-full font-bold">Tìm kiếm</Button>
+          </form>
 
           <div className="flex justify-between items-end border-b border-slate-200 pb-2">
             <h3 className="text-lg font-bold text-slate-700 uppercase">Danh sách doanh nghiệp thực tập</h3>
@@ -48,26 +108,40 @@ export default function AssignEnterpriseDialog({ isOpen, onClose, selectedCount,
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MOCK_ENTERPRISES.map((ent, idx) => {
-                  const isFull = ent.current_slots + selectedCount > ent.max_slots;
-                  return (
-                    <TableRow key={ent.id}>
-                      <TableCell className="text-center font-bold text-slate-600">{idx + 1}</TableCell>
-                      <TableCell className="font-bold text-slate-700">{ent.name}</TableCell>
-                      <TableCell className="text-center">{ent.tax_code}</TableCell>
-                      <TableCell className="text-center font-bold">{ent.current_slots}/{ent.max_slots}</TableCell>
-                      <TableCell className="text-center">
-                        <button 
-                          disabled={isFull}
-                          onClick={() => { toast.success(`Đã phân công thành công`); onSuccess(); }}
-                          className={`px-6 py-2 text-white text-[11px] font-bold rounded-lg uppercase shadow-md ${isFull ? "bg-slate-300 cursor-not-allowed" : "bg-[#7786d1] hover:bg-[#5c6bb2]"}`}
-                        >
-                          {isFull ? "Hết chỗ" : "Phân công"}
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan="5" className="text-center py-8 text-slate-500">
+                      Đang tải dữ liệu...
+                    </TableCell>
+                  </TableRow>
+                ) : enterprises.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan="5" className="text-center py-8 text-slate-500">
+                      Không có doanh nghiệp
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  enterprises.map((ent, idx) => {
+                    const isFull = ent.current_slots + selectedCount > ent.max_slots;
+                    return (
+                      <TableRow key={ent.id}>
+                        <TableCell className="text-center font-bold text-slate-600">{idx + 1}</TableCell>
+                        <TableCell className="font-bold text-slate-700">{ent.name}</TableCell>
+                        <TableCell className="text-center">{ent.tax_code}</TableCell>
+                        <TableCell className="text-center font-bold">{ent.current_slots}/{ent.max_slots}</TableCell>
+                        <TableCell className="text-center">
+                          <button 
+                            disabled={isFull || isAssigning}
+                            onClick={() => handleAssign(ent.id)}
+                            className={`px-6 py-2 text-white text-[11px] font-bold rounded-lg uppercase shadow-md ${isFull || isAssigning ? "bg-slate-300 cursor-not-allowed" : "bg-[#7786d1] hover:bg-[#5c6bb2]"}`}
+                          >
+                            {isFull ? "Hết chỗ" : isAssigning ? "Đang xử lý..." : "Phân công"}
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </div>

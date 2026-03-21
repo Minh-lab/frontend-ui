@@ -55,8 +55,14 @@ export default function DeXuatMoiForm({ onBack, onDangKy }) {
 
   const onSubmit = (data) => {
     onDangKy({
-      ...data,
-      gvhd: "Ths. Nguyen Thi Huong - CNTT"
+      title: data.ten,
+      linhVuc: data.linhVuc,
+      lecturer: {
+        name: "Ths. Nguyen Thi Huong - CNTT"
+      },
+      technologies: data.congNghe,
+      description: data.moTa,
+      fileDeCuong: data.fileDeCuong
     });
   };
 

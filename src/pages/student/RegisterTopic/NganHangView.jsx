@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -163,7 +164,17 @@ export default function NganHangView({ onBack, onDangKy }) {
                   <td className="px-4 py-3">
                     <Button
                       onClick={() => {
-                        onDangKy(dt);
+                        const transformedTopic = {
+                          title: dt.title,
+                          linhVuc: dt.expertise?.name || "Không xác định",
+                          lecturer: {
+                            name: dt.lecturer?.full_name || "Chưa phân công"
+                          },
+                          technologies: dt.technologies,
+                          description: dt.description,
+                          fileDeCuong: null
+                        };
+                        onDangKy(transformedTopic);
                         toast.success("Đã chọn đề tài thành công", {
                           className: "!bg-[#AAFAB8] !text-[#24AD47]",
                         });

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
