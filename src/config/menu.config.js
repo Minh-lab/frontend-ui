@@ -52,6 +52,7 @@ export const MASTER_MENU = [
   { title: "Phê duyệt đề tài", path: "/lecturer/approve-topic", icon: GraduationCap, roles: ["lecturer"] },
   { title: "Quản lý báo cáo đồ án", path: "/lecturer/project-reports", icon: ClipboardList, roles: ["lecturer"] },
   { title: "Chấm điểm đồ án", path: "/lecturer/project-grade", icon: CheckSquare, roles: ["lecturer"] },
+  { title: "Quan ly yeu cau huy", path: "/lecturer/cancel-requests", icon: FileText, roles: ["lecturer"] },
   
   { label: "PHẢN BIỆN ĐỒ ÁN", roles: ["lecturer"] },
   { title: "Chấm điểm phản biện", path: "/lecturer/review-grade", icon: CheckSquare, roles: ["lecturer"] },

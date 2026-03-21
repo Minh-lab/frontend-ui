@@ -1,31 +1,36 @@
-import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { toast } from 'sonner';
-import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as yup from 'yup';
+import lecturerApi from '@/services/lecturerApi';
 
-const approveSchema = yup.object().shape({
-    comment: yup.string().required('Vui lòng nhập nhận xét hoặc lý do từ chối'),
+const approveSchema = yup.object({
+    comment: yup.string().required('Vui long nhap nhan xet hoac ly do tu choi'),
 });
 
-const initialData = [
-    { id: 1, msv: '2351170101', name: 'Nguyễn Thị Hải Anh', class: '65KTPM', topicName: 'Ứng dụng AI nhận diện khuôn mặt sinh viên', tech: 'Python, OpenCV, YOLOv8', desc: 'Xây dựng hệ thống camera nhận diện khuôn mặt điểm danh sinh viên khi vào lớp, tự động cập nhật lên hệ thống quản lý.' },
-    { id: 2, msv: '2351170102', name: 'Trần Thị Kiều Anh', class: '65CNPM', topicName: 'Ứng dụng AI nhận diện...', tech: 'TensorFlow, Keras', desc: 'Nhận diện bệnh về da qua hình ảnh chụp từ điện thoại.' },
-    { id: 3, msv: '2351170674', name: 'Lê Văn Bình', class: '65CNTT', topicName: 'Ứng dụng AI nhận diện...', tech: 'PyTorch, ResNet', desc: 'Nhận diện các loại biển báo giao thông hỗ trợ xe tự hành.' },
-    { id: 4, msv: '2351170675', name: 'Đào Văn Hùng', class: '65KTPM', topicName: 'Ứng dụng AI nhận diện...', tech: 'Python, OpenCV', desc: 'Nhận dạng chữ viết tay tiếng Việt.' },
-    { id: 5, msv: '2351170712', name: 'Trần Thị Thu Huyền', class: '65KTPM', topicName: 'Ứng dụng AI nhận diện...', tech: 'YOLOv8', desc: 'Nhận diện và phân loại rác thải tự động.' },
-    { id: 6, msv: '2351170782', name: 'Lê Thị Kiều', class: '65KTPM', topicName: 'Ứng dụng AI nhận diện...', tech: 'Python', desc: 'Nhận diện cảm xúc qua giọng nói.' },
-];
+const mapTopic = (item) => ({
+    id: item.request_id,
+    msv: item.student_code ?? 'N/A',
+    name: item.student_name ?? 'N/A',
+    className: item.class_name ?? 'N/A',
+    topicName: item.topic_title ?? 'N/A',
+    tech: item.technologies ?? 'Chua cap nhat',
+    desc: item.description ?? 'N/A',
+    createdAt: item.created_at ?? '',
+});
 
-const ApproveTopic = () => {
-    const [data, setData] = useState(initialData);
+export default function ApproveTopicApi() {
+    const [data, setData] = useState([]);
     const [page, setPage] = useState(1);
     const [selectedTopic, setSelectedTopic] = useState(null);
-    
+    const [submitting, setSubmitting] = useState(false);
+    const itemsPerPage = 5;
+
     const {
         register,
         handleSubmit,
@@ -34,52 +39,75 @@ const ApproveTopic = () => {
     } = useForm({
         resolver: yupResolver(approveSchema),
     });
-    const itemsPerPage = 5;
+
+    useEffect(() => {
+        const fetchTopics = async () => {
+            try {
+                const response = await lecturerApi.getPendingCapstoneTopics();
+                setData((Array.isArray(response?.data) ? response.data : []).map(mapTopic));
+            } catch (error) {
+                toast.error(error?.message || 'Khong the tai danh sach de tai');
+                setData([]);
+            }
+        };
+
+        fetchTopics();
+    }, []);
 
     const totalPages = Math.max(1, Math.ceil(data.length / itemsPerPage));
     const currentPage = Math.min(page, totalPages);
-
-    const visibleData = data.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
-
-    const pageItems = [];
-    for (let i = 1; i <= totalPages; i++) {
-        pageItems.push(i);
-    }
+    const visibleData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const pageItems = useMemo(() => Array.from({ length: totalPages }, (_, i) => i + 1), [totalPages]);
 
     const handleOpenTopic = (topic) => {
         setSelectedTopic(topic);
         reset({ comment: '' });
     };
 
-    const onApproveSubmit = (dataInput) => {
-        setData((prev) => prev.filter((item) => item.id !== selectedTopic.id));
-        toast.success(`Đã duyệt đề tài cho sinh viên ${selectedTopic.name}`, {
-            className: '!bg-[#dcfce7] !text-[#047857]',
-        });
-        setSelectedTopic(null);
+    const handleApprove = async (formData) => {
+        try {
+            setSubmitting(true);
+            const response = await lecturerApi.reviewCapstoneTopic(selectedTopic.id, {
+                status: 'APPROVED',
+                feedback: formData.comment,
+            });
+            setData((prev) => prev.filter((item) => item.id !== selectedTopic.id));
+            toast.success(response?.message || `Da duyet de tai cho sinh vien ${selectedTopic.name}`);
+            setSelectedTopic(null);
+        } catch (error) {
+            toast.error(error?.message || 'Khong the duyet de tai');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    const onRejectSubmit = (dataInput) => {
-        setData((prev) => prev.filter((item) => item.id !== selectedTopic.id));
-        toast.error(`Đã từ chối đề tài của sinh viên ${selectedTopic.name}`, {
-            className: '!bg-[#fee2e2] !text-[#b91c1c]',
-        });
-        setSelectedTopic(null);
+    const handleReject = async (formData) => {
+        try {
+            setSubmitting(true);
+            const response = await lecturerApi.reviewCapstoneTopic(selectedTopic.id, {
+                status: 'REJECTED',
+                feedback: formData.comment,
+            });
+            setData((prev) => prev.filter((item) => item.id !== selectedTopic.id));
+            toast.error(response?.message || `Da tu choi de tai cua sinh vien ${selectedTopic.name}`);
+            setSelectedTopic(null);
+        } catch (error) {
+            toast.error(error?.message || 'Khong the tu choi de tai');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
-        <Card className="bg-white m-0 border-0 shadow-sm rounded-none md:rounded-2xl relative">
+        <Card className="relative m-0 rounded-none border-0 bg-white shadow-sm md:rounded-2xl">
             <div className="p-5 md:p-8">
-                <h2 className="text-center text-xl font-bold uppercase text-slate-800 md:text-2xl mb-8 tracking-wider">
-                    XÁC NHẬN DUYỆT ĐỀ TÀI
+                <h2 className="mb-8 text-center text-xl font-bold uppercase tracking-wider text-slate-800 md:text-2xl">
+                    XAC NHAN DUYET DE TAI
                 </h2>
 
-                <div className="flex flex-wrap items-center gap-4 mb-6">
+                <div className="mb-6 flex flex-wrap items-center gap-4">
                     <span className="inline-flex rounded-full border border-[#fbd38d] px-4 py-1.5 text-xs font-semibold text-[#dd6b20]">
-                        Hạn chót duyệt: 20/05/2026
+                        Danh sach de tai cho duyet
                     </span>
                 </div>
 
@@ -89,34 +117,26 @@ const ApproveTopic = () => {
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="font-bold text-slate-600">STT</TableHead>
                                 <TableHead className="font-bold text-slate-600">MSV</TableHead>
-                                <TableHead className="font-bold text-slate-600">Họ và tên</TableHead>
-                                <TableHead className="font-bold text-slate-600">Lớp</TableHead>
-                                <TableHead className="font-bold text-slate-600">Tên đề tài đề xuất</TableHead>
-                                <TableHead className="font-bold text-slate-600 text-center">Hành động</TableHead>
+                                <TableHead className="font-bold text-slate-600">Ho va ten</TableHead>
+                                <TableHead className="font-bold text-slate-600">Lop</TableHead>
+                                <TableHead className="font-bold text-slate-600">Ten de tai de xuat</TableHead>
+                                <TableHead className="text-center font-bold text-slate-600">Hanh dong</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {visibleData.map((item, index) => (
-                                <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <TableCell className="font-medium text-slate-600">
-                                        {(currentPage - 1) * itemsPerPage + index + 1}
-                                    </TableCell>
+                                <TableRow key={item.id} className="transition-colors hover:bg-slate-50/50">
+                                    <TableCell className="font-medium text-slate-600">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                                     <TableCell className="text-slate-600">{item.msv}</TableCell>
                                     <TableCell className="font-semibold text-slate-800">{item.name}</TableCell>
-                                    <TableCell className="font-medium text-slate-600">{item.class}</TableCell>
-                                    <TableCell className="text-slate-600 max-w-[200px] truncate" title={item.topicName}>
+                                    <TableCell className="font-medium text-slate-600">{item.className}</TableCell>
+                                    <TableCell className="max-w-[200px] truncate text-slate-600" title={item.topicName}>
                                         {item.topicName}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center justify-center">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-[#3b82f6] hover:text-[#2563eb] hover:bg-blue-50 font-medium h-8"
-                                                onClick={() => handleOpenTopic(item)}
-                                            >
-                                                <span className="mr-1 inline-block w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></span>
-                                                Xem chi tiết
+                                            <Button variant="ghost" size="sm" className="h-8 font-medium text-[#3b82f6] hover:bg-blue-50 hover:text-[#2563eb]" onClick={() => handleOpenTopic(item)}>
+                                                Xem chi tiet
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -125,7 +145,7 @@ const ApproveTopic = () => {
                             {visibleData.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={6} className="h-32 text-center text-slate-500">
-                                        Không có đề tài nào chờ duyệt
+                                        Khong co de tai nao cho duyet
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -133,14 +153,9 @@ const ApproveTopic = () => {
                     </Table>
                 </div>
 
-                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border border-slate-100 bg-white p-3">
-                    <Button
-                        variant="outline"
-                        onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                        className="w-full sm:w-auto text-slate-600 border-slate-200"
-                    >
-                        <ChevronLeft className="w-4 h-4 mr-1" />
+                <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-xl border border-slate-100 bg-white p-3 sm:flex-row">
+                    <Button variant="outline" onClick={() => setPage((prev) => Math.max(1, prev - 1))} disabled={currentPage === 1} className="w-full border-slate-200 text-slate-600 sm:w-auto">
+                        <ChevronLeft className="mr-1 h-4 w-4" />
                         Previous
                     </Button>
 
@@ -151,120 +166,80 @@ const ApproveTopic = () => {
                                 size="sm"
                                 variant={item === currentPage ? 'default' : 'ghost'}
                                 onClick={() => setPage(item)}
-                                className={`h-9 min-w-9 px-2 font-medium ${item === currentPage
-                                        ? 'bg-slate-800 text-white hover:bg-slate-700'
-                                        : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
+                                className={`h-9 min-w-9 px-2 font-medium ${item === currentPage ? 'bg-slate-800 text-white hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-100'}`}
                             >
                                 {item}
                             </Button>
                         ))}
                     </div>
 
-                    <Button
-                        variant="outline"
-                        onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                        className="w-full sm:w-auto text-slate-600 border-slate-200"
-                    >
+                    <Button variant="outline" onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="w-full border-slate-200 text-slate-600 sm:w-auto">
                         Next
-                        <ChevronRight className="w-4 h-4 ml-1" />
+                        <ChevronRight className="ml-1 h-4 w-4" />
                     </Button>
                 </div>
             </div>
 
-            {/* View Detail Modal Overlay */}
             {selectedTopic && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-[600px] overflow-hidden flex flex-col max-h-[90vh]">
-                        {/* Modal Header */}
-                        <div className="bg-[#6d28d9] flex items-center justify-between p-4">
-                            <h3 className="text-white font-bold uppercase tracking-wider text-base md:text-lg">
-                                CHI TIẾT ĐỀ TÀI ĐỀ XUẤT
-                            </h3>
-                            <button
-                                onClick={() => {
-                                    setSelectedTopic(null);
-                                }}
-                                className="bg-red-500 hover:bg-red-600 text-white p-1.5 rounded transition-colors"
-                            >
-                                <X className="w-5 h-5" />
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+                    <div className="flex max-h-[90vh] w-full max-w-[600px] flex-col overflow-hidden rounded-xl bg-white shadow-xl">
+                        <div className="flex items-center justify-between bg-[#6d28d9] p-4">
+                            <h3 className="text-base font-bold uppercase tracking-wider text-white md:text-lg">CHI TIET DE TAI DE XUAT</h3>
+                            <button onClick={() => setSelectedTopic(null)} className="rounded bg-red-500 p-1.5 text-white transition-colors hover:bg-red-600">
+                                <X className="h-5 w-5" />
                             </button>
                         </div>
 
-                        {/* Modal Body */}
-                        <div className="p-6 overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-6 mb-6">
+                        <div className="overflow-y-auto p-6">
+                            <div className="mb-6 grid grid-cols-2 gap-6">
                                 <div>
-                                    <label className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                                        MÃ SINH VIÊN
-                                    </label>
-                                    <p className="font-bold text-slate-800 text-sm sm:text-base">{selectedTopic.msv}</p>
+                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Ma sinh vien</label>
+                                    <p className="text-sm font-bold text-slate-800 sm:text-base">{selectedTopic.msv}</p>
                                 </div>
                                 <div className="text-right sm:text-left">
-                                    <label className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                                        HỌ TÊN & LỚP
-                                    </label>
-                                    <p className="font-bold text-slate-800 text-sm sm:text-base">
-                                        {selectedTopic.name} <br className="sm:hidden" />
-                                        <span className="hidden sm:inline"> - </span>
-                                        {selectedTopic.class}
+                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Ho ten va lop</label>
+                                    <p className="text-sm font-bold text-slate-800 sm:text-base">
+                                        {selectedTopic.name} <span className="hidden sm:inline">- </span> {selectedTopic.className}
                                     </p>
                                 </div>
                             </div>
 
                             <div className="space-y-5">
                                 <div>
-                                    <label className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                                        TÊN ĐỀ TÀI (PROPOSED TOPIC)
-                                    </label>
-                                    <p className="font-bold text-slate-800 text-sm">{selectedTopic.topicName}</p>
+                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Ten de tai</label>
+                                    <p className="text-sm font-bold text-slate-800">{selectedTopic.topicName}</p>
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                                        CÔNG NGHỆ DỰ KIẾN (TECHNOLOGIES)
-                                    </label>
-                                    <p className="font-bold text-slate-800 text-sm">{selectedTopic.tech}</p>
+                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Cong nghe du kien</label>
+                                    <p className="text-sm font-bold text-slate-800">{selectedTopic.tech}</p>
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                                        MÔ TẢ / MỤC TIÊU (PROPOSED_DESCRIPTION)
-                                    </label>
-                                    <p className="font-bold text-slate-800 text-sm">
-                                        {selectedTopic.desc}
-                                    </p>
+                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Mo ta</label>
+                                    <p className="text-sm font-bold text-slate-800">{selectedTopic.desc}</p>
                                 </div>
 
                                 <div className="mt-6">
-                                    <label className="text-xs font-bold text-slate-600 block mb-2">
-                                        Nhận xét / Lý do từ chối (Gửi cho sinh viên): <span className="text-red-500">*</span>
+                                    <label className="mb-2 block text-xs font-bold text-slate-600">
+                                        Nhan xet / Ly do tu choi: <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
                                         {...register('comment')}
-                                        placeholder="Nhập nhận xét chi tiết cho sinh viên tại đây..."
-                                        className={`w-full min-h-[100px] p-3 text-sm border ${errors.comment ? 'border-red-500' : 'border-slate-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6d28d9] focus:border-transparent resize-y`}
-                                    ></textarea>
-                                    {errors.comment && <p className="text-xs text-red-500 mt-1">{errors.comment.message}</p>}
+                                        placeholder="Nhap nhan xet chi tiet cho sinh vien tai day..."
+                                        className={`min-h-[100px] w-full resize-y rounded-lg border p-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#6d28d9] ${errors.comment ? 'border-red-500' : 'border-slate-200'}`}
+                                    />
+                                    {errors.comment && <p className="mt-1 text-xs text-red-500">{errors.comment.message}</p>}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Modal Footer */}
-                        <div className="p-4 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50">
-                            <Button
-                                variant="outline"
-                                onClick={handleSubmit(onRejectSubmit)}
-                                className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 px-6 font-semibold"
-                            >
-                                Từ chối
+                        <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 p-4">
+                            <Button variant="outline" disabled={submitting} onClick={handleSubmit(handleReject)} className="border-red-200 px-6 font-semibold text-red-500 hover:bg-red-50 hover:text-red-600">
+                                {submitting ? 'Dang xu ly...' : 'Tu choi'}
                             </Button>
-                            <Button
-                                onClick={handleSubmit(onApproveSubmit)}
-                                className="bg-[#6d28d9] hover:bg-[#5b21b6] text-white px-6 font-semibold"
-                            >
-                                Duyệt đề tài
+                            <Button disabled={submitting} onClick={handleSubmit(handleApprove)} className="bg-[#6d28d9] px-6 font-semibold text-white hover:bg-[#5b21b6]">
+                                {submitting ? 'Dang xu ly...' : 'Duyet de tai'}
                             </Button>
                         </div>
                     </div>
@@ -272,6 +247,4 @@ const ApproveTopic = () => {
             )}
         </Card>
     );
-};
-
-export default ApproveTopic;
+}
