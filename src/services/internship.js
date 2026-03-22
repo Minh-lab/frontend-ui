@@ -61,6 +61,50 @@ const internshipService = {
     } catch (error) {
       throw error.response?.data || error;
     }
+  },
+
+  // UC 38: Yêu cầu hủy thực tập
+  cancelInternship: async (internshipId) => {
+    try {
+      const response = await axiosInstance.post(`/internships/request-cancel`, { internship_id: internshipId });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // UC 35: Lấy danh sách tất cả các đợt thực tập
+  getMilestones: async () => {
+    try {
+      const response = await axiosInstance.get(`/internships/milestones`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // UC 35: Lấy lịch sử nộp báo cáo theo milestone
+  getReportHistory: async (milestoneId) => {
+    try {
+      const response = await axiosInstance.get(`/internships/reports/history`, {
+        params: { milestone_id: milestoneId }
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // UC 35: Thực hiện nộp báo cáo
+  submitReport: async (formData) => {
+    try {
+      const response = await axiosInstance.post(`/internships/reports/submit`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
   }
 };
 

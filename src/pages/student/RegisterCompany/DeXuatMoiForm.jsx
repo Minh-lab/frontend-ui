@@ -198,7 +198,6 @@ export default function DeXuatMoiForm({ onBack, onDangKy, initialData = null, in
               {errors.position && <p className="text-red-500 text-[10px] mt-0.5">{errors.position.message}</p>}
             </div>
           </div>
-
           <div className="space-y-1">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Địa chỉ *</label>
             <input

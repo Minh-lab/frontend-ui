@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import internshipService from "@/services/internship";
 
-export default function NganHangView({ onBack, onDangKy }) {
+export default function NganHangView({ onBack, onDangKy, isRegistrationLocked }) {
   const [search, setSearch] = useState("");
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -33,6 +33,12 @@ export default function NganHangView({ onBack, onDangKy }) {
   }, [fetchCompanies]);
 
   const handleDangKy = (company) => {
+    if (isRegistrationLocked) {
+      toast.error("Bạn đã thực hiện đăng ký doanh nghiệp rồi.", {
+        description: "Vui lòng hủy yêu cầu hiện tại nếu bạn muốn thay đổi doanh nghiệp."
+      });
+      return;
+    }
     onDangKy({
       tenCongTy: company.name,
       maSoThue: company.tax_code,
@@ -142,11 +148,11 @@ export default function NganHangView({ onBack, onDangKy }) {
                   <td className="px-4 py-4 text-center">
                     <Button
                       onClick={() => handleDangKy(c)}
-                      disabled={c.available <= 0}
+                      disabled={c.available <= 0 || isRegistrationLocked}
                       size="sm"
-                      className={`h-8 px-4 text-xs font-bold transition-all ${c.available > 0 ? 'bg-[#5c60c0] hover:bg-[#4a4ea8] text-white' : 'bg-gray-100 text-gray-400'}`}
+                      className={`h-8 px-4 text-xs font-bold transition-all ${c.available > 0 && !isRegistrationLocked ? 'bg-[#5c60c0] hover:bg-[#4a4ea8] text-white' : 'bg-gray-100 text-gray-400'}`}
                     >
-                      {c.available > 0 ? 'Đăng ký' : 'Hết chỗ'}
+                      {c.available > 0 ? (isRegistrationLocked ? 'Đã đăng ký' : 'Đăng ký') : 'Hết chỗ'}
                     </Button>
                   </td>
                 </tr>

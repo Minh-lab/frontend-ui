@@ -2,64 +2,65 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getStudentAccess } from "@/lib/studentAccess";
+import studentService from "@/services/studentService";
 
 import ChuaDangKy from "./ChuaDangKy";
 import DeXuatMoiForm from "./DeXuatMoiForm";
 import NganHangView from "./NganHangView";
 import DaDangKy from "./DaDangKy";
 
-const STORAGE_KEY = "student_registered_topic";
-
 export default function DangKyDeTaiPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [access] = useState(() => getStudentAccess());
-
-  // Initialize state from localStorage
-  const [view, setView] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const { view: savedView } = JSON.parse(saved);
-      return savedView;
-    }
-    return location.state?.view ?? "empty";
-  });
-
-  const [topic, setTopic] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const { topic: savedTopic } = JSON.parse(saved);
-      return savedTopic;
-    }
-    return null;
-  });
+  const [view, setView] = useState("empty");
+  const [topic, setTopic] = useState(null);
+  const [loadingStatus, setLoadingStatus] = useState(true);
 
   useEffect(() => {
-    if (location.state?.view) {
-      setView(location.state.view);
-    }
+    const fetchStatus = async () => {
+      try {
+        setLoadingStatus(true);
+        const response = await studentService.getMyCapstoneStatus();
+        const capstone = response?.data;
+
+        if (capstone) {
+          setTopic({
+            title: capstone.topic?.title,
+            linhVuc: capstone.topic?.expertise?.name,
+            lecturer: {
+              name: capstone.lecturer?.full_name || "Chua phan cong",
+              lecturer_id: capstone.lecturer?.lecturer_id || null,
+            },
+            technologies: capstone.topic?.technologies,
+            description: capstone.topic?.description,
+            fileDeCuong: null,
+            requestStatus: capstone.status,
+          });
+          setView("registered");
+        } else {
+          setTopic(null);
+          setView(location.state?.view ?? "empty");
+        }
+      } catch (error) {
+        setTopic(null);
+        setView(location.state?.view ?? "empty");
+      } finally {
+        setLoadingStatus(false);
+      }
+    };
+
+    fetchStatus();
   }, [location.state?.view]);
 
   // Function to handle registration and persistence
   const handleDangKy = (dt) => {
-    const nextView = "registered";
-
-    // Convert File object to string name for serialization
-    const serializableTopic = { ...dt };
-    if (dt.fileDeCuong instanceof File) {
-      serializableTopic.fileDeCuong = dt.fileDeCuong.name;
-    }
-
-    setView(nextView);
-    setTopic(serializableTopic);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ view: nextView, topic: serializableTopic }));
+    setView("registered");
+    setTopic(dt);
   };
 
   const handleUpdateView = (nextView) => {
     setView(nextView);
-    const saved = localStorage.getItem(STORAGE_KEY);
-    const existingTopic = saved ? JSON.parse(saved).topic : null;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ view: nextView, topic: existingTopic }));
   };
 
 
@@ -80,6 +81,19 @@ export default function DangKyDeTaiPage() {
               Quay về trang chủ
             </Button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadingStatus) {
+    return (
+      <div className="p-6">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm max-w-2xl mx-auto">
+          <div className="bg-[#5c60c0] text-white px-5 py-3 rounded-t-xl font-semibold">
+            Dang ky de tai
+          </div>
+          <div className="p-8 text-center text-gray-500">Dang tai trang thai de tai...</div>
         </div>
       </div>
     );

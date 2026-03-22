@@ -14,7 +14,7 @@ export default function ChuaDangKy({ onDeXuatMoi, onNganHang }) {
         </div>
         <div className="mb-6">
           <p className="text-sm font-bold text-gray-700 mb-3">Thông tin đề tài:</p>
-          {["Tên đề tài:", "Lĩnh vực:", "Giảng viên hướng dẫn:", "Công nghệ sử dụng:", "Mô tả:", "File đề cương (PDF):"].map((l) => (
+          {["Tên đề tài:", "Chuyên môn:", "Giảng viên hướng dẫn:", "Công nghệ sử dụng:", "Mô tả:"].map((l) => (
             <div key={l} className="flex items-start gap-4 mb-2">
               <span className="text-sm font-semibold text-gray-600 w-48 flex-shrink-0 mt-0.5">{l}</span>
               <span className="text-sm text-gray-300">—</span>

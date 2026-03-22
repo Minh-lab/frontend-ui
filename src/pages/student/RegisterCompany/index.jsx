@@ -22,37 +22,38 @@ export default function RegisterCompanyPage() {
   const [prefillData, setPrefillData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const resp = await internshipService.getStatus();
-        setRegistration(resp.data);
-        
-        // Nếu đã đăng ký doanh nghiệp (status khác INITIALIZED), chuyển sang màn hình đã đăng ký
-        if (resp.data.status !== "INITIALIZED") {
-          setView("registered");
-        }
-      } catch (error) {
-        console.error("Không thể lấy trạng thái thực tập:", error);
-        // Nếu chưa đăng ký đợt thực tập (404), lấy đợt đang mở
-        if (error.status === 404) {
-          try {
-            const mResp = await internshipService.getMilestone();
-            setMilestone(mResp.data);
-          } catch (mErr) {
-            console.error("Lỗi lấy đợt thực tập:", mErr);
-          }
-        }
-      } finally {
-        setLoading(false);
+  const fetchStatus = async () => {
+    try {
+      setLoading(true);
+      const resp = await internshipService.getStatus();
+      const internship = resp.data;
+      setRegistration(internship);
+      
+      // Nếu đã đăng ký doanh nghiệp (status khác INITIALIZED), chuyển sang màn hình đã đăng ký
+      if (internship && internship.status !== "INITIALIZED") {
+        setView("registered");
+      } else {
+        setView(location.state?.view ?? "");
       }
-    };
-
-    fetchStatus();
-  }, []);
+    } catch (error) {
+      console.error("Không thể lấy trạng thái thực tập:", error);
+      // Nếu chưa đăng ký đợt thực tập (404), lấy đợt đang mở
+      if (error.status === 404) {
+        try {
+          const mResp = await internshipService.getMilestone();
+          setMilestone(mResp.data);
+        } catch (mErr) {
+          console.error("Lỗi lấy đợt thực tập:", mErr);
+        }
+      }
+      setView(location.state?.view ?? "");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (location.state?.view) setView(location.state.view);
+    fetchStatus();
   }, [location.state?.view]);
 
   if (loading) {
@@ -101,6 +102,8 @@ export default function RegisterCompanyPage() {
       );
     }
 
+  const isRegistrationLocked = ["PENDING", "PENDING_TEACHER", "PENDING_FACULTY", "PENDING_COMPANY", "APPROVED", "COMPANY_APPROVED"].includes(registration?.status || registration?.latest_request?.status);
+
   if (view === "form-moi")
     return (
       <div className="p-6">
@@ -116,6 +119,7 @@ export default function RegisterCompanyPage() {
     return (
       <div className="p-6">
         <NganHangView 
+          isRegistrationLocked={isRegistrationLocked}
           onBack={() => setView("empty")} 
           onDangKy={(data) => { 
             setPrefillData(data);
@@ -127,14 +131,18 @@ export default function RegisterCompanyPage() {
   if (view === "registered")
     return (
       <div className="p-6">
-        <DaDangKy registration={registration} onDeXuatMoi={() => { setPrefillData(null); setView("form-moi"); }} onNganHang={() => setView("ngan-hang")} />
+        <DaDangKy 
+          registration={registration} 
+          onDeXuatMoi={() => { setPrefillData(null); setView("form-moi"); }} 
+          onNganHang={() => setView("ngan-hang")} 
+        />
       </div>
     );
 
   if (!registration && !milestone && !skipMilestone) {
     return (
       <div className="p-6">
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm max-w-2xl mx-auto">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm max-w-2xl mx-auto overflow-hidden">
           <div className="bg-[#5c60c0] text-white px-5 py-3 rounded-t-xl font-semibold">
             Đăng ký thực tập
           </div>
@@ -144,10 +152,10 @@ export default function RegisterCompanyPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
              </div>
-             <p className="text-gray-600 font-medium">Hiện không có đợt đăng ký thực tập nào được mở.</p>
+             <p className="text-gray-600 font-medium text-lg">Hiện không có đợt đăng ký thực tập nào được mở.</p>
              <p className="text-sm text-gray-400">Vui lòng quay lại sau hoặc liên hệ Văn phòng khoa.</p>
              <div className="flex flex-col gap-2 pt-4">
-               <Button onClick={() => navigate("/student/dashboard")} variant="outline" className="w-full">
+               <Button onClick={() => navigate("/student/dashboard")} className="w-full bg-[#5c60c0] hover:bg-[#4a4ea8] text-white">
                   Quay về trang chủ
                </Button>
                <Button onClick={() => setSkipMilestone(true)} variant="ghost" size="sm" className="text-gray-400 text-[10px] italic">
@@ -160,5 +168,31 @@ export default function RegisterCompanyPage() {
     );
   }
 
-  return <div className="p-6"><ChuaDangKy onDeXuatMoi={() => { setPrefillData(null); setView("form-moi"); }} onNganHang={() => setView("ngan-hang")} /></div>;
+  const handleUpdateView = (nextView) => {
+    setView(nextView);
+    setPrefillData(null);
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => fetchStatus()}
+          disabled={loading}
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition disabled:opacity-50"
+          title="Tải lại trạng thái"
+        >
+          {loading ? (
+            <div className="w-4 h-4 border-2 border-gray-700 border-t-transparent animate-spin rounded-full"></div>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          )}
+          Tải lại
+        </button>
+      </div>
+      <ChuaDangKy registration={registration} isRegistrationLocked={isRegistrationLocked} onDeXuatMoi={() => handleUpdateView("form-moi")} onNganHang={() => handleUpdateView("ngan-hang")} />
+    </div>
+  );
 }

@@ -19,7 +19,7 @@ export default function DaDangKy({ onDeXuatMoi, onNganHang, topic }) {
           <div className="space-y-3">
             {[
               ["Tên đề tài:", topic?.title || topic?.ten],
-              ["Lĩnh vực:", topic?.expertise?.name || topic?.linhVuc],
+              ["Chuyên môn:", topic?.expertise?.name || topic?.linhVuc],
               ["Giảng viên hướng dẫn:", topic?.lecturer?.name || topic?.gvhd || "Chưa phân công"],
               ["Công nghệ sử dụng:", topic?.technologies || topic?.congNghe],
             ].map(([lbl, val]) => (
@@ -33,15 +33,6 @@ export default function DaDangKy({ onDeXuatMoi, onNganHang, topic }) {
             <div className="flex items-start gap-4">
               <span className="text-sm font-semibold text-gray-600 w-48 flex-shrink-0">Mô tả:</span>
               <div className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 leading-relaxed">{typeof topic?.description === "string" ? topic.description : (typeof topic?.moTa === "string" ? topic.moTa : "")}</div>
-            </div>
-            <div className="flex items-start gap-4">
-              <span className="text-sm font-semibold text-gray-600 w-48 flex-shrink-0">File đề cương (PDF):</span>
-              <div className="flex-1 bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-400 flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                {typeof topic?.fileDeCuong === "string" ? topic.fileDeCuong : ""}
-              </div>
             </div>
           </div>
         </div>

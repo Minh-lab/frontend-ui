@@ -1,13 +1,26 @@
 import React from "react";
 import StatusBadge from "../../../components/StatusBadge";
+import { toast } from "sonner";
 
 export default function DaDangKy({ registration, onDeXuatMoi, onNganHang }) {
-  // If no registration data passed, use some placeholder or handle empty state
+  const isRegistrationLocked = ["PENDING_FACULTY", "APPROVED", "COMPANY_APPROVED"].includes(registration?.status || registration?.latest_request?.status);
+
+  const handleAction = (callback) => {
+    if (isRegistrationLocked) {
+      toast.error("Bạn đã thực hiện đăng ký và yêu cầu đang được xử lý. Không thể đăng ký thêm.", {
+        description: "Vui lòng hủy yêu cầu hiện tại nếu bạn muốn thay đổi doanh nghiệp."
+      });
+      return;
+    }
+    callback();
+  };
+
   const data = {
-    tenCongTy: registration?.company?.name || registration?.latest_request?.company_name || registration?.tenCongTy || "Chưa cập nhật",
-    maSoThue: registration?.company?.tax_code || registration?.maSoThue || "Chưa cập nhật",
-    email: registration?.company?.email || registration?.email || "Chưa cập nhật",
-    diaChi: registration?.company?.address || registration?.diaChi || "Chưa cập nhật",
+    tenCongTy: registration?.company?.name || registration?.latest_request?.company_name || "Chưa cập nhật",
+    maSoThue: registration?.company?.tax_code || registration?.latest_request?.tax_code || "Chưa cập nhật",
+    email: registration?.company?.email || registration?.latest_request?.email || "Chưa cập nhật",
+    diaChi: registration?.company?.address || registration?.latest_request?.address || "Chưa cập nhật",
+    position: registration?.latest_request?.student_message || "Chưa cập nhật",
     status: registration?.latest_request?.status || registration?.status || "PENDING_FACULTY",
     type: registration?.company ? "OFFICIAL" : "PROPOSAL"
   };
@@ -33,39 +46,47 @@ export default function DaDangKy({ registration, onDeXuatMoi, onNganHang }) {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Thông tin đã đăng ký</h3>
-
-          <div className="grid grid-cols-1 gap-3">
+          <p className="text-sm font-bold text-gray-700 mb-1">Thông tin đã đăng ký:</p>
+          <div className="space-y-3">
             {[
-              ["Tên doanh nghiệp", data.tenCongTy],
-              ["Mã số thuế", data.maSoThue],
-              ["Email liên hệ", data.email],
-              ["Địa chỉ", data.diaChi],
-              ["Loại hình", data.type === "PROPOSAL" ? "Sinh viên đề xuất" : "Doanh nghiệp liên kết"]
-            ].map(([label, value]) => (
-              <div key={label} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <label className="sm:w-32 text-xs font-bold text-[#5c60c0] shrink-0 uppercase">{label}</label>
-                <div className="text-sm text-gray-700 font-medium">{value}</div>
+              ["Tên doanh nghiệp:", data.tenCongTy],
+              ["Mã số thuế:", data.maSoThue],
+              ["Email liên hệ:", data.email],
+              ["Vị trí thực tập:", data.position],
+              ["Loại hình:", data.type === "PROPOSAL" ? "Sinh viên tự đề xuất" : "Doanh nghiệp đối tác"],
+            ].map(([lbl, val]) => (
+              <div key={lbl} className="flex items-start gap-4">
+                <span className="text-sm font-semibold text-gray-600 w-48 flex-shrink-0 mt-0.5">{lbl}</span>
+                <div className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700">
+                  {val}
+                </div>
               </div>
             ))}
+            <div className="flex items-start gap-4">
+              <span className="text-sm font-semibold text-gray-600 w-48 flex-shrink-0 mt-0.5">Địa chỉ:</span>
+              <div className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 leading-relaxed">
+                {data.diaChi}
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col items-center gap-4">
           <p className="text-[11px] text-gray-400 italic text-center">Bạn muốn thay đổi doanh nghiệp? Vui lòng hủy yêu cầu hiện tại hoặc liên hệ VPK.</p>
-          <div className="flex gap-3">
+          <div className="flex gap-4 w-full">
             <button
-              onClick={onDeXuatMoi}
-              className="px-4 py-2 text-xs font-semibold text-[#5c60c0] hover:bg-[#5c60c0]/5 rounded-lg transition"
+              onClick={() => handleAction(onDeXuatMoi)}
+              disabled={isRegistrationLocked}
+              className={`flex-1 font-semibold text-sm py-3 rounded-lg transition border ${isRegistrationLocked ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" : "bg-[#d0d5f0] hover:bg-[#c0c7e8] text-[#3b3f8c]"}`}
             >
-              Gửi đề xuất khác
+              Đề xuất doanh nghiệp mới
             </button>
-            <div className="w-px h-4 bg-gray-200 self-center"></div>
             <button
-              onClick={onNganHang}
-              className="px-4 py-2 text-xs font-semibold text-[#5c60c0] hover:bg-[#5c60c0]/5 rounded-lg transition"
+              onClick={() => handleAction(onNganHang)}
+              disabled={isRegistrationLocked}
+              className={`flex-1 font-semibold text-sm py-3 rounded-lg transition border ${isRegistrationLocked ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" : "bg-red-100 hover:bg-red-200 text-red-600 border-red-200"}`}
             >
-              Chọn từ danh sách
+              Ngân hàng doanh nghiệp đối tác
             </button>
           </div>
         </div>
