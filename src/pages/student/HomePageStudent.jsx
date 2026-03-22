@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { getStudentAccess, setStudentAccess } from "@/lib/studentAccess";
 import { toast } from "sonner";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
-
+import studentService from "@/services/studentService";
+import internshipService from "@/services/internship";
 const steps = [
   { label: "Dang ky", done: true },
   { label: "Cho duyet", done: true },
@@ -26,41 +27,74 @@ export default function HomePageStudent() {
   const [access, setAccess] = useState(() => getStudentAccess());
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null });
 
-  const handleEnableProject = () => {
-    setAccess(setStudentAccess({ projectEnabled: true }));
-    toast.success("Đã mở đợt đồ án", {
-      className: "!bg-[#AAFAB8] !text-[#24AD47]",
-    });
+  const handleEnableProject = async () => {
+    try {
+      await studentService.registerCapstonePhase();
+      setAccess(setStudentAccess({ projectEnabled: true }));
+      toast.success("Đã đăng ký đợt đồ án thành công", {
+        className: "!bg-[#AAFAB8] !text-[#24AD47]",
+      });
+    } catch (error) {
+      toast.error(error.message || "Đăng ký đợt đồ án thất bại");
+    }
   };
 
   const handleDisableProject = () => {
     setConfirmModal({ isOpen: true, type: "project" });
   };
 
-  const handleEnableIntern = () => {
-    setAccess(setStudentAccess({ internEnabled: true }));
-    toast.success("Đã mở đợt thực tập", {
-      className: "!bg-[#AAFAB8] !text-[#24AD47]",
-    });
+  const handleEnableIntern = async () => {
+    try {
+      const milestoneRes = await internshipService.getMilestone();
+      const milestoneId = milestoneRes.data?.milestone_id || milestoneRes.milestone_id;
+      
+      if (!milestoneId) {
+        throw new Error("Không tìm thấy đợt thực tập nào đang mở");
+      }
+
+      await internshipService.registerInternship(milestoneId);
+      
+      setAccess(setStudentAccess({ internEnabled: true }));
+      toast.success("Đã đăng ký đợt thực tập thành công", {
+        className: "!bg-[#AAFAB8] !text-[#24AD47]",
+      });
+    } catch (error) {
+      toast.error(error.message || "Đăng ký đợt thực tập thất bại");
+    }
   };
 
   const handleDisableIntern = () => {
     setConfirmModal({ isOpen: true, type: "intern" });
   };
 
-  const processConfirm = () => {
-    if (confirmModal.type === "project") {
-      setAccess(setStudentAccess({ projectEnabled: false }));
-      toast.success("Đã hủy đợt đồ án", {
-        className: "!bg-[#AAFAB8] !text-[#24AD47]",
-      });
-    } else if (confirmModal.type === "intern") {
-      setAccess(setStudentAccess({ internEnabled: false }));
-      toast.success("Đã hủy đợt thực tập", {
-        className: "!bg-[#AAFAB8] !text-[#24AD47]",
-      });
+  const processConfirm = async () => {
+    try {
+      if (confirmModal.type === "project") {
+        await studentService.cancelCapstone();
+        setAccess(setStudentAccess({ projectEnabled: false }));
+        toast.success("Đã gửi yêu cầu hủy đợt đồ án thành công", {
+          className: "!bg-[#AAFAB8] !text-[#24AD47]",
+        });
+      } else if (confirmModal.type === "intern") {
+        const statusRes = await internshipService.getStatus();
+        const internshipId = statusRes.data?.internship_id || statusRes.internship_id;
+        
+        if (!internshipId) {
+          throw new Error("Không tìm thấy thông tin thực tập để hủy");
+        }
+
+        await internshipService.cancelInternship(internshipId);
+
+        setAccess(setStudentAccess({ internEnabled: false }));
+        toast.success("Đã gửi yêu cầu hủy đợt thực tập thành công", {
+          className: "!bg-[#AAFAB8] !text-[#24AD47]",
+        });
+      }
+    } catch (error) {
+      toast.error(error.message || `Yêu cầu hủy ${confirmModal.type === "project" ? "đồ án" : "thực tập"} thất bại`);
+    } finally {
+      setConfirmModal({ isOpen: false, type: null });
     }
-    setConfirmModal({ isOpen: false, type: null });
   };
 
   return (

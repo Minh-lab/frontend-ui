@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import topicService from "@/services/topic";
+import studentService from "@/services/studentService";
 
 export default function NganHangView({ onBack, onDangKy }) {
   const [search, setSearch] = useState("");
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [submittingId, setSubmittingId] = useState(null);
   const [filterCongNghe, setFilterCongNghe] = useState("");
   const [filterLinhVuc, setFilterLinhVuc] = useState("");
   const [meta, setMeta] = useState({
@@ -159,30 +161,51 @@ export default function NganHangView({ onBack, onDangKy }) {
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500 max-w-[140px]">{dt.technologies || "—"}</td>
                   <td className="px-4 py-3 text-xs text-gray-600">
-                    {dt.lecturer?.name || "Chưa phân công"}
+                    {dt.lecturer?.full_name || "Chưa phân công"}
                   </td>
                   <td className="px-4 py-3">
                     <Button
-                      onClick={() => {
-                        const transformedTopic = {
-                          title: dt.title,
-                          linhVuc: dt.expertise?.name || "Không xác định",
-                          lecturer: {
-                            name: dt.lecturer?.full_name || "Chưa phân công"
-                          },
-                          technologies: dt.technologies,
-                          description: dt.description,
-                          fileDeCuong: null
-                        };
-                        onDangKy(transformedTopic);
-                        toast.success("Đã chọn đề tài thành công", {
-                          className: "!bg-[#AAFAB8] !text-[#24AD47]",
-                        });
+                      disabled={!dt.lecturer?.lecturer_id || submittingId === dt.topic_id}
+                      onClick={async () => {
+                        if (!dt.lecturer?.lecturer_id) {
+                          toast.error("De tai nay chua co giang vien huong dan");
+                          return;
+                        }
+
+                        try {
+                          setSubmittingId(dt.topic_id);
+                          const response = await studentService.registerCapstoneTopic({
+                            topic_id: dt.topic_id,
+                            lecturer_id: dt.lecturer.lecturer_id,
+                          });
+
+                          const transformedTopic = {
+                            title: dt.title,
+                            linhVuc: dt.expertise?.name || "Khong xac dinh",
+                            lecturer: {
+                              name: dt.lecturer?.full_name || "Chua phan cong",
+                              lecturer_id: dt.lecturer?.lecturer_id,
+                            },
+                            technologies: dt.technologies,
+                            description: dt.description,
+                            fileDeCuong: null,
+                            requestStatus: response?.data?.status ?? null,
+                          };
+
+                          onDangKy(transformedTopic);
+                          toast.success(response?.message || "Da gui yeu cau dang ky de tai", {
+                            className: "!bg-[#AAFAB8] !text-[#24AD47]",
+                          });
+                        } catch (error) {
+                          toast.error(error?.message || "Khong the dang ky de tai");
+                        } finally {
+                          setSubmittingId(null);
+                        }
                       }}
-                      className="bg-green-500 hover:bg-green-600 text-white"
+                      className="bg-green-500 hover:bg-green-600 text-white disabled:bg-slate-300"
                       size="sm"
                     >
-                      Đăng ký
+                      {submittingId === dt.topic_id ? "Dang gui..." : "Dang ky"}
                     </Button>
                   </td>
                 </tr>
@@ -212,3 +235,4 @@ export default function NganHangView({ onBack, onDangKy }) {
     </div>
   );
 }
+

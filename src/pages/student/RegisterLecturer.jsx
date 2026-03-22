@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { getStudentAccess } from "@/lib/studentAccess";
 import lecturerApi from "@/services/lecturerApi";
+import studentService from "@/services/studentService";
 
 function DanhSachGV({ listGV, onChon, isRegister }) {
   const [keyword, setKeyword] = useState('')
@@ -28,7 +29,7 @@ function DanhSachGV({ listGV, onChon, isRegister }) {
         gvName.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
-        !statusFilter || (gv.is_active ? statusFilter === "true" : statusFilter === "false");
+        !statusFilter || (gv.is_accepting ? statusFilter === "true" : statusFilter === "false");
       
       const gvExpertises = gv.expertises || [];
       const matchesTopic = !topicFilter || gvExpertises.some(mon => mon.toLowerCase().includes(topicFilter.toLowerCase()));
@@ -97,8 +98,8 @@ function DanhSachGV({ listGV, onChon, isRegister }) {
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm divide-y divide-gray-100">
         {filteredGV.map((gv) => {
           const initials = gv.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || "GV";
-          const daDangKy = gv.da_dang_ky || 0;
-          const max = gv.max_assignment || 10;
+          const daDangKy = gv.slots?.current || 0;
+          const max = gv.slots?.max || 10;
           const full = daDangKy >= max;
 
           return (
@@ -144,9 +145,8 @@ function DanhSachGV({ listGV, onChon, isRegister }) {
 }
 
 const schema = yup.object().shape({
-  linhVuc: yup.string().required("Vui lòng nhập lĩnh vực dự kiến"),
+  linhVuc: yup.string().required("Vui lòng nhập chuyên môn dự kiến"),
   yTuong: yup.string().optional(),
-  file: yup.mixed().optional(),
 });
 
 function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
@@ -162,20 +162,37 @@ function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
     defaultValues: {
       linhVuc: "",
       yTuong: "",
-      file: "",
     },
   });
 
-  const fileValue = watch("file");
+  const onSubmit = async (data) => {
+    try {
+      const statusRes = await studentService.getMyCapstoneStatus();
+      const capstoneId = statusRes?.data?.capstone_id || statusRes?.capstone_id;
 
-  const onSubmit = (data) => {
-    onBack();
-    setIsRegister(true);
-    gv.daDangKy += 1;
-    toast.success("Hạnh động đã được ghi nhận", {
-      className: "!bg-[#AAFAB8] !text-[#24AD47]",
-    });
-    console.log("Form data:", data);
+      if (!capstoneId) {
+        throw new Error("Không tìm thấy đồ án của bạn để đăng ký.");
+      }
+
+      const formData = new FormData();
+      formData.append("capstone_id", capstoneId);
+      formData.append("lecturer_id", gv.lecturer_id);
+      
+      const message = `${data.linhVuc}${data.yTuong ? " - " + data.yTuong : ""}`;
+      formData.append("student_message", message);
+      
+      await studentService.registerLecturer(formData);
+
+      onBack();
+      setIsRegister(true);
+      if (gv.da_dang_ky !== undefined) { gv.da_dang_ky += 1; }
+      
+      toast.success("Đăng ký GVHD thành công!", {
+        className: "!bg-[#AAFAB8] !text-[#24AD47]",
+      });
+    } catch (error) {
+      toast.error(error.message || "Đăng ký thất bại");
+    }
   };
 
   return (
@@ -203,7 +220,7 @@ function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
                   </div>
                 </div>
                 <div className="text-right">
-                  {gv.is_active && (
+                  {gv.is_accepting && (
                     <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded-full border border-green-200 mb-1">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -211,7 +228,7 @@ function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
                       Còn nhận
                     </span>
                   )}
-                  <p className="text-xs text-green-600 font-medium">Đã đăng ký: {gv.da_dang_ky || 0}/{gv.max_assignment || 10}</p>
+                  <p className="text-xs text-green-600 font-medium">Đã đăng ký: {gv.slots?.current || 0}/{gv.slots?.max || 10}</p>
                 </div>
               </div>
             </div>
@@ -221,13 +238,13 @@ function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
         <div className="border-t border-gray-100 pt-5">
           <p className="text-sm font-bold text-gray-700 mb-3">Thông tin sinh viên:</p>
           <div className="grid grid-cols-3 gap-3 text-sm mb-2">
-            <div><span className="text-gray-400">Mã sinh viên:</span> <span className="font-medium">{student.maSV}</span></div>
-            <div><span className="text-gray-400">Họ và tên:</span> <span className="font-medium">{student.hoTen}</span></div>
-            <div><span className="text-gray-400">Lớp:</span> <span className="font-medium">{student.lop}</span></div>
+            <div><span className="text-gray-400">Mã sinh viên:</span> <span className="font-medium">{student.usercode || student.maSV}</span></div>
+            <div><span className="text-gray-400">Họ và tên:</span> <span className="font-medium">{student.full_name || student.hoTen}</span></div>
+            <div><span className="text-gray-400">Lớp:</span> <span className="font-medium">{student.class_name || student.lop}</span></div>
           </div>
           <div className="grid grid-cols-3 gap-3 text-sm">
-            <div><span className="text-gray-400">Email:</span> <span className="font-medium">{student.maSV}@e.tlu.edu.vn</span></div>
-            <div><span className="text-gray-400">SĐT:</span> <span className="font-medium">{student.sdt}</span></div>
+            <div><span className="text-gray-400">Email:</span> <span className="font-medium">{student.email || `${student.maSV}@e.tlu.edu.vn`}</span></div>
+            <div><span className="text-gray-400">SĐT:</span> <span className="font-medium">{student.phone || student.sdt}</span></div>
             <div className="flex items-center gap-2"><span className="text-gray-400">GPA:</span> <span className="font-medium">{student.gpa}</span>
               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -237,7 +254,7 @@ function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Lĩnh vực dự kiến: <span className="text-red-500">*</span></label>
+          <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Chuyên môn dự kiến: <span className="text-red-500">*</span></label>
           <input
             className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0] ${errors.linhVuc ? "border-red-500" : "border-gray-300"}`}
             {...register("linhVuc")}
@@ -251,10 +268,6 @@ function FormDangKyGVHD({ gv, onBack, setIsRegister }) {
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0]"
             {...register("yTuong")}
           />
-        </div>
-        <div>
-          <label className="text-sm font-semibold text-gray-700 mb-1.5 block">CV/ Bảng điểm (Tùy chọn):</label>
-          <FileUpload value={fileValue} onChange={(v) => setValue("file", v)} />
         </div>
 
         <div className="flex justify-end gap-3">
