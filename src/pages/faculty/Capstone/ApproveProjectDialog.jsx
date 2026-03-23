@@ -40,7 +40,7 @@ export default function ApproveProjectDialog({ isOpen, onClose, onSuccess }) {
       fetchRegistrations();
       fetchMajors();
     }
-  }, [isOpen, view, pagination.current_page, searchTerm, selectedMajor]);
+  }, [isOpen, view, pagination.current_page, selectedMajor, searchTerm]);
 
   const fetchRegistrations = async () => {
     try {
@@ -50,11 +50,22 @@ export default function ApproveProjectDialog({ isOpen, onClose, onSuccess }) {
         itemsPerPage: pagination.items_per_page,
         search: searchTerm,
         major: selectedMajor,
-        status: "Chờ duyệt"
+        status: "PENDING_FACULTY"
       });
 
       if (response.success) {
-        setRegistrations(response.data.registrations);
+        // Transform API response to match table structure
+        const transformedRegistrations = response.data.registrations.map(item => ({
+          id: item.capstone_request_id, // Use request_id, not student_id!
+          name: item.capstone?.student?.full_name || "",
+          class: item.capstone?.student?.studentClass?.class_name || "",
+          topic: item.capstone?.topic?.title || "",
+          major: item.capstone?.topic?.expertise?.name || "",
+          status: item.status,
+          request_id: item.capstone_request_id
+        }));
+        
+        setRegistrations(transformedRegistrations);
         setPagination(response.data.pagination);
       } else {
         toast.error(response.message);
@@ -68,9 +79,9 @@ export default function ApproveProjectDialog({ isOpen, onClose, onSuccess }) {
 
   const fetchMajors = async () => {
     try {
-      const response = await capstoneService.getCapstoneMajors();
+      const response = await capstoneService.getMajors();
       if (response.success) {
-        setMajors(response.data);
+        setMajors(response.data.data || response.data);
       }
     } catch (error) {
       console.error("Lỗi tải chuyên ngành:", error);
@@ -87,7 +98,7 @@ export default function ApproveProjectDialog({ isOpen, onClose, onSuccess }) {
       setProcessing(true);
       
       if (type === "approve") {
-        const response = await capstoneService.approveRegistration(selectedTopic.id);
+        const response = await capstoneService.approveRegistration(selectedTopic.request_id);
         
         if (response.success) {
           toast.success(`Đã phê duyệt đề tài của ${selectedTopic.name}`);
@@ -99,10 +110,10 @@ export default function ApproveProjectDialog({ isOpen, onClose, onSuccess }) {
           toast.error(response.message);
         }
       } else {
-        const response = await capstoneService.rejectRegistration(selectedTopic.id);
+        const response = await capstoneService.rejectRegistration(selectedTopic.request_id, "");
         
         if (response.success) {
-          toast.error(`Đã từ chối đề tài của ${selectedTopic.name}`);
+          toast.success(`Đã từ chối đề tài của ${selectedTopic.name}`);
           setView("list");
           // Refresh lại danh sách
           fetchRegistrations();
@@ -170,9 +181,8 @@ export default function ApproveProjectDialog({ isOpen, onClose, onSuccess }) {
                     <SelectValue placeholder="Chuyên môn" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    {majors.map(major => (
-                      <SelectItem key={major} value={major}>{major}</SelectItem>
+                    {majors && majors.length > 0 && majors.map(major => (
+                      <SelectItem key={major.expertise_id} value={major.expertise_id?.toString()}>{major.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

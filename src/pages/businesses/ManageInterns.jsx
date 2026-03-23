@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import Modal from '@/components/Modal'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'

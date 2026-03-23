@@ -22,12 +22,95 @@ import {
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import adminService from "@/services/adminService";
 
-// Schema cập nhật theo field backend
+// Schema cập nhật theo CSDL database schema
 const schema = yup.object().shape({
-  username: yup.string().required("Tên đăng nhập không được để trống"),
-  email: yup.string().required("Email không được để trống").email("Email không hợp lệ"),
-  status: yup.string().required("Vui lòng chọn trạng thái"),
-  usercode: yup.string().required("Mã định danh không được để trống"),
+  // Chung cho tất cả role
+  username: yup.string()
+    .required("Tên đăng nhập không được để trống")
+    .min(1, "Tên đăng nhập phải có ít nhất 1 ký tự")
+    .max(255, "Tên đăng nhập không được vượt quá 255 ký tự"),
+  email: yup.string()
+    .required("Email không được để trống")
+    .email("Email không hợp lệ")
+    .max(255, "Email không được vượt quá 255 ký tự"),
+  usercode: yup.string()
+    .required("Mã định danh không được để trống")
+    .max(50, "Mã định danh không được vượt quá 50 ký tự"),
+  status: yup.string()
+    .required("Trạng thái không được để trống"),
+  role: yup.string()
+    .required("Vai trò không được để trống"),
+
+  // Chung cho Student, Lecturer, Faculty_staff, Admin (người dùng)
+  full_name: yup.string().when('role', {
+    is: (role) => ['student', 'lecturer', 'faculty_staff', 'admin'].includes(role),
+    then: (schema) => schema.required("Họ tên không được để trống").max(255, "Họ tên không được vượt quá 255 ký tự"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  gender: yup.string().when('role', {
+    is: (role) => ['student', 'lecturer', 'faculty_staff', 'admin'].includes(role),
+    then: (schema) => schema.notRequired().nullable(),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  dob: yup.string().when('role', {
+    is: (role) => ['student', 'lecturer', 'faculty_staff', 'admin'].includes(role),
+    then: (schema) => schema.notRequired().nullable(),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  phone_number: yup.string().when('role', {
+    is: (role) => ['student', 'lecturer', 'faculty_staff', 'admin'].includes(role),
+    then: (schema) => schema.notRequired().nullable().max(15, "Số điện thoại không được vượt quá 15 ký tự").matches(/^[0-9\-\+\s]*$/, "Số điện thoại chỉ được chứa chữ số, dấu cộng, dấu gạch ngang hoặc khoảng trắng"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+
+  // Student fields (chỉ validate khi role === 'student')
+  class_id: yup.string().when('role', {
+    is: 'student',
+    then: (schema) => schema.required("Lớp không được để trống"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  gpa: yup.number().when('role', {
+    is: 'student',
+    then: (schema) => schema.notRequired().nullable().typeError("GPA phải là một số").min(0, "GPA phải >= 0").max(4, "GPA phải <= 4"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+
+  // Lecturer fields (chỉ validate khi role === 'lecturer')
+  degree: yup.string().when('role', {
+    is: 'lecturer',
+    then: (schema) => schema.notRequired().nullable().max(100, "Học vị không được vượt quá 100 ký tự"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  department: yup.string().when('role', {
+    is: 'lecturer',
+    then: (schema) => schema.notRequired().nullable().max(255, "Khoa không được vượt quá 255 ký tự"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+
+  // Company fields (chỉ validate khi role === 'company')
+  name: yup.string().when('role', {
+    is: 'company',
+    then: (schema) => schema.required("Tên doanh nghiệp không được để trống").max(255, "Tên doanh nghiệp không được vượt quá 255 ký tự"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  address: yup.string().when('role', {
+    is: 'company',
+    then: (schema) => schema.notRequired().nullable().max(500, "Địa chỉ không được vượt quá 500 ký tự"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  website: yup.string().when('role', {
+    is: 'company',
+    then: (schema) => schema.notRequired().nullable().test('valid-url', 'Website phải hợp lệ', (value) => {
+      if (!value) return true; // Cho phép để trống
+      return /^(https?:\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+/.test(value);
+    }),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  is_partnered: yup.string().when('role', {
+    is: 'company',
+    then: (schema) => schema.required("Trạng thái đối tác không được để trống"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
 });
 
 export default function DetailAccount() {
@@ -37,15 +120,18 @@ export default function DetailAccount() {
   const [isEditing, setIsEditing] = useState(false);
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [classes, setClasses] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(true);
 
   const form = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       role: "", username: "", email: "", status: "", usercode: "",
-      full_name: "", gender: "Nam", dob: "", phone_number: "",
-      class_id: "", gpa: "", degree: "", department: "",
-      name: "", address: "", website: "", is_partnered: "0" // Mặc định là "0" (Chưa ký kết)
-    }
+      full_name: "", gender: "", dob: "", phone_number: "",
+      class_id: "", gpa: null, degree: "", department: "",
+      name: "", address: "", website: "", is_partnered: ""
+    },
+    mode: "onBlur"
   });
 
   // 1. Fetch dữ liệu: Cần cả ID và Role
@@ -61,6 +147,11 @@ export default function DetailAccount() {
         if (res.success) {
           // Backend trả về 'active'/'inactive', map sang label hiển thị
           const displayStatus = res.data.status === "active" ? "Hoạt động" : "Vô hiệu hóa";
+          
+          // Chuyển đổi gender từ "male"/"female" sang "Nam"/"Nữ" để hiển thị trong form
+          if (res.data.gender) {
+            res.data.gender = res.data.gender === "male" ? "Nam" : (res.data.gender === "female" ? "Nữ" : res.data.gender);
+          }
           
           // Chuyển đổi is_partnered từ boolean sang string cho Select
           if (res.data.is_partnered !== undefined) {
@@ -78,6 +169,24 @@ export default function DetailAccount() {
     fetchAccount();
   }, [id, role, form]);
 
+  // 2. Fetch danh sách lớp học
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoadingClasses(true);
+        const response = await adminService.getClasses();
+        if (response.success && response.data) {
+          setClasses(response.data);
+        }
+      } catch (error) {
+        console.error("Lỗi tải danh sách lớp:", error);
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+    fetchClasses();
+  }, []);
+
   const selectedRole = useWatch({ control: form.control, name: "role" });
 
   const onSubmit = async (data) => {
@@ -85,12 +194,14 @@ export default function DetailAccount() {
       // Chuyển đổi status từ hiển thị sang API
       const apiStatus = data.status === "Hoạt động" ? "active" : "inactive";
       
-      // Tạo payload với status đã chuyển đổi
+      // Tạo payload với các chuyển đổi cần thiết
       const payload = { 
         ...data, 
         status: apiStatus,
-        // Chuyển is_partnered từ string "1"/"0" sang int 1/0
-        is_partnered: data.is_partnered === "1" ? 1 : 0
+        // Chuyển giới tính từ "Nam"/"Nữ" sang "male"/"female"
+        gender: data.gender === "Nam" ? "male" : (data.gender === "Nữ" ? "female" : data.gender),
+        // Chuyển is_partnered từ string "1"/"0" sang number 1/0
+        is_partnered: Number(data.is_partnered)
       };
       
       const res = await adminService.updateAccount(id, role, payload);
@@ -247,7 +358,25 @@ export default function DetailAccount() {
                       <FormField control={form.control} name="gender" render={({ field }) => (<FormItem><FormLabel className="font-bold">Giới tính</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}><FormControl><SelectTrigger className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`}><SelectValue /></SelectTrigger></FormControl><SelectContent className="bg-white"><SelectItem value="Nam">Nam</SelectItem><SelectItem value="Nữ">Nữ</SelectItem></SelectContent></Select></FormItem>)} />
                       <FormField control={form.control} name="dob" render={({ field }) => (<FormItem><FormLabel className="font-bold">Ngày sinh</FormLabel><FormControl><Input {...field} type={isEditing ? "date" : "text"} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl></FormItem>)} />
                       <FormField control={form.control} name="phone_number" render={({ field }) => (<FormItem><FormLabel className="font-bold">Số điện thoại</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-bold" : "bg-white"}`} /></FormControl></FormItem>)} />
-                      <FormField control={form.control} name="class_id" render={({ field }) => (<FormItem><FormLabel className="font-bold">Lớp</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-black text-indigo-600" : "bg-white"}`} /></FormControl></FormItem>)} />
+                      <FormField control={form.control} name="class_id" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-bold">Lớp</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing || loadingClasses}>
+                            <FormControl>
+                              <SelectTrigger className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-black text-indigo-600" : "bg-white"}`}>
+                                <SelectValue placeholder={loadingClasses ? "Đang tải..." : "Chọn lớp"} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="bg-white border-slate-200 max-h-48 overflow-y-auto">
+                              {classes.map((cls, index) => (
+                                <SelectItem key={`${cls.class_id}-${index}`} value={String(cls.class_id)}>
+                                  {cls.class_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )} />
                       <FormField control={form.control} name="gpa" render={({ field }) => (<FormItem><FormLabel className="font-bold">GPA</FormLabel><FormControl><Input {...field} readOnly={!isEditing} className={`h-11 ${!isEditing ? "bg-slate-50/50 border-transparent shadow-none font-black" : "bg-white"}`} /></FormControl></FormItem>)} />
                     </>
                   )}

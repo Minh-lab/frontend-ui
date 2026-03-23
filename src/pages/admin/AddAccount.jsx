@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
@@ -20,17 +20,119 @@ import adminService from "@/services/adminService";
 
 /**
  * 1. Định nghĩa Schema Validation với Yup [cite: 848]
+ * Cập nhật theo CSDL database schema từ docs/csdl.md
  */
 const schema = yup.object().shape({
+  // Chung cho tất cả role
   role: yup.string().required("Vui lòng chọn vai trò"),
-  username: yup.string().required("Tên đăng nhập không được để trống"),
-  email: yup.string().required("Email không được để trống").email("Định dạng email không hợp lệ"),
-  code: yup.string().required("Mã định danh không được để trống"),
+  username: yup.string()
+    .required("Tên đăng nhập không được để trống")
+    .min(1, "Tên đăng nhập phải có ít nhất 1 ký tự")
+    .max(255, "Tên đăng nhập không được vượt quá 255 ký tự"),
+  email: yup.string()
+    .required("Email không được để trống")
+    .email("Định dạng email không hợp lệ")
+    .max(255, "Email không được vượt quá 255 ký tự"),
+  code: yup.string()
+    .required("Mã định danh không được để trống")
+    .max(50, "Mã định danh không được vượt quá 50 ký tự"),
+
+  // Chung cho Student, Lecturer, Faculty_staff, Admin (người dùng)
+  full_name: yup.string().when('role', {
+    is: (role) => ['student', 'lecturer', 'faculty_staff', 'admin'].includes(role),
+    then: (schema) => schema.required("Họ tên không được để trống").max(255, "Họ tên không được vượt quá 255 ký tự"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  gender: yup.string().when('role', {
+    is: (role) => ['student', 'lecturer', 'faculty_staff', 'admin'].includes(role),
+    then: (schema) => schema.notRequired().nullable(),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  dob: yup.string().when('role', {
+    is: (role) => ['student', 'lecturer', 'faculty_staff', 'admin'].includes(role),
+    then: (schema) => schema.notRequired().nullable(),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  phone_number: yup.string().when('role', {
+    is: (role) => ['student', 'lecturer', 'faculty_staff', 'admin'].includes(role),
+    then: (schema) => schema.notRequired().nullable().max(15, "Số điện thoại không được vượt quá 15 ký tự").matches(/^[0-9\-\+\s]*$/, "Số điện thoại chỉ được chứa chữ số, dấu cộng, dấu gạch ngang hoặc khoảng trắng"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+
+  // Student fields (chỉ validate khi role === 'student')
+  class: yup.string().when('role', {
+    is: 'student',
+    then: (schema) => schema.required("Lớp không được để trống"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  gpa: yup.number().when('role', {
+    is: 'student',
+    then: (schema) => schema.notRequired().nullable().typeError("GPA phải là một số").min(0, "GPA phải >= 0").max(4, "GPA phải <= 4"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+
+  // Lecturer fields (chỉ validate khi role === 'lecturer')
+  degree: yup.string().when('role', {
+    is: 'lecturer',
+    then: (schema) => schema.notRequired().nullable().max(100, "Học vị không được vượt quá 100 ký tự"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  department: yup.string().when('role', {
+    is: 'lecturer',
+    then: (schema) => schema.notRequired().nullable().max(255, "Khoa không được vượt quá 255 ký tự"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+
+  // Company fields (chỉ validate khi role === 'company')
+  company_name: yup.string().when('role', {
+    is: 'company',
+    then: (schema) => schema.required("Tên doanh nghiệp không được để trống").max(255, "Tên doanh nghiệp không được vượt quá 255 ký tự"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  address: yup.string().when('role', {
+    is: 'company',
+    then: (schema) => schema.notRequired().nullable().max(500, "Địa chỉ không được vượt quá 500 ký tự"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  website: yup.string().when('role', {
+    is: 'company',
+    then: (schema) => schema.notRequired().nullable().test('valid-url', 'Website phải hợp lệ', (value) => {
+      if (!value) return true; // Cho phép để trống
+      return /^(https?:\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+/.test(value);
+    }),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
+  partner_status: yup.string().when('role', {
+    is: 'company',
+    then: (schema) => schema.required("Trạng thái đối tác không được để trống"),
+    otherwise: (schema) => schema.notRequired().nullable()
+  }),
 });
 
 export default function AddAccount() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [classes, setClasses] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(true);
+
+  // Fetch danh sách lớp học
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoadingClasses(true);
+        const response = await adminService.getClasses();
+        if (response.success && response.data) {
+          setClasses(response.data);
+        }
+      } catch (error) {
+        console.error("Lỗi tải danh sách lớp:", error);
+        toast.error("Không thể tải danh sách lớp học");
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+    fetchClasses();
+  }, []);
 
   const form = useForm({
     resolver: yupResolver(schema),
@@ -40,18 +142,19 @@ export default function AddAccount() {
       email: "",
       code: "", 
       full_name: "",
-      gender: "Nam",
+      gender: "",
       dob: "",
       phone_number: "",
       class: "",
-      gpa: "",
+      gpa: null,
       degree: "",
       department: "",
       company_name: "",
       address: "",
       website: "",
-      partner_status: "0",
-    }
+      partner_status: "",
+    },
+    mode: "onBlur"
   });
 
   const selectedRole = form.watch("role");
@@ -192,7 +295,24 @@ export default function AddAccount() {
                         <FormItem><FormLabel className="font-bold text-slate-700">SĐT</FormLabel><FormControl><Input {...field} className="h-11" /></FormControl></FormItem>
                       )} />
                       <FormField control={form.control} name="class" render={({ field }) => (
-                        <FormItem><FormLabel className="font-bold text-slate-700">Lớp</FormLabel><FormControl><Input {...field} className="h-11" /></FormControl></FormItem>
+                        <FormItem>
+                          <FormLabel className="font-bold text-slate-700">Lớp</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={loadingClasses}>
+                            <FormControl>
+                              <SelectTrigger className="h-11 bg-white">
+                                <SelectValue placeholder={loadingClasses ? "Đang tải..." : "Chọn lớp"} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="bg-white border-slate-200 max-h-48 overflow-y-auto">
+                              {classes.map((cls, index) => (
+                                <SelectItem key={`${cls.class_id}-${index}`} value={String(cls.class_id)}>
+                                  {cls.class_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
                       )} />
                       <FormField control={form.control} name="gpa" render={({ field }) => (
                         <FormItem><FormLabel className="font-bold text-slate-700">GPA</FormLabel><FormControl><Input {...field} type="number" step="0.1" className="h-11" /></FormControl></FormItem>

@@ -8,7 +8,8 @@ import capstoneService from './capstoneService';
 import councilService from './councilService';
 
 // Flag để chuyển đổi giữa mock và real API cho tất cả faculty services
-export const USE_MOCK = true; // Sử dụng mock data (backend lecturer chưa hoàn thiện)
+// ✅ UPDATED: Sử dụng REAL API từ backend (backend lecturer đã hoàn thiện)
+export const USE_MOCK = false;
 
 export {
   topicService,

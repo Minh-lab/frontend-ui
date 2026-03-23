@@ -18,10 +18,20 @@ import { topicService } from "@/services/faculty";
 
 // Validation schema
 const topicSchema = yup.object({
-  topicName: yup.string().required("Tên đề tài không được để trống"),
-  technology: yup.string().required("Công nghệ không được để trống"),
-  description: yup.string().required("Mô tả không được để trống"),
-  specialization: yup.string().required("Chuyên môn không được để trống"),
+  topicName: yup.string()
+    .required("Tên đề tài không được để trống")
+    .max(255, "Tên đề tài không được vượt quá 255 ký tự"),
+  technology: yup.string()
+    .required("Công nghệ không được để trống"),
+  description: yup.string()
+    .nullable()
+    .notRequired(),
+  specialization: yup.string()
+    .required("Chuyên môn không được để trống"),
+  isAvailable: yup.boolean()
+    .notRequired(),
+  isBankTopic: yup.boolean()
+    .notRequired(),
 });
 
 export default function EditTopic() {
@@ -39,6 +49,8 @@ export default function EditTopic() {
       technology: "",
       description: "",
       specialization: "",
+      isAvailable: true,
+      isBankTopic: true,
     },
   });
 
@@ -69,6 +81,8 @@ export default function EditTopic() {
             technology: topic.technology || "",
             description: topic.description || "",
             specialization: topic.specialization || "",
+            isAvailable: topic.isAvailable !== undefined ? topic.isAvailable : true,
+            isBankTopic: topic.isBankTopic !== undefined ? topic.isBankTopic : true,
           });
         } else {
           setNotFound(true);

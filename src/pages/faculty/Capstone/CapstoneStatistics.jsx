@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, ChevronRight, FileDown, 
@@ -21,6 +21,7 @@ export default function CapstoneStatistics() {
   
   // State cho dữ liệu
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [capstones, setCapstones] = useState([]);
   const [statistics, setStatistics] = useState(null);
   const [pagination, setPagination] = useState({
@@ -48,73 +49,106 @@ export default function CapstoneStatistics() {
   }, []);
 
   // Fetch khi filter thay đổi
+  const fetchStatistics = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Fetch danh sách capstones từ statistics endpoint
+      const response = await capstoneService.getCapstonesByStatistics({
+        page: pagination.current_page,
+        itemsPerPage: pagination.items_per_page,
+        semester_id: selectedSemester !== "all" ? selectedSemester : "",
+        status: selectedStatus !== "all" ? selectedStatus : "",
+        lecturer_id: selectedLecturer !== "all" ? selectedLecturer : "",
+        council_id: selectedCouncil !== "all" ? selectedCouncil : ""
+      });
+
+      if (response.success && response.data) {
+        // Response structure: { capstones, statistics, pagination }
+        const capstonesData = response.data.capstones || [];
+        const paginationData = response.data.pagination || {
+          current_page: pagination.current_page,
+          total_items: 0,
+          items_per_page: pagination.items_per_page,
+          total_pages: 1
+        };
+        const statsData = response.data.statistics || null;
+        
+        setCapstones(Array.isArray(capstonesData) ? capstonesData : []);
+        setPagination(paginationData);
+        if (statsData) setStatistics(statsData);
+        setError(null); // Clear error khi dữ liệu load thành công
+      } else {
+        // Response không success - show error message
+        const errorMsg = response.message || "Không thể lấy dữ liệu thống kê";
+        setError(errorMsg);
+        console.error("API Error Response:", response);
+        toast.error(errorMsg);
+        setCapstones([]);
+      }
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+      // Show error message từ exception
+      const errorMsg = error?.message || "Lỗi khi tải dữ liệu thống kê";
+      setError(errorMsg);
+      toast.error(errorMsg);
+      setCapstones([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.current_page, pagination.items_per_page, selectedSemester, selectedStatus, selectedLecturer, selectedCouncil]);
+
   useEffect(() => {
     fetchStatistics();
-  }, [pagination.current_page, selectedStatus, selectedLecturer, selectedCouncil]);
+  }, [fetchStatistics]);
 
   const fetchInitialData = async () => {
     try {
       setLoading(true);
       
-      // Fetch song song các dữ liệu cần thiết
-      const [statusesRes, lecturersRes, councilsRes, statsRes] = await Promise.all([
+      // Fetch song song các dữ liệu filter
+      const [statusesRes, lecturersRes, councilsRes, semestersRes] = await Promise.all([
         capstoneService.getCapstoneStatuses(),
-        capstoneService.getLecturers(),
-        capstoneService.getCouncils(),
-        capstoneService.getCapstoneStatistics()
+        capstoneService.getLecturersForFilter(),
+        capstoneService.getCouncilsForFilter(),
+        capstoneService.getSemesters()
       ]);
 
-      if (statusesRes.success) setStatuses(statusesRes.data);
-      if (lecturersRes.success) setLecturers(lecturersRes.data);
-      if (councilsRes.success) setCouncils(councilsRes.data);
-      if (statsRes.success) setStatistics(statsRes.data);
-      
-      // Mock semesters (có thể thay bằng API thật sau)
-      setSemesters(["Học kỳ 1 - 2024", "Học kỳ 2 - 2024", "Học kỳ 1 - 2025"]);
-
-    // eslint-disable-next-line no-unused-vars
-    } catch (error) {
-      toast.error("Lỗi khi tải dữ liệu filter");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStatistics = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch danh sách capstones với filter
-      const params = {
-        page: pagination.current_page,
-        itemsPerPage: pagination.items_per_page
-      };
-      
-      if (selectedStatus && selectedStatus !== "all") params.status = selectedStatus;
-      if (selectedLecturer && selectedLecturer !== "all") params.lecturer = selectedLecturer;
-      if (selectedCouncil && selectedCouncil !== "all") params.council = selectedCouncil;
-      
-      const response = await capstoneService.getCapstones(params);
-
-      if (response.success) {
-        setCapstones(response.data.capstones);
-        setPagination(response.data.pagination);
-        
-        // Cập nhật thống kê nếu cần (có thể gọi lại API thống kê với filter)
-        if (selectedStatus !== "all" || selectedLecturer !== "all" || selectedCouncil !== "all") {
-          // Gọi API thống kê với filter nếu backend hỗ trợ
-          // const statsRes = await capstoneService.getFilteredStatistics(params);
-          // if (statsRes.success) setStatistics(statsRes.data);
-        } else {
-          // Nếu không có filter, dùng statistics từ initial data
-          const statsRes = await capstoneService.getCapstoneStatistics();
-          if (statsRes.success) setStatistics(statsRes.data);
-        }
-      } else {
-        toast.error(response.message);
+      // Xử lý statuses
+      if (statusesRes.success && Array.isArray(statusesRes.data)) {
+        setStatuses(statusesRes.data.map(s => ({ id: s.id, name: s.name })));
       }
+      
+      // Xử lý lecturers
+      if (lecturersRes.success) {
+        const lecturerData = Array.isArray(lecturersRes.data.data) ? lecturersRes.data.data : lecturersRes.data;
+        setLecturers(lecturerData.map(l => ({ 
+          id: l.lecturer_id, 
+          name: l.full_name 
+        })));
+      }
+      
+      // Xử lý councils
+      if (councilsRes.success) {
+        const councilData = Array.isArray(councilsRes.data.data) ? councilsRes.data.data : councilsRes.data;
+        setCouncils(councilData.map(c => ({ 
+          id: c.council_id, 
+          name: c.name 
+        })));
+      }
+
+      // Xử lý semesters
+      if (semestersRes.success) {
+        const semesterData = Array.isArray(semestersRes.data.data) ? semestersRes.data.data : semestersRes.data;
+        setSemesters(semesterData.map(s => ({ 
+          id: s.semester_id, 
+          name: `${s.semester_name} - ${s.year_name}` 
+        })));
+      }
+
     } catch (error) {
-      toast.error(error.message || "Lỗi khi tải dữ liệu thống kê");
+      console.error("Error loading filters:", error);
     } finally {
       setLoading(false);
     }
@@ -133,9 +167,10 @@ export default function CapstoneStatistics() {
     try {
       toast.loading("Đang xuất báo cáo...");
       const response = await capstoneService.exportStatisticsReport("excel", {
+        semester_id: selectedSemester !== "all" ? selectedSemester : undefined,
         status: selectedStatus !== "all" ? selectedStatus : undefined,
-        lecturer: selectedLecturer !== "all" ? selectedLecturer : undefined,
-        council: selectedCouncil !== "all" ? selectedCouncil : undefined
+        lecturer_id: selectedLecturer !== "all" ? selectedLecturer : undefined,
+        council_id: selectedCouncil !== "all" ? selectedCouncil : undefined
       });
       
       if (response.success) {
@@ -154,22 +189,39 @@ export default function CapstoneStatistics() {
 
   const getStatusClass = (status) => {
     switch(status) {
-      case "Đã hủy":
-      case "Không đạt":
+      case "CANCEL":
+      case "FAILED":
         return "text-red-500";
-      case "Đã hoàn thành":
+      case "COMPLETED":
         return "text-green-600 font-bold";
-      case "Đang thực hiện":
-      case "Chờ phản biện":
+      case "REPORTING":
+      case "REVIEW_ELIGIBLE":
+      case "DEFENSE_ELIGIBLE":
         return "text-yellow-600";
       default:
         return "text-slate-800";
     }
   };
 
+  const mapStatusToVietnamese = (status) => {
+    const statusMap = {
+      'INITIALIZED': 'Chưa khởi tạo',
+      'LECTURER_APPROVED': 'GVHD đã phê duyệt',
+      'TOPIC_APPROVED': 'Đề tài đã duyệt',
+      'REPORTING': 'Đang nộp báo cáo',
+      'OFFICIAL_SUBMITTED': 'Nộp báo cáo cuối cùng',
+      'REVIEW_ELIGIBLE': 'Chờ phản biện',
+      'DEFENSE_ELIGIBLE': 'Chờ bảo vệ',
+      'CANCEL': 'Đã hủy',
+      'FAILED': 'Đã trượt',
+      'COMPLETED': 'Hoàn tất'
+    };
+    return statusMap[status] || status;
+  };
+
   if (loading && capstones.length === 0) {
     return (
-      <div className="p-8 min-h-[400px] flex items-center justify-center">
+      <div className="p-8 min-h-100 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-purple-600 animate-spin mx-auto" />
           <p className="mt-4 text-slate-500 font-medium">Đang tải dữ liệu thống kê...</p>
@@ -205,8 +257,8 @@ export default function CapstoneStatistics() {
             </SelectTrigger>
             <SelectContent className="bg-white">
               <SelectItem value="all">Tất cả học kỳ</SelectItem>
-              {semesters.map((sem, index) => (
-                <SelectItem key={index} value={sem}>{sem}</SelectItem>
+              {semesters.map((sem) => (
+                <SelectItem key={sem.id} value={String(sem.id)}>{sem.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -218,7 +270,7 @@ export default function CapstoneStatistics() {
             <SelectContent className="bg-white">
               <SelectItem value="all">Tất cả trạng thái</SelectItem>
               {statuses.map(status => (
-                <SelectItem key={status} value={status}>{status}</SelectItem>
+                <SelectItem key={status.id} value={status.id}>{status.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -230,7 +282,7 @@ export default function CapstoneStatistics() {
             <SelectContent className="bg-white">
               <SelectItem value="all">Tất cả giảng viên</SelectItem>
               {lecturers.map(lecturer => (
-                <SelectItem key={lecturer.id} value={lecturer.name}>{lecturer.name}</SelectItem>
+                <SelectItem key={lecturer.id} value={String(lecturer.id)}>{lecturer.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -242,7 +294,7 @@ export default function CapstoneStatistics() {
             <SelectContent className="bg-white">
               <SelectItem value="all">Tất cả hội đồng</SelectItem>
               {councils.map(council => (
-                <SelectItem key={council.id} value={council.name}>{council.name}</SelectItem>
+                <SelectItem key={council.id} value={String(council.id)}>{council.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -283,46 +335,66 @@ export default function CapstoneStatistics() {
 
       {/* 3. BẢNG DỮ LIỆU */}
       <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden max-w-7xl mx-auto">
-        <Table>
-          <TableHeader className="bg-[#e3f2fd]">
-            <TableRow className="hover:bg-transparent border-b-0">
-              <TableHead className="w-16 font-bold text-slate-800 uppercase text-[11px] text-center">STT</TableHead>
-              <TableHead className="font-bold text-slate-800 uppercase text-[11px]">Mã SV</TableHead>
-              <TableHead className="font-bold text-slate-800 uppercase text-[11px]">Tên sinh viên</TableHead>
-              <TableHead className="font-bold text-slate-800 uppercase text-[11px] text-center">Lớp</TableHead>
-              <TableHead className="font-bold text-slate-800 uppercase text-[11px] text-center">Trạng thái</TableHead>
-              <TableHead className="font-bold text-slate-800 uppercase text-[11px]">GVHD</TableHead>
-              <TableHead className="font-bold text-slate-800 uppercase text-[11px]">GVPB</TableHead>
-              <TableHead className="font-bold text-slate-800 uppercase text-[11px]">Hội đồng</TableHead>
-              <TableHead className="font-bold text-slate-800 uppercase text-[11px] text-center">Điểm</TableHead>
-              <TableHead className="font-bold text-slate-800 uppercase text-[11px] text-center">Hành động</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {capstones.length > 0 ? (
-              capstones.map((item, index) => (
-                <TableRow key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center">
+            <p className="text-red-600 font-bold mb-4">{error}</p>
+            <Button 
+              onClick={fetchStatistics}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 rounded-xl font-bold"
+            >
+              Thử lại
+            </Button>
+          </div>
+        ) : capstones.length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-slate-500 font-bold">Không có dữ liệu đồ án</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader className="bg-[#e3f2fd]">
+              <TableRow className="hover:bg-transparent border-b-0">
+                <TableHead className="w-16 font-bold text-slate-800 uppercase text-[11px] text-center">STT</TableHead>
+                <TableHead className="font-bold text-slate-800 uppercase text-[11px]">Mã SV</TableHead>
+                <TableHead className="font-bold text-slate-800 uppercase text-[11px]">Tên sinh viên</TableHead>
+                <TableHead className="font-bold text-slate-800 uppercase text-[11px] text-center">Lớp</TableHead>
+                <TableHead className="font-bold text-slate-800 uppercase text-[11px] text-center">Trạng thái</TableHead>
+                <TableHead className="font-bold text-slate-800 uppercase text-[11px]">GVHD</TableHead>
+                <TableHead className="font-bold text-slate-800 uppercase text-[11px]">GVPB</TableHead>
+                <TableHead className="font-bold text-slate-800 uppercase text-[11px]">Hội đồng</TableHead>
+                <TableHead className="font-bold text-slate-800 uppercase text-[11px] text-center">Điểm</TableHead>
+                <TableHead className="font-bold text-slate-800 uppercase text-[11px] text-center">Hành động</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {capstones.map((item, index) => (
+                <TableRow key={item.capstone_id || index} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                   <TableCell className="text-center font-bold text-slate-400">
                     {(pagination.current_page - 1) * pagination.items_per_page + index + 1}
                   </TableCell>
-                  <TableCell className="font-bold text-slate-700">{item.id}</TableCell>
-                  <TableCell className="font-bold text-slate-700 capitalize">{item.name}</TableCell>
-                  <TableCell className="text-center text-slate-600 font-medium">{item.class}</TableCell>
+                  <TableCell className="font-bold text-slate-700">{item.student_code || "---"}</TableCell>
+                  <TableCell className="font-bold text-slate-700 capitalize">{item.student_name || "---"}</TableCell>
+                  <TableCell className="text-center text-slate-600 font-medium">{item.class_name || "---"}</TableCell>
                   <TableCell className="text-center font-bold">
                     <span className={getStatusClass(item.status)}>
-                      {item.status}
+                      {mapStatusToVietnamese(item.status)}
                     </span>
                   </TableCell>
-                  <TableCell className="text-slate-700 font-medium">{item.gvhd || "---"}</TableCell>
-                  <TableCell className="text-slate-400 italic text-xs">{item.gvpb || "---"}</TableCell>
-                  <TableCell className="text-slate-400 italic text-xs">{item.council || "---"}</TableCell>
+                  <TableCell className="text-slate-700 font-medium">{item.lecturer_name || "---"}</TableCell>
+                  <TableCell className="text-slate-400 italic text-xs">
+                    {item.reviewers_name || "---"}
+                  </TableCell>
+                  <TableCell className="text-slate-400 italic text-xs">{item.council_name || "---"}</TableCell>
                   <TableCell className="text-center font-bold text-indigo-600">
-                    {item.score || <span className="text-slate-300">---</span>}
+                    {item.council_grade || <span className="text-slate-300">---</span>}
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-center">
                       <button 
-                        onClick={() => navigate(`/faculty_staff/capstone/detail/${item.id}`)}
+                        onClick={() => navigate(`/faculty_staff/capstone/detail/${item.capstone_id}`)}
                         className="px-4 py-1.5 bg-[#7786d1] hover:bg-[#5c6bb2] text-white text-[10px] font-bold rounded-full transition-all shadow-sm active:scale-95 whitespace-nowrap"
                       >
                         xem chi tiết
@@ -330,16 +402,10 @@ export default function CapstoneStatistics() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-slate-500">
-                  Không có dữ liệu thống kê
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       {/* 4. PHÂN TRANG */}

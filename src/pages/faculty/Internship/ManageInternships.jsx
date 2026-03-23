@@ -37,20 +37,24 @@ export default function ManageInternships() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [targetIntern, setTargetIntern] = useState(null);
 
-  // Load internships from fake API on mount
+  // Load internships from API on mount
   useEffect(() => {
     const loadInternships = async () => {
       try {
         setIsLoading(true);
         const response = await internshipService.getInternships();
-        if (response.success) {
+        
+        if (response.success && Array.isArray(response.data)) {
+          // Data đã được transform từ service method
           setInternships(response.data);
         } else {
           toast.error(response.message || "Lỗi tải danh sách thực tập");
+          setInternships([]);
         }
       } catch (error) {
         toast.error("Lỗi tải danh sách thực tập");
         console.error("Error loading internships:", error);
+        setInternships([]);
       } finally {
         setIsLoading(false);
       }

@@ -3,6 +3,7 @@ import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { capstoneService } from "@/services/faculty";
+import { transformCapstone } from "@/services/faculty/transforms";
 
 export default function CapstoneDetailDialog({ isOpen, onClose, data, onOpenCancelAction }) {
   const [loading, setLoading] = useState(false);
@@ -21,7 +22,9 @@ export default function CapstoneDetailDialog({ isOpen, onClose, data, onOpenCanc
       const response = await capstoneService.getCapstoneById(id);
       
       if (response.success) {
-        setCapstoneDetail(response.data);
+        // Transform backend data to frontend format
+        const transformedData = transformCapstone(response.data);
+        setCapstoneDetail(transformedData);
       } else {
         toast.error(response.message);
       }
@@ -136,8 +139,8 @@ export default function CapstoneDetailDialog({ isOpen, onClose, data, onOpenCanc
                   </p>
                 )}
 
-                {/* Nút Duyệt Hủy (Chỉ hiện khi trạng thái khớp) */}
-                {displayData.status === "Yêu cầu hủy đồ án" && (
+                {/* Nút Duyệt Hủy (Chỉ hiện khi có pending cancel request) */}
+                {displayData.has_pending_cancel_request && (
                   <div className="absolute bottom-0 right-0 pt-10">
                     <button 
                       onClick={() => onOpenCancelAction(displayData)}

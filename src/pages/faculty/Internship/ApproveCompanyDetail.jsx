@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
@@ -14,6 +14,8 @@ import {
   FormControl, FormMessage, FormField 
 } from "@/components/ui/form";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import internshipService from "@/services/faculty/internshipService";
+import api from "@/services/apiConfig";
 
 /**
  * 1. Định nghĩa Schema Validation với Yup
@@ -35,15 +37,30 @@ export default function ApproveCompanyDetail() {
   const [isEditing, setIsEditing] = useState(false);
   // State lưu danh sách ID sinh viên ĐƯỢC CHỌN ĐỂ DUYỆT
   const [selectedStudents, setSelectedStudents] = useState([]);
+  // State tải dữ liệu
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // State dữ liệu công ty và sinh viên
+  const [companyData, setCompanyData] = useState(null);
+  const [registeredStudents, setRegisteredStudents] = useState([]);
+  // State lưu request type và proposed_company_id
+  const [requestType, setRequestType] = useState(null);
+  const [proposedCompanyId, setProposedCompanyId] = useState(null);
 
-  // Mock data hồ sơ doanh nghiệp ban đầu
-  const initialData = useMemo(() => ({
-    name: "Công ty Cổ phần TechVina",
-    tax_code: "0102030405",
-    address: "Số 1 Duy Tân, Cầu Giấy, Hà Nội",
-    email: "contact@techvina.vn",
-    website: "https://techvina.vn",
-  }), []);
+  // Mock data hồ sơ doanh nghiệp ban đầu (fallback)
+  const initialData = useMemo(() => companyData ? {
+    name: companyData.name || "",
+    tax_code: companyData.tax_code || "",
+    address: companyData.address || "",
+    email: companyData.email || "",
+    website: companyData.website || "",
+  } : {
+    name: "",
+    tax_code: "",
+    address: "",
+    email: "",
+    website: "",
+  }, [companyData]);
 
   // 2. Khởi tạo React Hook Form
   const form = useForm({
@@ -51,12 +68,33 @@ export default function ApproveCompanyDetail() {
     values: initialData, // Tự động điền dữ liệu vào form
   });
 
-  // Mock danh sách sinh viên
-  const registeredStudents = [
-    { id: "sv001", name: "Nguyễn Văn An", class: "65KTPM1", gpa: 3.6 },
-    { id: "sv005", name: "Trần Thị Bình", class: "65KTPM2", gpa: 3.4 },
-    { id: "sv009", name: "Lê Văn Cường", class: "65KTPM1", gpa: 3.2 },
-  ];
+  // Load company detail when component mounts
+  useEffect(() => {
+    loadCompanyDetail();
+  }, [id]);
+
+  const loadCompanyDetail = async () => {
+    try {
+      setIsLoading(true);
+      const response = await internshipService.getCompanyApprovalDetail(id);
+      if (response.success && response.data) {
+        setCompanyData(response.data.company || null);
+        setRegisteredStudents(response.data.students || []);
+        setRequestType(response.data.type || null);
+        setProposedCompanyId(response.data.proposed_company_id || null);
+        // Auto-select all students initially
+        setSelectedStudents((response.data.students || []).map(s => s.id));
+      } else {
+        toast.error(response.message || "Lỗi tải chi tiết doanh nghiệp");
+        console.error("Failed response:", response);
+      }
+    } catch (error) {
+      toast.error("Lỗi tải chi tiết doanh nghiệp: " + (error.message || "Không xác định"));
+      console.error("Error loading company detail:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toggleSelectAll = (e) => {
     if (e.target.checked) setSelectedStudents(registeredStudents.map(s => s.id));
@@ -64,30 +102,120 @@ export default function ApproveCompanyDetail() {
   };
 
   // Xử lý lưu thông tin DN sau khi sửa
-  const onSaveCompanyInfo = (data) => {
-    console.log("Dữ liệu DN đã cập nhật:", data);
-    toast.success("Đã cập nhật thông tin doanh nghiệp thành công!");
-    setIsEditing(false);
+  const onSaveCompanyInfo = async (data) => {
+    if (!proposedCompanyId) {
+      toast.error("Không thể cập nhật: doanh nghiệp không phải loại đề xuất");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await internshipService.updateProposedCompany(proposedCompanyId, data);
+      if (response.success) {
+        toast.success(response.message || "Đã cập nhật thông tin doanh nghiệp thành công!");
+        setIsEditing(false);
+        // Update local state with new company data
+        setCompanyData({
+          ...data,
+          name: data.name,
+          tax_code: data.tax_code,
+          address: data.address,
+          email: data.email,
+          website: data.website,
+        });
+      } else {
+        toast.error(response.message || "Lỗi cập nhật thông tin doanh nghiệp");
+      }
+    } catch (error) {
+      toast.error("Lỗi cập nhật: " + error.message);
+      console.error("Error updating company:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Xử lý Duyệt/Từ chối tổng thể
-  const handleFinalAction = (type) => {
+  const handleFinalAction = async (type) => {
     if (type === "approve") {
-      const approvedIds = selectedStudents;
-      const rejectedIds = registeredStudents
-        .filter(s => !selectedStudents.includes(s.id))
-        .map(s => s.id);
+      if (selectedStudents.length === 0) {
+        toast.error("Vui lòng chọn ít nhất một sinh viên để duyệt");
+        return;
+      }
 
-      toast.success(`Đã xử lý: Duyệt ${approvedIds.length}, Từ chối ${rejectedIds.length} sinh viên.`);
+      try {
+        setIsSubmitting(true);
+        const response = await internshipService.approveCompanyWithStudents(
+          id,
+          selectedStudents,
+          {
+            company_name: form.getValues('name'),
+            company_email: form.getValues('email'),
+            company_address: form.getValues('address'),
+          }
+        );
+
+        if (response.success) {
+          toast.success(response.message || "Phê duyệt thành công");
+          setTimeout(() => navigate(-1), 1000);
+        } else {
+          toast.error(response.message || "Lỗi phê duyệt doanh nghiệp");
+        }
+      } catch (error) {
+        toast.error("Lỗi phê duyệt: " + error.message);
+        console.error("Error approving company:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
     } else {
-      toast.error("Đã từ chối yêu cầu của doanh nghiệp này.");
+      // Từ chối toàn bộ
+      try {
+        setIsSubmitting(true);
+        const response = await api.post(`/faculty_staff/internships/approve/${id}`, {
+          status: 'REJECTED',
+          feedback: "Từ chối yêu cầu đăng ký doanh nghiệp"
+        });
+
+        if (response.data?.success) {
+          toast.success("Đã từ chối yêu cầu của doanh nghiệp này");
+          setTimeout(() => navigate(-1), 1000);
+        } else {
+          toast.error(response.data?.message || "Lỗi từ chối");
+        }
+      } catch (error) {
+        toast.error("Lỗi từ chối: " + error.message);
+        console.error("Error rejecting company:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
-    navigate(-1);
   };
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
+      {isLoading && (
+        <div className="fixed inset-0 bg-white/50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+            <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-600 font-semibold">Đang tải dữ liệu...</p>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && !companyData && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
+          <p className="text-red-600 font-semibold mb-4">Không thể tải chi tiết yêu cầu</p>
+          <Button 
+            onClick={() => navigate(-1)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            <ChevronLeft className="mr-2 size-4" /> Quay lại
+          </Button>
+        </div>
+      )}
+
+      {!isLoading && companyData && (
+        <>
+          <div className="flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition">
           <ChevronLeft className="size-5" /> QUAY LẠI
         </button>
@@ -103,29 +231,33 @@ export default function ApproveCompanyDetail() {
           </div>
           
           {!isEditing ? (
-            <Button 
-                type="button"
-                onClick={() => setIsEditing(true)}
-                variant="outline" 
-                className="rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 font-bold text-xs h-9 px-5 transition-colors"
-                >
-                <Edit className="size-3.5 mr-2" /> Chỉnh sửa thông tin dn
-            </Button>
+            requestType === "COMPANY_REG" && proposedCompanyId ? (
+              <Button 
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  variant="outline" 
+                  className="rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 font-bold text-xs h-9 px-5 transition-colors"
+                  >
+                  <Edit className="size-3.5 mr-2" /> Chỉnh sửa thông tin dn
+              </Button>
+            ) : null
           ) : (
             <div className="flex gap-2">
               <Button 
                 type="button"
                 onClick={() => { setIsEditing(false); form.reset(); }}
-                variant="ghost" 
-                className="rounded-full text-slate-400 font-bold text-xs h-9"
+                variant="ghost"
+                disabled={isSubmitting}
+                className="rounded-full text-slate-400 font-bold text-xs h-9 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Hủy
               </Button>
               <Button 
                 onClick={form.handleSubmit(onSaveCompanyInfo)}
-                className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-9 px-5 shadow-md"
+                disabled={isSubmitting}
+                className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-9 px-5 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save className="size-3.5 mr-2" /> Lưu thay đổi
+                <Save className="size-3.5 mr-2" /> {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
               </Button>
             </div>
           )}
@@ -233,13 +365,24 @@ export default function ApproveCompanyDetail() {
 
       {/* NÚT HÀNH ĐỘNG CUỐI TRANG */}
       <div className="flex justify-center items-center gap-4 pt-4 pb-10">
-        <Button onClick={() => handleFinalAction("approve")} className="bg-green-600 hover:bg-green-700 text-white font-bold px-12 rounded-full shadow-lg py-6 text-sm transition-all hover:scale-105">
+        <Button 
+          onClick={() => handleFinalAction("approve")} 
+          disabled={isSubmitting || isLoading}
+          className="bg-green-600 hover:bg-green-700 text-white font-bold px-12 rounded-full shadow-lg py-6 text-sm transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <Check className="mr-2 size-5" /> DUYỆT ĐĂNG KÝ
         </Button>
-        <Button onClick={() => handleFinalAction("reject")} variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 font-bold px-12 rounded-full py-6 text-sm">
+        <Button 
+          onClick={() => handleFinalAction("reject")} 
+          disabled={isSubmitting || isLoading}
+          variant="outline" 
+          className="border-red-200 text-red-600 hover:bg-red-50 font-bold px-12 rounded-full py-6 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <X className="mr-2 size-5" /> KHÔNG DUYỆT
         </Button>
       </div>
+        </>
+      )}
     </div>
   );
 }

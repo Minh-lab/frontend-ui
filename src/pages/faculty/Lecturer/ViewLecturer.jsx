@@ -52,7 +52,7 @@ export default function ViewLecturer() {
       setProcessing(true);
       
       const action = isApproved ? "approve" : "reject";
-      const response = await lecturerService.processLeaveRequest(id, action);
+      const response = await lecturerService.processLeaveRequest(id, action, feedback);
       
       if (response.success) {
         if (isApproved) {
@@ -79,10 +79,28 @@ export default function ViewLecturer() {
   };
 
   const handleDownloadFile = () => {
-    if (lecturer?.leave_request?.file_path) {
-      // Trong thực tế, đây sẽ là link download file
-      toast.success("Đang tải file: " + lecturer.leave_request.file_path);
-      // window.open(lecturer.leave_request.file_path, '_blank');
+    if (!lecturer?.leave_request?.file_path) {
+      toast.error("Không có file đính kèm");
+      return;
+    }
+
+    try {
+      // Tải trực tiếp qua URL storage (đã có symlink)
+      const downloadUrl = `/storage/${lecturer.leave_request.file_path}`;
+      const fileName = lecturer.leave_request.file_path.split('/').pop() || 'leave-request.pdf';
+
+      // Tạo link tạm để download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Tải file thành công");
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Lỗi khi tải file");
     }
   };
 
@@ -152,7 +170,7 @@ export default function ViewLecturer() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
           {[
             { label: "Mã giảng viên", value: lecturer.id },
-            { label: "Họ và tên", value: lecturer.full_name },
+            { label: "Họ và tên", value: lecturer.name },
             { label: "Giới tính", value: lecturer.gender },
             { label: "Ngày sinh", value: formatDate(lecturer.dob) },
             { label: "Số điện thoại", value: lecturer.phone_number },
@@ -200,6 +218,14 @@ export default function ViewLecturer() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
+            {/* Tiêu đề yêu cầu */}
+            <label className="text-sm font-bold text-slate-500 md:text-right mt-2 uppercase">Tiêu đề</label>
+            <Input 
+              value={lecturer.leave_request.title} 
+              readOnly 
+              className="bg-slate-50 border-none rounded-xl font-semibold text-slate-700" 
+            />
+
             {/* Lý do nghỉ */}
             <label className="text-sm font-bold text-slate-500 md:text-right mt-2 uppercase">Mô tả lý do</label>
             <Textarea 

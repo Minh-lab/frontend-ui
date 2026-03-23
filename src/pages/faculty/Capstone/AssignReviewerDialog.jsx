@@ -26,10 +26,10 @@ export default function AssignReviewerDialog({ isOpen, onClose, selectedCount, s
   // Fetch thành viên hội đồng khi chọn hội đồng
   useEffect(() => {
     if (selectedCouncil) {
-      fetchCouncilMembers(selectedCouncil.id);
-      // Đặt ngày bảo vệ mặc định là ngày đầu tiên của hội đồng
-      if (selectedCouncil.dates && selectedCouncil.dates.length > 0) {
-        setProtectionDate(selectedCouncil.dates[0]);
+      fetchCouncilMembers(selectedCouncil.council_id);
+      // Đặt ngày bảo vệ mặc định là ngày bắt đầu của hội đồng
+      if (selectedCouncil.start_date) {
+        setProtectionDate(selectedCouncil.start_date);
       }
     }
   }, [selectedCouncil]);
@@ -52,9 +52,32 @@ export default function AssignReviewerDialog({ isOpen, onClose, selectedCount, s
       const response = await capstoneService.getCouncils();
       
       if (response.success) {
-        setCouncils(response.data);
-        if (response.data.length > 0) {
-          setSelectedCouncil(response.data[0]);
+        // Transform council data to match component expectations
+        const transformedCouncils = response.data.map(council => {
+          // Generate array of dates between start_date and end_date
+          const defenseStartDate = new Date(council.start_date);
+          const defenseEndDate = new Date(council.end_date);
+          const defenseDates = [];
+          
+          for (let d = new Date(defenseStartDate); d <= defenseEndDate; d.setDate(d.getDate() + 1)) {
+            defenseDates.push(new Date(d).toISOString().split('T')[0]);
+          }
+          
+          return {
+            id: council.council_id,
+            council_id: council.council_id,
+            name: council.name,
+            color: 'bg-gradient-to-br from-indigo-50 to-purple-50',
+            count: council.student_count || 0,
+            dates: defenseDates.length > 0 ? defenseDates : [council.start_date],
+            start_date: council.start_date,
+            end_date: council.end_date
+          };
+        });
+        
+        setCouncils(transformedCouncils);
+        if (transformedCouncils.length > 0) {
+          setSelectedCouncil(transformedCouncils[0]);
         }
       } else {
         toast.error(response.message);
@@ -71,8 +94,22 @@ export default function AssignReviewerDialog({ isOpen, onClose, selectedCount, s
       const response = await capstoneService.getCouncilMembers(councilId);
       
       if (response.success) {
-        setCouncilMembers(response.data);
-        setFilteredMembers(response.data);
+        // Extract members from response data
+        const members = response.data.members || [];
+        
+        // Transform member data to match component expectations
+        const transformedMembers = members.map(member => ({
+          id: member.lecturer_id,
+          lecturer_id: member.lecturer_id,
+          name: member.name || member.full_name,
+          color: 'bg-gradient-to-br from-blue-50 to-cyan-50',
+          count: member.review_count || 0, // Count of reviews this member has done from CapstoneReviewer table
+          degree: member.degree,
+          department: member.department
+        }));
+        
+        setCouncilMembers(transformedMembers);
+        setFilteredMembers(transformedMembers);
         // Reset selected GVPB khi đổi hội đồng
         setSelectedGVPB([]);
       } else {
@@ -95,23 +132,20 @@ export default function AssignReviewerDialog({ isOpen, onClose, selectedCount, s
     try {
       setProcessing(true);
       
-      // Lấy tên giảng viên được chọn
-      const selectedReviewers = councilMembers
-        .filter(m => selectedGVPB.includes(m.id))
-        .map(m => m.name);
+      // Gọi API phân công hàng loạt hội đồng và giảng viên phản biện
+      const response = await capstoneService.assignCouncilAndReviewers(
+        selectedCouncil.council_id,
+        selectedGVPB,
+        selectedIds
+      );
       
-      // Phân công cho từng sinh viên đã chọn
-      for (const studentId of selectedIds) {
-        await capstoneService.updateCapstone(studentId, {
-          gvpb: selectedReviewers.join(", "),
-          council: selectedCouncil.name,
-          protection_date: protectionDate
-        });
+      if (response.success) {
+        toast.success(`Đã phân công phản biện cho ${selectedCount} sinh viên`);
+        onSuccess();
+        onClose();
+      } else {
+        toast.error(response.message || "Lỗi khi phân công phản biện");
       }
-      
-      toast.success(`Đã phân công phản biện cho ${selectedCount} sinh viên`);
-      onSuccess();
-      onClose();
     } catch (error) {
       toast.error(error.message || "Lỗi khi phân công phản biện");
     } finally {

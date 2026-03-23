@@ -67,7 +67,7 @@ const milestoneSchema = yup.object().shape({
 
 export default function AddMilestone() {
   const navigate = useNavigate();
-  const { id: planId } = useParams();
+  const { planId } = useParams();
   
   const [submitting, setSubmitting] = useState(false);
   const [filteredPhaseNames, setFilteredPhaseNames] = useState([]);

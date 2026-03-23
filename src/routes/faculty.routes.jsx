@@ -43,8 +43,8 @@ export const facultyRoutes = [
   { path: "plans/add", element: <AddPlan /> },
   { path: "plans/view/:id", element: <ViewPlan /> },
 
-  { path: "plans/:id/milestone/add", element: <AddMileStone /> },
-  { path: "milestone/edit/:id", element: <EditMileStone /> },
+  { path: "plans/:planId/milestone/add", element: <AddMileStone /> },
+  { path: "plans/:planId/milestone/edit/:id", element: <EditMileStone /> },
   { path: "milestone/view/:id", element: <ViewMileStone /> }, 
   
   { path: "lecturers", element: <ManageLecturers /> },

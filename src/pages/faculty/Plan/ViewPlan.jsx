@@ -226,7 +226,7 @@ export default function ViewPlan() {
                           xem chi tiết
                         </button>
                         <button 
-                          onClick={() => navigate(`/faculty_staff/milestone/edit/${m.milestone_id}`, { state: { milestone: m } })}
+                          onClick={() => navigate(`/faculty_staff/plans/${id}/milestone/edit/${m.milestone_id}`)}
                           className="px-4 py-1.5 bg-[#4fd1c5] hover:bg-[#38b2ac] text-white text-[10px] font-bold rounded-full uppercase transition-all active:scale-95"
                         >
                           sửa
