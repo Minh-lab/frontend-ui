@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
@@ -8,18 +9,23 @@ import { toast } from "sonner";
 import internshipService from "@/services/faculty/internshipService";
 
 export default function AssignEnterpriseDialog({ isOpen, onClose, selectedCount, onSuccess, selectedIds = [] }) {
+  const navigate = useNavigate();
   const [enterprises, setEnterprises] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAssigning, setIsAssigning] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({});
 
   // Load enterprises when dialog opens
-  const loadEnterprises = useCallback(async () => {
+  const loadEnterprises = useCallback(async (page = 1) => {
     try {
       setIsLoading(true);
-      const response = await internshipService.getEnterprises(searchQuery);
-      if (response.success) {
+      const response = await internshipService.getEnterprises(searchQuery, page);
+      if (response.success && response.data) {
         setEnterprises(response.data);
+        setPagination(response.pagination || {});
+        setCurrentPage(page);
       } else {
         toast.error(response.message || "Lỗi tải danh sách doanh nghiệp");
       }
@@ -39,7 +45,11 @@ export default function AssignEnterpriseDialog({ isOpen, onClose, selectedCount,
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    await loadEnterprises();
+    await loadEnterprises(1);
+  };
+
+  const handlePageChange = (page) => {
+    loadEnterprises(page);
   };
 
   const handleAssign = async (enterpriseId) => {
@@ -52,13 +62,17 @@ export default function AssignEnterpriseDialog({ isOpen, onClose, selectedCount,
       setIsAssigning(true);
       const response = await internshipService.assignEnterprise(selectedIds, enterpriseId);
       if (response.success) {
-        toast.success(response.message);
-        onSuccess();
+        toast.success(response.message || "Phân công doanh nghiệp thành công");
+        // Delay navigation to let toast appear first
+        setTimeout(() => {
+          navigate("/faculty_staff/internships");
+        }, 1000);
       } else {
         toast.error(response.message || "Lỗi phân công doanh nghiệp");
       }
     } catch (error) {
-      toast.error("Lỗi phân công doanh nghiệp");
+      const errorMsg = error.response?.data?.message || error.message || "Lỗi phân công doanh nghiệp";
+      toast.error(errorMsg);
       console.error("Error assigning enterprise:", error);
     } finally {
       setIsAssigning(false);
@@ -132,7 +146,7 @@ export default function AssignEnterpriseDialog({ isOpen, onClose, selectedCount,
                         <TableCell className="text-center">
                           <button 
                             disabled={isFull || isAssigning}
-                            onClick={() => handleAssign(ent.id)}
+                            onClick={() => handleAssign(ent.company_id || ent.id)}
                             className={`px-6 py-2 text-white text-[11px] font-bold rounded-lg uppercase shadow-md ${isFull || isAssigning ? "bg-slate-300 cursor-not-allowed" : "bg-[#7786d1] hover:bg-[#5c6bb2]"}`}
                           >
                             {isFull ? "Hết chỗ" : isAssigning ? "Đang xử lý..." : "Phân công"}
@@ -145,6 +159,41 @@ export default function AssignEnterpriseDialog({ isOpen, onClose, selectedCount,
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {pagination?.last_page > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-sm border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
+              >
+                ← Trước
+              </button>
+
+              {Array.from({ length: pagination.last_page }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`px-3 py-1 text-sm rounded-lg font-bold ${
+                    currentPage === page
+                      ? "bg-[#7786d1] text-white"
+                      : "border border-slate-300 hover:bg-slate-100"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === pagination.last_page}
+                className="px-3 py-1 text-sm border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
+              >
+                Sau →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

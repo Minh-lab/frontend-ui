@@ -137,7 +137,11 @@ const Topics = () => {
         fetchTopics(page);
       }
     } catch (error) {
-      toast.error(error.message || "Lỗi khi xóa đề tài");
+      // Display both message and detail from backend response
+      const message = error.message || "Lỗi khi xóa đề tài";
+      const detail = error.detail || "";
+      const fullMessage = detail ? `${message}\n${detail}` : message;
+      toast.error(fullMessage);
     } finally {
       setDeletingId(null);
     }

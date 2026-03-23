@@ -56,7 +56,7 @@ const adminService = {
         email: data.email,
         usercode: data.code,  // Map "code" thành "usercode"
         full_name: data.full_name,
-        gender: data.gender === "Nam" ? "male" : "female",
+        gender: data.gender === "Nam" ? "male" : (data.gender === "Nữ" ? "female" : data.gender),
         dob: data.dob,
         phone_number: data.phone_number,
         class_id: data.class,  // Map "class" thành "class_id"
@@ -89,13 +89,15 @@ const adminService = {
           break;
 
         case 'company':
-          // Company cần: usercode (mã số thuế), username, email, name, address, website, is_partnered
+          // Company cần: user_code (mã số thuế), username, email, name, address, website, is_partnered
+          mappedData.user_code = data.code;  // Map "code" thành "user_code"
           mappedData.name = data.company_name;  // Map "company_name" thành "name"
           mappedData.address = data.address;
           mappedData.website = data.website;
-          mappedData.is_partnered = data.partner_status === "1"; // Convert string "0"/"1" sang boolean
+          mappedData.is_partnered = Number(data.partner_status); // Convert string "0"/"1" sang number
           
           // Xóa các field không cần cho company
+          delete mappedData.usercode;  // Xóa usercode vì company dùng user_code
           delete mappedData.full_name;
           delete mappedData.gender;
           delete mappedData.dob;
@@ -144,8 +146,8 @@ const adminService = {
     if (role !== 'company') {
       if (data.full_name) mappedData.full_name = data.full_name;
       if (data.gender) {
-        // Chuyển từ "Nam"/"Nữ" sang "male"/"female" cho backend
-        mappedData.gender = data.gender === "Nam" ? "male" : "female";
+        // Chuyển từ "Nam"/"Nữ" sang "male"/"female" cho backend (hoặc giữ nguyên nếu đã là "male"/"female")
+        mappedData.gender = data.gender === "Nam" ? "male" : (data.gender === "Nữ" ? "female" : data.gender);
       }
       if (data.dob) mappedData.dob = data.dob;
     }
@@ -194,6 +196,19 @@ const adminService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: "Không thể vô hiệu hóa tài khoản" };
+    }
+  },
+
+  /**
+   * 8. Lấy danh sách lớp học
+   * API: GET /admin/classes
+   */
+  getClasses: async () => {
+    try {
+      const response = await api.get("/admin/classes");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Không thể tải danh sách lớp học" };
     }
   },
 };

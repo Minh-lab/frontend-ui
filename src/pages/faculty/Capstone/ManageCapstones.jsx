@@ -23,8 +23,9 @@ import AssignAdvisorDialog from "./AssignAdvisorDialog";
 import AssignReviewerDialog from "./AssignReviewerDialog";
 import ApproveProjectDialog from "./ApproveProjectDialog";
 
-// Import service
+// Import service và transformers
 import { capstoneService } from "@/services/faculty";
+import { transformCapstone } from "@/services/faculty/transforms";
 
 export default function ManageCapstones() {
   const navigate = useNavigate();
@@ -42,10 +43,8 @@ export default function ManageCapstones() {
 
   // State cho filter
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedLecturer, setSelectedLecturer] = useState("");
-  const [selectedCouncil, setSelectedCouncil] = useState("");
-  const [statuses, setStatuses] = useState([]);
+  const [selectedLecturer, setSelectedLecturer] = useState("all");
+  const [selectedCouncil, setSelectedCouncil] = useState("all");
   const [lecturers, setLecturers] = useState([]);
   const [councils, setCouncils] = useState([]);
 
@@ -68,18 +67,16 @@ export default function ManageCapstones() {
   // Fetch khi filter thay đổi
   useEffect(() => {
     fetchCapstones();
-  }, [pagination.current_page, searchTerm, selectedStatus, selectedLecturer, selectedCouncil]);
+  }, [pagination.current_page, searchTerm, selectedLecturer, selectedCouncil]);
 
   const fetchInitialData = async () => {
     try {
       // Fetch song song các dữ liệu cần thiết
-      const [statusesRes, lecturersRes, councilsRes] = await Promise.all([
-        capstoneService.getCapstoneStatuses(),
+      const [lecturersRes, councilsRes] = await Promise.all([
         capstoneService.getLecturers(),
         capstoneService.getCouncils()
       ]);
 
-      if (statusesRes.success) setStatuses(statusesRes.data);
       if (lecturersRes.success) setLecturers(lecturersRes.data);
       if (councilsRes.success) setCouncils(councilsRes.data);
 
@@ -96,12 +93,13 @@ export default function ManageCapstones() {
         page: pagination.current_page,
         itemsPerPage: pagination.items_per_page,
         search: searchTerm,
-        status: selectedStatus === "all" ? "" : selectedStatus,
         lecturer: selectedLecturer === "all" ? "" : selectedLecturer
       });
 
       if (response.success) {
-        setCapstones(response.data.capstones);
+        // Transform backend data to frontend format
+        const transformedCapstones = response.data.capstones.map(transformCapstone);
+        setCapstones(transformedCapstones);
         setPagination(response.data.pagination);
       } else {
         toast.error(response.message);
@@ -240,24 +238,6 @@ export default function ManageCapstones() {
         </div>
         <div className="flex gap-2">
           <Select 
-            value={selectedStatus} 
-            onValueChange={(value) => {
-              setSelectedStatus(value);
-              setPagination(prev => ({ ...prev, current_page: 1 }));
-            }}
-          >
-            <SelectTrigger className="w-36 rounded-xl border-slate-200 bg-white">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent className="bg-white">
-              <SelectItem value="all">Tất cả</SelectItem>
-              {statuses.map(status => (
-                <SelectItem key={status} value={status}>{status}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select 
             value={selectedLecturer} 
             onValueChange={(value) => {
               setSelectedLecturer(value);
@@ -268,9 +248,9 @@ export default function ManageCapstones() {
               <SelectValue placeholder="GVHD" />
             </SelectTrigger>
             <SelectContent className="bg-white">
-              <SelectItem value="all">Tất cả</SelectItem>
-              {lecturers.map(lecturer => (
-                <SelectItem key={lecturer.id} value={lecturer.name}>{lecturer.name}</SelectItem>
+              <SelectItem key="all-lecturer" value="all">Tất cả</SelectItem>
+              {lecturers && lecturers.length > 0 && lecturers.map((lecturer, index) => (
+                <SelectItem key={lecturer.lecturer_id || lecturer.id || `lecturer-${index}`} value={lecturer.name}>{lecturer.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -286,9 +266,9 @@ export default function ManageCapstones() {
               <SelectValue placeholder="Hội đồng" />
             </SelectTrigger>
             <SelectContent className="bg-white">
-              <SelectItem value="all">Tất cả</SelectItem>
-              {councils.map(council => (
-                <SelectItem key={council.id} value={council.name}>{council.name}</SelectItem>
+              <SelectItem key="all-council" value="all">Tất cả</SelectItem>
+              {councils && councils.length > 0 && councils.map((council, index) => (
+                <SelectItem key={council.council_id || council.id || `council-${index}`} value={council.name}>{council.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -380,7 +360,7 @@ export default function ManageCapstones() {
                   </TableCell>
                   <TableCell>
                     <span className={`font-bold text-[11px] ${
-                      item.status === "Chờ phản biện" || item.status === "Yêu cầu hủy đồ án" 
+                      (item.status_raw === 'REVIEW_ELIGIBLE' || item.status_raw === 'DEFENSE_ELIGIBLE' || item.status_raw === 'CANCEL') 
                         ? "text-red-500" 
                         : "text-slate-700"
                     }`}>

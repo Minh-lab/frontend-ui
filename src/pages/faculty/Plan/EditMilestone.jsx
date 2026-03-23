@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -67,13 +67,12 @@ const milestoneSchema = yup.object().shape({
 
 export default function EditMilestone() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { id } = useParams(); // ID của mốc thời gian cần sửa
+  const { planId, id } = useParams(); // planId: ID của kế hoạch, id: ID của mốc thời gian
   
-  const [loading, setLoading] = useState(!location.state?.milestone);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [filteredPhaseNames, setFilteredPhaseNames] = useState([]);
-  const [notFound, setNotFound] = useState(!location.state?.milestone);
+  const [notFound, setNotFound] = useState(false);
 
   const form = useForm({
     resolver: yupResolver(milestoneSchema),
@@ -89,24 +88,47 @@ export default function EditMilestone() {
   // Theo dõi sự thay đổi của type để lọc phase names
   const watchType = form.watch("type");
 
-  // Sử dụng dữ liệu milestone từ route state
+  // Fetch dữ liệu mốc thời gian từ API
   useEffect(() => {
-    if (location.state?.milestone) {
-      const data = location.state.milestone;
-      form.reset({
-        phase_name: data.phase_name,
-        type: data.type,
-        description: data.description,
-        start_date: data.start_date,
-        end_date: data.end_date,
-      });
-      setLoading(false);
-    } else {
-      setNotFound(true);
-      toast.error("Không tìm thấy dữ liệu mốc thời gian. Quay lại trang trước.");
-      setLoading(false);
+    const fetchMilestone = async () => {
+      try {
+        setLoading(true);
+        // Lấy danh sách mốc của kế hoạch, sau đó tìm mốc cần sửa
+        const response = await planService.getMilestonesByPlanId(planId, { page: 1, itemsPerPage: 100 });
+        
+        if (response.success && response.data.length > 0) {
+          // Tìm mốc thời gian có ID tương ứng
+          const milestone = response.data.find(m => m.milestone_id === parseInt(id));
+          
+          if (milestone) {
+            form.reset({
+              phase_name: milestone.phase_name,
+              type: milestone.type,
+              description: milestone.description,
+              start_date: milestone.start_date,
+              end_date: milestone.end_date,
+            });
+            setNotFound(false);
+          } else {
+            setNotFound(true);
+            toast.error("Không tìm thấy mốc thời gian trong kế hoạch.");
+          }
+        } else {
+          setNotFound(true);
+          toast.error("Không thể tải dữ liệu mốc thời gian.");
+        }
+      } catch (error) {
+        setNotFound(true);
+        toast.error(error.message || "Lỗi khi tải dữ liệu mốc thời gian");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (planId && id) {
+      fetchMilestone();
     }
-  }, [location.state?.milestone, form]);
+  }, [planId, id, form]);
 
   // Lọc phase names khi type thay đổi
   useEffect(() => {
@@ -121,14 +143,11 @@ export default function EditMilestone() {
   const onSubmit = async (data) => {
     try {
       setSubmitting(true);
-      
-      // Use milestone_id from route state
-      const milestoneId = location.state?.milestone?.milestone_id || id;
-      const response = await planService.updateMilestone(milestoneId, data);
+      const response = await planService.updateMilestone(id, data);
       
       if (response.success) {
         toast.success(response.message || "Cập nhật mốc thời gian thành công!");
-        navigate(-1); // Quay lại trang chi tiết học kỳ
+        navigate(`/faculty_staff/plans/view/${planId}`); // Quay lại trang chi tiết kế hoạch
       } else {
         toast.error(response.message || "Không thể cập nhật mốc thời gian");
       }
@@ -174,7 +193,7 @@ export default function EditMilestone() {
     <div className="p-8 max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
       {/* Nút quay lại */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate(`/faculty_staff/plans/${planId}`)}
         className="flex items-center gap-2 text-slate-500 hover:text-purple-600 font-semibold transition group"
         disabled={submitting}
       >

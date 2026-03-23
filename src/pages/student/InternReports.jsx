@@ -193,7 +193,9 @@ export default function BaoCaoThucTapPage() {
         setSelectedMilestone(filteredMilestones[0]);
       }
     } catch (error) {
+      const message = error.message || "Lỗi khi tải dữ liệu báo cáo";
       console.error("Lỗi lấy dữ liệu báo cáo:", error);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -208,7 +210,9 @@ export default function BaoCaoThucTapPage() {
       const resp = await internshipService.getReportHistory(milestoneId);
       setReports(resp.data);
     } catch (error) {
+      const message = error.message || "Lỗi khi tải lịch sử báo cáo";
       console.error("Lỗi lấy lịch sử nộp:", error);
+      toast.error(message);
     }
   };
 
