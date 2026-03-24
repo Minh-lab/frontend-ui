@@ -15,14 +15,14 @@ const gradeSchema = yup.object({
     score: yup
         .number()
         .transform((value, originalValue) => (originalValue === '' ? undefined : value))
-        .typeError('Vui long nhap diem la so')
-        .required('Vui long nhap diem')
-        .min(0, 'Diem khong duoc nho hon 0')
-        .max(10, 'Diem khong duoc lon hon 10'),
+        .typeError('Vui lòng nhập điểm là số')
+        .required('Vui lòng nhập điểm')
+        .min(0, 'Điểm không được nhỏ hơn 0')
+        .max(10, 'Điểm không được lớn hơn 10'),
     comment: yup.string().nullable(),
 });
 
-const statusLabel = (item) => (item.diemThi === '' || item.diemThi === null ? 'chua cham' : 'da cham');
+const statusLabel = (item) => (item.diemThi === '' || item.diemThi === null ? 'chưa chấm' : 'đã chấm');
 
 const mapIntern = (item) => ({
     id: item.internship_id,
@@ -41,12 +41,11 @@ const mapIntern = (item) => ({
 });
 
 function InternStatusBadge({ status }) {
-    const isGraded = status === 'da cham';
+    const isGraded = status === 'đã chấm';
     return (
         <span
-            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-                isGraded ? 'border-[#10b981] bg-[#dcfce7] text-[#10b981]' : 'border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed]'
-            }`}
+            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${isGraded ? 'border-[#10b981] bg-[#dcfce7] text-[#10b981]' : 'border-[#d8b4fe] bg-[#faf5ff] text-[#7c3aed]'
+                }`}
         >
             {isGraded ? 'Da cham' : 'Chua cham'}
         </span>
@@ -71,9 +70,9 @@ function InternGradeDetail({ item, onBack, onSave, submitting }) {
             <div className="flex flex-wrap items-center gap-3">
                 <Button onClick={onBack} variant="ghost" className="border border-gray-200">
                     <ChevronLeft className="size-4" />
-                    Quay lai
+                    Quay lại
                 </Button>
-                <h2 className="text-lg font-bold text-slate-800 md:text-xl">Cham diem thuc tap</h2>
+                <h2 className="text-lg font-bold text-slate-800 md:text-xl">Chấm điểm thực tập</h2>
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[1.15fr_0.95fr]">
@@ -82,10 +81,10 @@ function InternGradeDetail({ item, onBack, onSave, submitting }) {
                         <FileText className="mb-4 size-14 text-slate-500" />
                         {item.fileUrl ? (
                             <a href={item.fileUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-600 underline">
-                                Mo file bao cao
+                                Mở file báo cáo
                             </a>
                         ) : (
-                            <p className="text-base font-medium md:text-lg">Chua co file bao cao</p>
+                            <p className="text-base font-medium md:text-lg">Chưa có file báo cáo</p>
                         )}
                     </div>
                 </Card>
@@ -105,25 +104,25 @@ function InternGradeDetail({ item, onBack, onSave, submitting }) {
                                 </p>
                             </div>
                             <div>
-                                <p className="mb-1 text-slate-500">Lop:</p>
+                                <p className="mb-1 text-slate-500">Lớp:</p>
                                 <p className="font-medium text-slate-800">{item.lop}</p>
                             </div>
                             <div>
-                                <p className="mb-1 text-slate-500">Diem qua trinh:</p>
+                                <p className="mb-1 text-slate-500">Điểm quá trình:</p>
                                 <p className="font-medium text-slate-800">{item.diemQuaTrinh === '' ? '--' : item.diemQuaTrinh}</p>
                             </div>
                             <div>
-                                <p className="mb-1 text-slate-500">Diem tong:</p>
+                                <p className="mb-1 text-slate-500">Điểm tổng:</p>
                                 <p className="font-medium text-slate-800">{item.diemTong === '' ? '--' : item.diemTong}</p>
                             </div>
                         </div>
                     </Card>
 
                     <Card className="rounded-2xl border border-slate-200 p-6">
-                        <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Ket qua danh gia</h3>
+                        <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Kết quả đánh giá</h3>
                         <form onSubmit={handleSubmit((data) => onSave(item.id, data.score, data.comment))} className="mt-6 space-y-5">
                             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                                <label className="text-sm font-semibold text-slate-700 md:text-base">Diem tong</label>
+                                <label className="text-sm font-semibold text-slate-700 md:text-base">Điểm tổng</label>
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-2">
                                         <Input {...register('score')} type="number" step="0.1" className={`h-10 w-28 text-center ${errors.score ? 'border-red-500' : ''}`} />
@@ -134,11 +133,11 @@ function InternGradeDetail({ item, onBack, onSave, submitting }) {
                             </div>
 
                             <div>
-                                <label className="mb-2 block text-sm font-semibold text-slate-700">Nhan xet</label>
+                                <label className="mb-2 block text-sm font-semibold text-slate-700">Nhận xét</label>
                                 <textarea
                                     {...register('comment')}
                                     className={`min-h-[140px] w-full rounded-xl border p-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 ${errors.comment ? 'border-red-500' : 'border-slate-300'}`}
-                                    placeholder="Nhap nhan xet chi tiet..."
+                                    placeholder="Nhập nhận xét chi tiết..."
                                 />
                             </div>
 
@@ -180,12 +179,12 @@ function InternGradeList({ items, onOpen, loading }) {
     return (
         <Card className="bg-white">
             <div className="p-5">
-                <h2 className="text-center text-2xl font-bold text-slate-800 md:text-3xl">CHAM DIEM THUC TAP</h2>
+                <h2 className="text-center text-2xl font-bold text-slate-800 md:text-3xl">CHẤM ĐIỂM THỰC TẬP</h2>
 
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                     <div className="relative sm:max-w-sm">
                         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-                        <Input value={keyword} onChange={(event) => setKeyword(event.target.value)} className="pl-9" placeholder="Tim theo MSV, ten, lop" />
+                        <Input value={keyword} onChange={(event) => setKeyword(event.target.value)} className="pl-9" placeholder="Tìm theo MSV, tên, lớp" />
                     </div>
                     <Button
                         onClick={() => {
@@ -194,7 +193,7 @@ function InternGradeList({ items, onOpen, loading }) {
                         }}
                         className="sm:w-fit"
                     >
-                        Tim kiem
+                        Tìm kiếm
                     </Button>
                 </div>
 
@@ -204,19 +203,19 @@ function InternGradeList({ items, onOpen, loading }) {
                             <TableRow>
                                 <TableHead>STT</TableHead>
                                 <TableHead>MSV</TableHead>
-                                <TableHead>Ho va ten</TableHead>
-                                <TableHead>Lop</TableHead>
-                                <TableHead>Trang thai</TableHead>
-                                <TableHead>Diem qua trinh</TableHead>
-                                <TableHead>Diem thi</TableHead>
-                                <TableHead>Hanh dong</TableHead>
+                                <TableHead>Họ và tên</TableHead>
+                                <TableHead>Lớp</TableHead>
+                                <TableHead>Trạng thái</TableHead>
+                                <TableHead>Điểm quá trình</TableHead>
+                                <TableHead>Điểm thi</TableHead>
+                                <TableHead>Hành động</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading && (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center text-slate-500">
-                                        Dang tai du lieu...
+                                        Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -235,10 +234,10 @@ function InternGradeList({ items, onOpen, loading }) {
                                         <TableCell>
                                             <div className="flex flex-wrap gap-2">
                                                 <Button size="sm" variant="outline" onClick={() => onOpen(item)}>
-                                                    Cham diem
+                                                    Chấm điểm
                                                 </Button>
                                                 <Button size="sm" variant="outline" onClick={() => onOpen(item)}>
-                                                    Xem chi tiet
+                                                    Xem chi tiết
                                                 </Button>
                                             </div>
                                         </TableCell>
@@ -247,7 +246,7 @@ function InternGradeList({ items, onOpen, loading }) {
                             {!loading && visibleItems.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center text-slate-500">
-                                        Khong co sinh vien nao can cham diem
+                                        Không có sinh viên nào cần chấm điểm
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -309,13 +308,13 @@ export default function InterGradeApi() {
             });
             setInterns((prev) =>
                 prev.map((intern) =>
-                    intern.id === internId ? { ...intern, diemThi: score, nhanXet: comment, trangthai: 'da cham' } : intern
+                    intern.id === internId ? { ...intern, diemThi: score, nhanXet: comment, trangthai: 'đã chấm' } : intern
                 )
             );
-            toast.success('Cham diem thuc tap thanh cong');
+            toast.success('Chấm điểm thực tập thành công');
             setSelectedIntern(null);
         } catch (error) {
-            toast.error(error?.message || 'Khong the cham diem thuc tap');
+            toast.error(error?.message || 'Không thể chấm điểm thực tập');
         } finally {
             setSubmitting(false);
         }

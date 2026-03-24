@@ -15,18 +15,18 @@ const gradeSchema = yup.object({
     score: yup
         .number()
         .transform((value, originalValue) => (originalValue === '' ? undefined : value))
-        .typeError('Vui long nhap diem la so')
-        .required('Vui long nhap diem')
-        .min(0, 'Diem khong duoc nho hon 0')
-        .max(10, 'Diem khong duoc lon hon 10'),
+        .typeError('Vui lòng nhập điểm là số')
+        .required('Vui lòng nhập điểm')
+        .min(0, 'Điểm không được nhỏ hơn 0')
+        .max(10, 'Điểm không được lớn hơn 10'),
 });
 
 const statusLabelMap = {
-    COMPLETED: 'da cham',
-    FAILED: 'da cham',
-    DEFENSE_ELIGIBLE: 'da duyet',
-    REPORTING: 'da duyet',
-    LECTURER_APPROVED: 'da duyet',
+    COMPLETED: 'đã chấm',
+    FAILED: 'đã chấm',
+    DEFENSE_ELIGIBLE: 'đã duyệt',
+    REPORTING: 'đã duyệt',
+    LECTURER_APPROVED: 'đã duyệt',
 };
 
 const mapProject = (item) => ({
@@ -40,12 +40,12 @@ const mapProject = (item) => ({
     nhanXet: item.feedback ?? '',
     fileUrl: item.preview_url ?? null,
     trangthai: item.current_grade !== null && item.current_grade !== undefined
-        ? 'da cham'
-        : (statusLabelMap[item.status] ?? 'da duyet'),
+        ? 'đã chấm'
+        : (statusLabelMap[item.status] ?? 'đã duyệt'),
 });
 
 function ProjectStatusBadge({ status }) {
-    const isGraded = status === 'da cham';
+    const isGraded = status === 'đã chấm';
 
     return (
         <span
@@ -54,13 +54,13 @@ function ProjectStatusBadge({ status }) {
                 : 'border-[#93c5fd] bg-[#dbeafe] text-[#2563eb]'
                 }`}
         >
-            {isGraded ? 'Da cham' : 'Da duyet'}
+            {isGraded ? 'Đã chấm' : 'Đã duyệt'}
         </span>
     );
 }
 
 function ProjectGradeDetail({ item, onBack, onSave, submitting }) {
-    const isGraded = item.trangthai === 'da cham';
+    const isGraded = item.trangthai === 'đã chấm';
 
     const {
         register,
@@ -78,9 +78,9 @@ function ProjectGradeDetail({ item, onBack, onSave, submitting }) {
             <div className="flex flex-wrap items-center gap-3">
                 <Button onClick={onBack} variant="ghost" className="border border-gray-200">
                     <ChevronLeft className="size-4" />
-                    Quay lai
+                    Quay lại
                 </Button>
-                <h2 className="text-lg font-bold text-slate-800 md:text-xl">Cham diem do an {item.id}</h2>
+                <h2 className="text-lg font-bold text-slate-800 md:text-xl">Chấm điểm đồ án {item.id}</h2>
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[1.2fr_0.95fr]">
@@ -89,10 +89,10 @@ function ProjectGradeDetail({ item, onBack, onSave, submitting }) {
                         <FileText className="mb-4 size-14 text-slate-500" />
                         {item.fileUrl ? (
                             <a href={item.fileUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-600 underline">
-                                Mo file bao cao
+                                Mở file báo cáo
                             </a>
                         ) : (
-                            <p className="text-lg font-medium">Chua co file preview</p>
+                            <p className="text-lg font-medium">Chưa có file preview</p>
                         )}
                     </div>
                 </Card>
@@ -106,31 +106,31 @@ function ProjectGradeDetail({ item, onBack, onSave, submitting }) {
                         <div className="my-5 h-px bg-slate-200" />
                         <div className="space-y-5">
                             <div>
-                                <p className="mb-2 text-sm text-slate-500">Sinh vien thuc hien:</p>
+                                <p className="mb-2 text-sm text-slate-500">Sinh viên thực hiện:</p>
                                 <p className="text-base font-semibold text-slate-800 md:text-lg">
                                     {item.hoTen} <span className="font-normal">({item.maSV})</span>
                                 </p>
                             </div>
                             <div>
-                                <p className="mb-2 text-sm text-slate-500">Lop:</p>
+                                <p className="mb-2 text-sm text-slate-500">Lớp:</p>
                                 <p className="text-base text-slate-800 md:text-lg">{item.lop}</p>
                             </div>
                             <div>
-                                <p className="mb-2 text-sm text-slate-500">De tai:</p>
+                                <p className="mb-2 text-sm text-slate-500">Đề tài:</p>
                                 <p className="text-base leading-relaxed text-[#2563eb] md:text-lg">{item.tenDeTai}</p>
                             </div>
                             <div>
-                                <p className="mb-2 text-sm text-slate-500">Linh vuc:</p>
+                                <p className="mb-2 text-sm text-slate-500">Lĩnh vực:</p>
                                 <p className="text-base text-slate-800 md:text-lg">{item.linhVuc}</p>
                             </div>
                         </div>
                     </Card>
 
                     <Card className="rounded-2xl border border-slate-200 p-6">
-                        <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Ket qua danh gia</h3>
+                        <h3 className="text-lg font-semibold text-slate-800 md:text-xl">Kết quả đánh giá</h3>
                         <form onSubmit={handleSubmit((data) => onSave(item.id, data.score))} className="mt-6 space-y-5">
                             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                                <label className="text-sm font-semibold text-slate-700 md:text-base">Diem tong</label>
+                                <label className="text-sm font-semibold text-slate-700 md:text-base">Điểm tổng</label>
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-2">
                                         <Input
@@ -152,7 +152,7 @@ function ProjectGradeDetail({ item, onBack, onSave, submitting }) {
                                     disabled={isGraded || submitting}
                                     className="h-11 rounded-xl bg-[#10b981] px-6 text-white hover:bg-[#059669] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    {submitting ? 'Dang xu ly...' : 'Hoan tat cham diem'}
+                                    {submitting ? 'Đang xử lý...' : 'Hoàn tất chấm điểm'}
                                 </Button>
                             </div>
                         </form>
@@ -193,7 +193,7 @@ function ProjectGradeList({ items, loading, onOpen }) {
     return (
         <Card className="bg-white">
             <div className="p-5">
-                <h2 className="text-center text-2xl font-bold text-slate-800 md:text-3xl">CHAM DIEM DO AN</h2>
+                <h2 className="text-center text-2xl font-bold text-slate-800 md:text-3xl">CHẤM ĐIỂM ĐỒ ÁN</h2>
 
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                     <div className="relative sm:max-w-sm">
@@ -202,7 +202,7 @@ function ProjectGradeList({ items, loading, onOpen }) {
                             value={keyword}
                             onChange={(event) => setKeyword(event.target.value)}
                             className="pl-9"
-                            placeholder="Tim theo MSV, ten, de tai"
+                            placeholder="Tìm theo MSV, tên, đề tài"
                         />
                     </div>
                     <Button
@@ -212,7 +212,7 @@ function ProjectGradeList({ items, loading, onOpen }) {
                         }}
                         className="sm:w-fit"
                     >
-                        Tim kiem
+                        Tìm kiếm
                     </Button>
                 </div>
 
@@ -222,18 +222,18 @@ function ProjectGradeList({ items, loading, onOpen }) {
                             <TableRow>
                                 <TableHead>STT</TableHead>
                                 <TableHead>MSV</TableHead>
-                                <TableHead>Ho va ten</TableHead>
-                                <TableHead>Ten de tai</TableHead>
-                                <TableHead>Trang thai</TableHead>
-                                <TableHead>Diem</TableHead>
-                                <TableHead>Hanh dong</TableHead>
+                                <TableHead>Họ và tên</TableHead>
+                                <TableHead>Tên đề tài</TableHead>
+                                <TableHead>Trạng thái</TableHead>
+                                <TableHead>Điểm</TableHead>
+                                <TableHead>Hành động</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading && (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-slate-500">
-                                        Dang tai du lieu...
+                                        Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -259,7 +259,7 @@ function ProjectGradeList({ items, loading, onOpen }) {
                             {!loading && visibleItems.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-slate-500">
-                                        Khong co do an nao de cham
+                                        Không có đồ án nào để chấm
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -318,7 +318,7 @@ export default function ProjectGrade() {
                 const response = await lecturerApi.getCapstoneGradingList();
                 setProjects((Array.isArray(response?.data) ? response.data : []).map(mapProject));
             } catch (error) {
-                toast.error(error?.message || 'Khong the tai danh sach cham diem do an');
+                toast.error(error?.message || 'Không thể tải danh sách chấm điểm đồ án');
                 setProjects([]);
             } finally {
                 setLoading(false);
@@ -344,7 +344,7 @@ export default function ProjectGrade() {
                         ? {
                             ...project,
                             diem: updatedGrade,
-                            trangthai: updatedStatus ? 'da cham' : project.trangthai,
+                            trangthai: updatedStatus ? 'đã chấm' : project.trangthai,
                         }
                         : project
                 )
@@ -355,15 +355,15 @@ export default function ProjectGrade() {
                     ? {
                         ...prevSelected,
                         diem: updatedGrade,
-                        trangthai: 'da cham',
+                        trangthai: 'đã chấm',
                     }
                     : null
             );
 
-            toast.success(response?.message || 'Cham diem do an thanh cong');
+            toast.success(response?.message || 'Chấm điểm đồ án thành công');
             setSelectedProject(null);
         } catch (error) {
-            toast.error(error?.message || 'Khong the cham diem do an');
+            toast.error(error?.message || 'Không thể chấm điểm đồ án');
         } finally {
             setSubmitting(false);
         }

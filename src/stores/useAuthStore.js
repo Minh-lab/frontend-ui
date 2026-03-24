@@ -31,6 +31,7 @@ const useAuthStore = create(
           isAuthenticated: false,
         });
         localStorage.removeItem('auth-storage'); // Xóa sạch bộ nhớ
+        localStorage.removeItem('student-access'); // Xóa cache đăng ký đợt đồ án/thực tập cục bộ của tài khoản cũ
       },
 
       // Kiểm tra xem có phải lần đầu đăng nhập không (dựa trên database của bạn)

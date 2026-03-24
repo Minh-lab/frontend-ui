@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import Modal from "../../components/Modal";
 import StatusBadge from "../../components/StatusBadge";
 import FileUpload from "../../components/FileUpload";
@@ -33,126 +36,140 @@ function PreviewBaoCao() {
     <div className="border border-gray-300 rounded-lg p-6 bg-white text-center space-y-3 min-h-55 flex flex-col items-center justify-center">
       <p className="text-xs font-semibold text-gray-500 tracking-wide">BỘ GIÁO DỤC VÀ ĐÀO TẠO &nbsp;&nbsp;&nbsp; BỘ NÔNG NGHIỆP VÀ PTNT</p>
       <p className="text-xs font-semibold text-gray-500 tracking-wide">TRƯỜNG ĐẠI HỌC THỦY LỢI</p>
-      <img src={tlu} alt="TLU Logo" className="w-16 h-16 object-contain" />
-      <p className="text-xs font-semibold text-blue-700 tracking-widest mt-1">BÁO CÁO THỰC TẬP</p>
+      <img src={tlu} alt="TLU Logo" className="w-16 h-16 object-contain mx-auto" />
+      <p className="text-xs font-semibold text-blue-700 tracking-widest mt-1 uppercase">Báo cáo thực tập</p>
     </div>
   );
 }
 
-function ModalXemChiTiet({ report, onClose }) {
+function ModalXemChiTiet({ bc, onClose }) {
   return (
-    <Modal title={`${report.phase_name} (Xem chi tiết)`} onClose={onClose} size="lg">
+    <Modal title={`${bc.ten} (xem chi tiết)`} onClose={onClose} size="lg">
       <div className="space-y-4">
-        <div className="flex justify-end text-xs text-gray-500 font-medium">
-          Ngày nộp: {formatDate(report.submission_date)}
+        <div className="flex justify-between items-center text-xs text-gray-500">
+          <span>Ngày nộp: {bc.ngayNop}</span>
+          {bc.reportInfo?.file_url && (
+            <a
+              href={bc.reportInfo.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline flex items-center gap-1"
+            >
+              Tải xuống tệp tin
+            </a>
+          )}
         </div>
         <div>
-          <p className="text-sm font-bold text-gray-700 mb-2">Xem tài liệu:</p>
-          <div className="flex flex-col items-center gap-4">
-            <PreviewBaoCao />
-            {report.file_url && (
-              <a
-                href={report.file_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 text-sm font-semibold underline flex items-center gap-1"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Tải xuống tệp tin
-              </a>
-            )}
-          </div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Preview báo cáo:</p>
+          <PreviewBaoCao />
         </div>
-        {report.description && (
+        {bc.reportInfo?.description && (
           <div>
-            <p className="text-sm font-bold text-gray-700 mb-2">Mô tả/Ghi chú:</p>
-            <div className="border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-sm text-gray-700 leading-relaxed italic">
-              "{report.description}"
+            <p className="text-sm font-semibold text-gray-700 mb-2">Mô tả/Ghi chú:</p>
+            <div className="border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-sm text-gray-700 italic">
+              {bc.reportInfo.description}
             </div>
           </div>
         )}
-        {report.lecturer_feedback && (
+        {bc.nhanXetGV && (
           <div>
-            <p className="text-sm font-bold text-gray-700 mb-2 text-purple-700">Nhận xét của giảng viên:</p>
-            <div className="border border-purple-200 rounded-lg px-4 py-3 bg-purple-50 text-sm text-gray-700 leading-relaxed whitespace-pre-line font-medium shadow-sm">
-              {report.lecturer_feedback}
+            <p className="text-sm font-semibold text-gray-700 mb-2">Nhận xét của giảng viên:</p>
+            <div className="border border-purple-300 rounded-lg px-4 py-3 bg-purple-50 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+              {bc.nhanXetGV}
             </div>
           </div>
         )}
-        <div className="flex justify-end pt-2">
-          <button onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-8 py-2.5 rounded-lg font-semibold text-sm transition font-medium">
+        <div className="flex justify-end">
+          <Button onClick={onClose} className="bg-[#5c60c0] hover:bg-[#4a4ea8] text-white">
             Đóng
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>
   );
 }
 
-function ModalNopBaoCao({ milestone, internshipId, onClose, onSuccess }) {
-  const [file, setFile] = useState(null);
-  const [description, setDescription] = useState("");
+const reportSchema = yup.object().shape({
+  file: yup
+    .mixed()
+    .required("Vui lòng tải lên file báo cáo")
+    .test("file-present", "Vui lòng tải lên file báo cáo", (value) => {
+      if (!value) return false;
+      return true;
+    }),
+  description: yup.string().max(500, "Mô tả không quá 500 ký tự"),
+});
+
+function ModalNopBaoCao({ bc, internshipId, onClose }) {
+  const {
+    handleSubmit,
+    setValue,
+    watch,
+    register,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(reportSchema),
+    mode: "onChange",
+    defaultValues: {
+      file: null,
+      description: "",
+    },
+  });
+
+  const fileValue = watch("file");
   const [loading, setLoading] = useState(false);
 
-  const handleSubit = async () => {
-    if (!file) {
-      toast.error("Vui lòng chọn tệp tin báo cáo.");
-      return;
-    }
-
+  const onSubmit = async (data) => {
     try {
       setLoading(true);
       const formData = new FormData();
-      formData.append("milestone_id", milestone.milestone_id);
-      formData.append("internship_id", internshipId);
-      formData.append("file", file);
-      if (description) formData.append("description", description);
+      formData.append('internship_id', internshipId);
+      formData.append('milestone_id', bc.milestone_id);
+      formData.append('file', data.file);
+      if (data.description) {
+        formData.append('description', data.description);
+      }
 
       await internshipService.submitReport(formData);
 
-      toast.success("Nộp báo cáo thành công!", {
+      toast.success("Nộp báo cáo thực tập thành công", {
         className: "!bg-[#AAFAB8] !text-[#24AD47]",
       });
-      onSuccess();
+      onClose(true);
     } catch (error) {
-      console.error("Lỗi nộp báo cáo:", error);
-      toast.error(error.message || "Không thể nộp báo cáo.");
+      toast.error(error.message || "Lỗi nộp báo cáo");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal title={`${milestone.phase_name} (Nộp báo cáo)`} onClose={onClose} size="md">
-      <div className="space-y-4 p-1">
+    <Modal title={`${bc.ten} (Nộp báo cáo)`} onClose={() => onClose(false)} size="md">
+      <div className="space-y-4">
         <div>
-          <p className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
-            Tải lên tệp tin (PDF): <span className="text-red-500">*</span>
-          </p>
-          <FileUpload value={file} onChange={setFile} accept=".pdf" />
-          <p className="text-[10px] text-gray-400 mt-1 italic">* Chỉ chấp nhận định dạng PDF, tối đa 10MB.</p>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Tải lên tệp tin (PDF):</p>
+          <FileUpload value={fileValue} onChange={(v) => setValue("file", v, { shouldValidate: true })} accept=".pdf" />
+          {errors.file && <p className="text-red-500 text-xs mt-1">{errors.file.message}</p>}
         </div>
         <div>
-          <p className="text-sm font-bold text-gray-700 mb-2">Mô tả/Ghi chú (Tùy chọn):</p>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Mô tả/Ghi chú (Tùy chọn):</p>
           <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/20 focus:border-[#5c60c0] min-h-[100px] resize-none"
+            className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#5c60c0]/40 focus:border-[#5c60c0] min-h-[100px] ${errors.description ? "border-red-500" : "border-gray-300"}`}
+            {...register("description")}
             placeholder="Nhập ghi chú hoặc mô tả về bản báo cáo này..."
           ></textarea>
+          {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
         </div>
-        <div className="flex justify-center gap-4 pt-4 border-t border-gray-100 mt-2">
-          <Button onClick={onClose} variant="ghost" className="text-gray-500 hover:bg-gray-100 px-6">
+        <div className="flex justify-center gap-4 pt-2">
+          <Button onClick={() => onClose(false)} variant="ghost" className="px-6" disabled={loading}>
             Hủy
           </Button>
           <Button
-            className="bg-[#5c60c0] hover:bg-[#4a4ea8] text-white px-10 shadow-lg shadow-indigo-100 transition-all font-bold"
-            onClick={handleSubit}
+            className="bg-[#5c60c0] hover:bg-[#4a4ea8] text-white px-8"
+            onClick={handleSubmit(onSubmit)}
             disabled={loading}
           >
-            {loading ? "Đang xử lý..." : "Nộp báo cáo"}
+            {loading ? "Đang xử lý..." : "Nộp bài"}
           </Button>
         </div>
       </div>
@@ -160,73 +177,45 @@ function ModalNopBaoCao({ milestone, internshipId, onClose, onSuccess }) {
   );
 }
 
-export default function BaoCaoThucTapPage() {
+export default function InternReports() {
   const navigate = useNavigate();
   const [access] = useState(() => getStudentAccess());
-  const [loading, setLoading] = useState(true);
-  const [internship, setInternship] = useState(null);
-  const [milestones, setMilestones] = useState([]);
-  const [selectedMilestone, setSelectedMilestone] = useState(null);
-  const [reports, setReports] = useState([]);
   const [modal, setModal] = useState(null);
 
-  const fetchData = async () => {
+  const [internship, setInternship] = useState(null);
+  const [milestones, setMilestones] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchReportsData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const [statusResp, milestoneResp] = await Promise.all([
+      const [statusRes, milestonesRes, historyRes] = await Promise.all([
         internshipService.getStatus(),
-        internshipService.getMilestones()
+        internshipService.getMilestones(),
+        internshipService.getReportHistory() // Fetch all history
       ]);
 
-      setInternship(statusResp.data);
+      setInternship(statusRes.data || statusRes);
 
-      // Lọc bỏ các milestone không phải là nộp báo cáo (như Đăng ký, Chấm điểm...)
-      const filteredMilestones = milestoneResp.data.filter(m => {
-        const name = m.phase_name.toLowerCase();
-        return (name.includes("báo cáo") || name.includes("đề cương")) && !name.includes("chấm điểm");
-      });
-
-      setMilestones(filteredMilestones);
-
-      // Chọn milestone đầu tiên mặc định
-      if (filteredMilestones.length > 0) {
-        setSelectedMilestone(filteredMilestones[0]);
-      }
-    } catch (error) {
-      const message = error.message || "Lỗi khi tải dữ liệu báo cáo";
-      console.error("Lỗi lấy dữ liệu báo cáo:", error);
-      toast.error(message);
+      // Include all internship milestones for that semester
+      const allInternMilestones = milestonesRes.data || milestonesRes;
+      
+      setMilestones(allInternMilestones);
+      setReports(historyRes.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể tải dữ liệu báo cáo");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchHistory = async (milestoneId) => {
-    try {
-      const resp = await internshipService.getReportHistory(milestoneId);
-      setReports(resp.data);
-    } catch (error) {
-      const message = error.message || "Lỗi khi tải lịch sử báo cáo";
-      console.error("Lỗi lấy lịch sử nộp:", error);
-      toast.error(message);
+    if (access.internEnabled) {
+      fetchReportsData();
     }
-  };
-
-  useEffect(() => {
-    if (selectedMilestone) {
-      fetchHistory(selectedMilestone.milestone_id);
-    }
-  }, [selectedMilestone]);
-
-  const handleSuccess = () => {
-    setModal(null);
-    // Reload trang theo yêu cầu của user (Bước 9)
-    window.location.reload();
-  };
+  }, [access.internEnabled]);
 
   if (!access.internEnabled) {
     return (
@@ -236,10 +225,7 @@ export default function BaoCaoThucTapPage() {
             Báo cáo thực tập
           </div>
           <div className="p-6 space-y-4">
-            <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-3 rounded-lg flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-3 rounded-lg">
               Bạn chưa mở đợt thực tập nên chưa thể sử dụng chức năng này.
             </div>
             <Button onClick={() => navigate("/student/dashboard")} className="bg-[#5c60c0] hover:bg-[#4a4ea8] text-white">
@@ -251,175 +237,160 @@ export default function BaoCaoThucTapPage() {
     );
   }
 
-  if (loading && !internship) {
-    return (
-      <div className="p-6 flex justify-center items-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-[#5c60c0] border-t-transparent animate-spin rounded-full"></div>
-          <p className="text-gray-500 font-medium">Đang tải dữ liệu...</p>
-        </div>
-      </div>
-    );
-  }
+  const combinedList = milestones.map((ms) => {
+    // Tìm báo cáo mới nhất cho milestone này
+    const report = reports.find(r => r.milestone_id === ms.milestone_id);
+    const start = new Date(ms.start_date || ms.created_at);
+    const end = new Date(ms.end_date);
+    const now = new Date();
 
-  const isExpired = selectedMilestone && new Date() > new Date(selectedMilestone.end_date);
-  const canSubmit = !isExpired && reports.length < 5;
+    const name = ms.phase_name.toLowerCase();
+    
+    // Determine status from database values
+    let displayStatus = "INCOMPLETE";
+    if (report) {
+      displayStatus = report.status;
+    } else {
+      // Logic for non-report milestones (Registration)
+      if (ms.milestone_id === 1 || name.includes("đăng ký đợt")) {
+        displayStatus = internship ? "APPROVED" : "INCOMPLETE";
+      } else if (ms.milestone_id === 2 || name.includes("doanh nghiệp")) {
+        displayStatus = internship?.company ? "APPROVED" : "INCOMPLETE";
+      }
+    }
+
+    return {
+      id: ms.milestone_id,
+      milestone_id: ms.milestone_id,
+      ten: ms.phase_name,
+      thoiHanNop: `${formatDate(ms.start_date)} - ${formatDate(ms.end_date)}`,
+      hanChot: formatDate(ms.end_date),
+      trangThai: displayStatus,
+      nhanXetGV: report ? report.lecturer_feedback : null,
+      ngayNop: report ? formatDate(report.submission_date) : null,
+      reportInfo: report || null,
+      // Disable if out of window, APPROVED, COMPLETED, or if it's the first milestone and already INITIALIZED
+      // Enable only if deadline is in the future and not yet approved/completed
+      isEnabled: (now <= end) && displayStatus !== "APPROVED" && displayStatus !== "COMPLETED",
+      isReportPhase: (name.includes("báo cáo") || name.includes("đề cương")) && !name.includes("chấm điểm"),
+      rawEnd: end
+    };
+  });
 
   return (
     <div className="p-6">
-      <div className="bg-white border border-gray-200 rounded-xl shadow-md max-w-5xl mx-auto overflow-hidden">
-        {/* Header */}
-        <div className="bg-[#5c60c0] text-white px-6 py-4 flex items-center justify-between border-b border-white/10">
-          <h1 className="text-lg font-bold tracking-tight">Báo cáo thực tập</h1>
-          <div className="text-xs bg-white/20 px-3 py-1 rounded-full font-medium">
-            Học kỳ: {internship?.semester?.name || "—"}
-          </div>
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm max-w-4xl mx-auto">
+        <div className="bg-[#5c60c0] text-white px-5 py-3 rounded-t-xl font-semibold flex justify-between items-center">
+          <span>Báo cáo thực tập</span>
+          <span className="text-xs bg-white/20 px-2 py-0.5 rounded">Học kỳ: {internship?.semester?.name || "—"}</span>
         </div>
 
-        <div className="p-6">
-          {/* Thông tin thực tập */}
-          <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Thông tin thực tập</p>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-500 w-32">Doanh nghiệp:</span>
-                  <span className="font-bold text-gray-800">{internship?.company?.name || internship?.latest_request?.company_name || "—"}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-500 w-32">Vị trí:</span>
-                  <span className="font-semibold text-gray-700 italic">
-                    {internship?.position || internship?.latest_request?.student_message || "—"}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Cố vấn & Trạng thái</p>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-500 w-32">GV hướng dẫn:</span>
-                  <span className="font-bold text-gray-800">{internship?.lecturer?.full_name || "Chưa phân công"}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-500 w-32">Trạng thái:</span>
-                  <StatusBadge status={internship?.status} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Chọn loại báo cáo */}
-          <div className="mb-6">
-            <label className="text-sm font-bold text-gray-700 mb-2 block">Chọn nội dung nộp báo cáo:</label>
-            <div className="flex flex-wrap gap-2">
-              {milestones.length === 0 && <p className="text-sm text-gray-400 italic">Không có đợt nộp báo cáo nào được mở.</p>}
-              {milestones.map((m) => (
-                <button
-                  key={m.milestone_id}
-                  onClick={() => setSelectedMilestone(m)}
-                  className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all border-2 
-                    ${selectedMilestone?.milestone_id === m.milestone_id
-                      ? "bg-[#5c60c0] text-white border-[#5c60c0] shadow-lg shadow-indigo-100 scale-105"
-                      : "bg-white text-gray-600 border-gray-100 hover:border-[#5c60c0]/30 hover:bg-gray-50"}`}
-                >
-                  {m.phase_name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Table & Form */}
-          {selectedMilestone && (
-            <div className="space-y-6">
-              <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                <div className="bg-gray-50 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200">
-                  <div className="space-y-1">
-                    <p className="font-bold text-[#5c60c0] text-base">{selectedMilestone.phase_name}</p>
-                    <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium">
-                      <span className="flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        Bắt đầu: {formatDate(selectedMilestone.start_date)}
-                      </span>
-                      <span className="flex items-center gap-1 text-red-500">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        Kết thúc: {formatDate(selectedMilestone.end_date)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="text-right mr-2 hidden md:block">
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">Số lần nộp</p>
-                      <p className="text-sm font-bold text-gray-700">{reports.length} / 5</p>
-                    </div>
-                    <Button
-                      onClick={() => setModal({ type: "nop", milestone: selectedMilestone })}
-                      className={`px-8 py-5 text-sm font-bold shadow-md transition-all
-                        ${canSubmit ? "bg-green-500 hover:bg-green-600 text-white" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
-                      disabled={!canSubmit}
-                    >
-                      {isExpired ? "Đã hết hạn" : reports.length >= 5 ? "Đã hết lượt nộp" : "Nộp bài ngay"}
-                    </Button>
+        <div className="p-5">
+          {loading ? (
+            <div className="flex justify-center p-8"><p className="text-gray-500">Đang tải dữ liệu...</p></div>
+          ) : (
+            <>
+              <div className="mb-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-bold text-gray-700 mb-2">Thông tin thực tập:</p>
+                  <div className="text-sm space-y-1 text-gray-600">
+                    <p>Doanh nghiệp: <span className="font-semibold text-gray-800">{internship?.company?.name || internship?.latest_request?.company_name || "Chưa xác định"}</span></p>
+                    <p>Vị trí: <span className="font-semibold">{internship?.position || "—"}</span></p>
                   </div>
                 </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-700 mb-2">Hướng dẫn & Trạng thái:</p>
+                  <div className="text-sm space-y-1 text-gray-600">
+                    <p>Giảng viên hướng dẫn: <span className="font-semibold text-gray-800">{internship?.lecturer?.full_name || "Chưa phân công"}</span></p>
+                    <div className="flex items-center gap-2">
+                      Trạng thái: <StatusBadge status={internship?.status} />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-white border-b border-gray-100">
-                        <th className="px-6 py-4 text-left font-bold text-xs text-gray-400 uppercase tracking-widest">STT</th>
-                        <th className="px-6 py-4 text-left font-bold text-xs text-gray-400 uppercase tracking-widest">Thời gian nộp</th>
-                        <th className="px-6 py-4 text-left font-bold text-xs text-gray-400 uppercase tracking-widest">Trạng thái</th>
-                        <th className="px-6 py-4 text-right font-bold text-xs text-gray-400 uppercase tracking-widest">Hành động</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {reports.length === 0 && (
-                        <tr>
-                          <td colSpan="4" className="px-6 py-10 text-center text-gray-400 italic">
-                            Bạn chưa có lịch sử nộp báo cáo cho đợt này.
-                          </td>
-                        </tr>
-                      )}
-                      {reports.map((report, index) => (
-                        <tr key={report.report_id} className="hover:bg-gray-50/80 transition-colors group">
-                          <td className="px-6 py-4 font-bold text-gray-400">#{reports.length - index}</td>
-                          <td className="px-6 py-4 text-gray-600 font-medium">
-                            {formatDate(report.submission_date)}
-                          </td>
-                          <td className="px-6 py-4">
-                            <StatusBadge status={report.status} />
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button
-                              onClick={() => setModal({ type: "view", report })}
-                              className="text-[#5c60c0] hover:text-[#4a4ea8] font-bold text-xs underline decoration-2 underline-offset-4 active:scale-95 transition-all"
-                            >
-                              Xem chi tiết
-                            </button>
-                          </td>
-                        </tr>
+              <div className="border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100">
+                      {["Mốc báo cáo", "Thời hạn nộp", "Hạn chót", "Trạng thái", "Hành động"].map((h) => (
+                        <th key={h} className="px-4 py-2.5 text-left font-semibold text-xs text-gray-500 uppercase tracking-tight">{h}</th>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {combinedList.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="p-4 text-center text-gray-500">Chưa có đợt nộp báo cáo nào cho thực tập.</td>
+                      </tr>
+                    )}
+                    {combinedList.map((bc) => {
+                      const isSubmitted = bc.reportInfo !== null;
+                      const disableSubmit = !bc.isEnabled; // In combined view, we might allow re-submit if needed, but for now match capstone
+
+                      return (
+                        <tr key={bc.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                          <td className="px-4 py-3 font-semibold text-gray-700">{bc.ten}</td>
+                          <td className="px-4 py-3 text-gray-500 text-xs">{bc.thoiHanNop}</td>
+                          <td className="px-4 py-3 text-red-500 font-semibold text-xs">{bc.hanChot}</td>
+                          <td className="px-4 py-3">
+                            <StatusBadge status={bc.trangThai === "Chưa hoàn thành" ? "INCOMPLETE" : bc.trangThai} />
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                onClick={() => setModal({ type: "view", bc })}
+                                className="bg-[#5c60c0] hover:bg-[#4a4ea8] text-white"
+                                size="sm"
+                                disabled={!isSubmitted}
+                              >
+                                Xem
+                              </Button>
+                              
+                              {bc.isEnabled ? (
+                                <Button
+                                  onClick={() => setModal({ type: "nop", bc })}
+                                  className="bg-green-500 hover:bg-green-600 text-white"
+                                  size="sm"
+                                >
+                                  {isSubmitted ? "Nộp lại" : "Nộp bài"}
+                                </Button>
+                              ) : (
+                                <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                                  (bc.trangThai === "APPROVED" || bc.trangThai === "COMPLETED" || (bc.milestone_id === 1 && bc.trangThai === "INITIALIZED"))
+                                  ? "text-green-600 bg-green-50" 
+                                  : (new Date() > bc.rawEnd ? "text-red-600 bg-red-50" : "text-gray-500 bg-gray-50")
+                                }`}>
+                                  {(bc.trangThai === "APPROVED" || bc.trangThai === "COMPLETED" || (bc.milestone_id === 1 && bc.trangThai === "INITIALIZED"))
+                                    ? "Đã hoàn tất" 
+                                    : (new Date() > bc.rawEnd ? "Đã quá hạn" : "Chưa đến hạn")
+                                  }
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
 
-      {modal?.type === "view" && <ModalXemChiTiet report={modal.report} onClose={() => setModal(null)} />}
+      {modal?.type === "view" && <ModalXemChiTiet bc={modal.bc} onClose={() => setModal(null)} />}
       {modal?.type === "nop" && (
         <ModalNopBaoCao
-          milestone={modal.milestone}
-          internshipId={internship.internship_id}
-          onClose={() => setModal(null)}
-          onSuccess={handleSuccess}
+          bc={modal.bc}
+          internshipId={internship?.internship_id}
+          onClose={(shouldReload) => {
+            setModal(null);
+            if (shouldReload) fetchReportsData();
+          }}
         />
       )}
     </div>
   );
 }
-

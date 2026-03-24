@@ -30,7 +30,7 @@ const mapInternshipCancel = (item) => ({
     className: item.class ?? 'N/A',
     date: item.created_at ?? '',
     status: item.current_status ?? '',
-    topicTitle: 'Yeu cau huy thuc tap',
+    topicTitle: 'Yêu cầu hủy thực tập',
     description: '',
     technologies: '',
     reason: item.reason ?? '',
@@ -40,16 +40,16 @@ const statusLabel = (status) => {
     switch (status) {
         case 'PENDING_CANCEL':
         case 'PENDING_TEACHER':
-            return 'Cho GV duyet';
+            return 'Chờ GV duyệt';
         case 'PENDING_FACULTY_CANCEL':
         case 'PENDING_FACULTY':
-            return 'Cho VPK duyet';
+            return 'Chờ VPK duyệt';
         case 'REJECTED':
-            return 'Da tu choi';
+            return 'Đã từ chối';
         case 'APPROVED':
-            return 'Da duyet';
+            return 'Đã duyệt';
         default:
-            return status || 'Dang xu ly';
+            return status || 'Đang xử lý';
     }
 };
 
@@ -85,7 +85,7 @@ function ReviewModal({ item, submitting, onClose, onSubmit }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
             <div className="flex max-h-[90vh] w-full max-w-[640px] flex-col overflow-hidden rounded-xl bg-white shadow-xl">
                 <div className="flex items-center justify-between bg-[#4f5ca8] p-4">
-                    <h3 className="text-base font-bold uppercase tracking-wider text-white md:text-lg">Chi tiet yeu cau huy</h3>
+                    <h3 className="text-base font-bold uppercase tracking-wider text-white md:text-lg">Chi tiết yêu cầu hủy</h3>
                     <button onClick={onClose} className="rounded bg-red-500 p-1.5 text-white transition-colors hover:bg-red-600">
                         <X className="h-5 w-5" />
                     </button>
@@ -94,19 +94,19 @@ function ReviewModal({ item, submitting, onClose, onSubmit }) {
                 <div className="space-y-5 overflow-y-auto p-6">
                     <div className="grid grid-cols-2 gap-5">
                         <div>
-                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Ma sinh vien</p>
+                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Mã sinh viên</p>
                             <p className="text-sm font-bold text-slate-800">{item.msv}</p>
                         </div>
                         <div>
-                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Ho va ten</p>
+                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Họ và tên</p>
                             <p className="text-sm font-bold text-slate-800">{item.name}</p>
                         </div>
                         <div>
-                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Lop</p>
+                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Lớp</p>
                             <p className="text-sm font-bold text-slate-800">{item.className}</p>
                         </div>
                         <div>
-                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Ngay gui</p>
+                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Ngày gửi</p>
                             <p className="text-sm font-bold text-slate-800">{item.date || 'N/A'}</p>
                         </div>
                     </div>
@@ -120,31 +120,31 @@ function ReviewModal({ item, submitting, onClose, onSubmit }) {
 
                     {item.description ? (
                         <div>
-                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Mo ta</p>
+                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Mô tả</p>
                             <p className="text-sm text-slate-700">{item.description}</p>
                         </div>
                     ) : null}
 
                     {item.technologies ? (
                         <div>
-                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Cong nghe</p>
+                            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Công nghệ</p>
                             <p className="text-sm text-slate-700">{item.technologies}</p>
                         </div>
                     ) : null}
 
                     <div>
-                        <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Ly do sinh vien gui</p>
+                        <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Lý do sinh viên gửi</p>
                         <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                            {item.reason || 'Chua co noi dung'}
+                            {item.reason || 'Chưa có nội dung'}
                         </p>
                     </div>
 
                     <div>
-                        <label className="mb-2 block text-xs font-bold text-slate-600">Nhan xet / Ly do tu choi</label>
+                        <label className="mb-2 block text-xs font-bold text-slate-600">Nhận xét / Lý do từ chối</label>
                         <textarea
                             value={feedback}
                             onChange={(event) => setFeedback(event.target.value)}
-                            placeholder="Nhap nhan xet neu can..."
+                            placeholder="Nhập nhận xét nếu cần..."
                             className="min-h-[110px] w-full resize-y rounded-lg border border-slate-200 p-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#4f5ca8]"
                         />
                     </div>
@@ -193,7 +193,7 @@ export default function CancelRequests() {
                 setCapstoneData((Array.isArray(capstoneResponse?.data) ? capstoneResponse.data : []).map(mapCapstoneCancel));
                 setInternshipData((Array.isArray(internshipResponse?.data) ? internshipResponse.data : []).map(mapInternshipCancel));
             } catch (error) {
-                toast.error(error?.message || 'Khong the tai danh sach yeu cau huy');
+                toast.error(error?.message || 'Không thể tải danh sách yêu cầu hủy');
                 setCapstoneData([]);
                 setInternshipData([]);
             } finally {
@@ -227,16 +227,16 @@ export default function CancelRequests() {
             if (selectedItem.type === 'capstone') {
                 const response = await lecturerApi.reviewCapstoneCancellation(selectedItem.id, { status, feedback });
                 setCapstoneData((prev) => prev.filter((item) => item.id !== selectedItem.id));
-                toast.success(response?.message || 'Da xu ly yeu cau huy do an');
+                toast.success(response?.message || 'Đã xử lý yêu cầu hủy đồ án');
             } else {
                 const response = await lecturerApi.reviewInternshipCancellation(selectedItem.id, { status, feedback });
                 setInternshipData((prev) => prev.filter((item) => item.id !== selectedItem.id));
-                toast.success(response?.message || 'Da xu ly yeu cau huy thuc tap');
+                toast.success(response?.message || 'Đã xử lý yêu cầu hủy thực tập');
             }
 
             setSelectedItem(null);
         } catch (error) {
-            toast.error(error?.message || 'Khong the xu ly yeu cau huy');
+            toast.error(error?.message || 'Không thể xử lý yêu cầu hủy');
         } finally {
             setSubmitting(false);
         }
@@ -246,7 +246,7 @@ export default function CancelRequests() {
         <Card className="relative m-0 rounded-none border-0 bg-white shadow-sm md:rounded-2xl">
             <div className="p-5 md:p-8">
                 <h2 className="mb-8 text-center text-xl font-bold uppercase tracking-wider text-slate-800 md:text-2xl">
-                    QUAN LY YEU CAU HUY
+                    QUẢN LÝ YÊU CẦU HỦY
                 </h2>
 
                 <div className="mb-4 flex items-center gap-6 border-b border-slate-200">
@@ -254,13 +254,13 @@ export default function CancelRequests() {
                         onClick={() => setActiveTab('capstone')}
                         className={`border-b-2 px-1 pb-3 text-sm font-bold ${activeTab === 'capstone' ? 'border-[#4f46e5] text-[#4f46e5]' : 'border-transparent text-slate-600'}`}
                     >
-                        Yeu cau huy Do an
+                        Yêu cầu hủy đồ án
                     </button>
                     <button
                         onClick={() => setActiveTab('internship')}
                         className={`border-b-2 px-1 pb-3 text-sm font-bold ${activeTab === 'internship' ? 'border-[#4f46e5] text-[#4f46e5]' : 'border-transparent text-slate-600'}`}
                     >
-                        Yeu cau huy Thuc tap
+                        Yêu cầu hủy thực tập
                     </button>
                 </div>
 
@@ -270,18 +270,18 @@ export default function CancelRequests() {
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="font-bold text-slate-600">STT</TableHead>
                                 <TableHead className="font-bold text-slate-600">MSV</TableHead>
-                                <TableHead className="font-bold text-slate-600">Ho va ten</TableHead>
-                                <TableHead className="font-bold text-slate-600">Lop</TableHead>
-                                <TableHead className="font-bold text-slate-600">Ngay gui</TableHead>
-                                <TableHead className="font-bold text-slate-600">Trang thai</TableHead>
-                                <TableHead className="text-center font-bold text-slate-600">Hanh dong</TableHead>
+                                <TableHead className="font-bold text-slate-600">Họ và tên</TableHead>
+                                <TableHead className="font-bold text-slate-600">Lớp</TableHead>
+                                <TableHead className="font-bold text-slate-600">Ngày gửi</TableHead>
+                                <TableHead className="font-bold text-slate-600">Trạng thái</TableHead>
+                                <TableHead className="text-center font-bold text-slate-600">Hành động</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="h-32 text-center text-slate-500">
-                                        Dang tai du lieu...
+                                        Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
                             ) : visibleData.length > 0 ? (
@@ -305,7 +305,7 @@ export default function CancelRequests() {
                                                     className="h-8 font-medium text-[#ef4444] hover:bg-red-50 hover:text-[#dc2626]"
                                                     onClick={() => setSelectedItem(item)}
                                                 >
-                                                    Xu ly
+                                                    Xử lý
                                                 </Button>
                                             </div>
                                         </TableCell>

@@ -12,13 +12,13 @@ import { toast } from 'sonner';
 import * as yup from 'yup';
 
 const reportSchema = yup.object({
-    comment: yup.string().required('Vui long nhap nhan xet'),
+    comment: yup.string().required('Vui lòng nhập nhận xét'),
 });
 
 const statusLabelMap = {
-    PENDING: 'chua duyet',
-    APPROVED: 'da duyet',
-    REJECTED: 'tu choi',
+    PENDING: 'chưa duyệt',
+    APPROVED: 'đã duyệt',
+    REJECTED: 'từ chối',
 };
 
 const mapReport = (item) => ({
@@ -30,7 +30,7 @@ const mapReport = (item) => ({
     ngayNop: item.submission_date ?? '',
     nhanXet: item.lecturer_feedback ?? '',
     fileUrl: item.file_preview_url ?? null,
-    trangthai: statusLabelMap[item.status] ?? 'chua duyet',
+    trangthai: statusLabelMap[item.status] ?? 'chưa duyệt',
 });
 
 function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
@@ -50,9 +50,9 @@ function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
             <div className="flex items-center justify-center gap-2">
                 <Button onClick={onBack} variant="ghost" className="border border-gray-200">
                     <ChevronLeft />
-                    Quay lai
+                    Quay lại
                 </Button>
-                <span className="text-lg font-bold">Bao cao do an</span>
+                <span className="text-lg font-bold">Báo cáo đồ án</span>
             </div>
 
             <div className="flex flex-col gap-4 pt-4 sm:flex-row">
@@ -61,10 +61,10 @@ function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
                         <FileText className="mb-4 size-14 text-slate-300" />
                         {item.fileUrl ? (
                             <a href={item.fileUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-600 underline">
-                                Mo file bao cao
+                                Mở file báo cáo
                             </a>
                         ) : (
-                            <p className="text-lg font-medium">Chua co file preview</p>
+                            <p className="text-lg font-medium">Chưa có file preview</p>
                         )}
                     </div>
                 </Card>
@@ -73,21 +73,21 @@ function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
                     <Card className="p-6">
                         <div className="space-y-4">
                             <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Sinh vien thuc hien</span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Sinh viên thực hiện</span>
                                 <p className="text-[15px] font-bold text-slate-800">
                                     {item.hoTen} - {item.maSV}
                                 </p>
                             </div>
                             <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Ten de tai</span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Tên đề tài</span>
                                 <p className="text-[15px] font-bold text-[#2563eb]">{item.tenDeTai}</p>
                             </div>
                             <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Dot bao cao</span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Đợt báo cáo</span>
                                 <p className="text-[15px] font-bold text-slate-800">{item.dotBaoCao}</p>
                             </div>
                             <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Ngay nop</span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Ngày nộp</span>
                                 <p className="text-sm text-slate-600">{item.ngayNop || 'N/A'}</p>
                             </div>
                         </div>
@@ -97,12 +97,12 @@ function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
                         <div className="space-y-4">
                             <div>
                                 <label className="mb-2 block text-sm font-bold text-slate-700">
-                                    Nhan xet <span className="text-red-500">*</span>
+                                    Nhận xét <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
                                     {...register('comment')}
                                     className={`min-h-[150px] w-full resize-none rounded-xl border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/50 ${errors.comment ? 'border-red-500' : 'border-gray-200'}`}
-                                    placeholder="Nhap noi dung nhan xet..."
+                                    placeholder="Nhập nội dung nhận xét..."
                                 />
                                 {errors.comment && <p className="mt-1 text-xs text-red-500">{errors.comment.message}</p>}
                             </div>
@@ -113,7 +113,7 @@ function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
                                     onClick={handleSubmit((data) => onReject(item.id, data.comment))}
                                     className="flex-1 rounded-xl border border-red-200 bg-white text-red-500 hover:bg-red-50"
                                 >
-                                    {submitting ? 'Dang xu ly...' : 'Tu choi'}
+                                    {submitting ? 'Đang xử lý...' : 'Từ chối'}
                                 </Button>
                                 <Button
                                     type="button"
@@ -121,7 +121,7 @@ function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
                                     onClick={handleSubmit((data) => onApprove(item.id, data.comment))}
                                     className="flex-1 rounded-xl bg-[#7c3aed] text-white hover:bg-[#6d28d9]"
                                 >
-                                    {submitting ? 'Dang xu ly...' : 'Duyet'}
+                                    {submitting ? 'Đang xử lý...' : 'Duyệt'}
                                 </Button>
                             </div>
                         </div>
@@ -165,7 +165,7 @@ function ReportTable({ reports, loading, onSelect }) {
     return (
         <Card className="bg-[#ffffff]">
             <div className="p-5">
-                <h2 className="text-center text-xl font-bold text-slate-800 md:text-2xl">QUAN LY BAO CAO DO AN</h2>
+                <h2 className="text-center text-xl font-bold text-slate-800 md:text-2xl">QUẢN LÝ BÁO CÁO ĐỒ ÁN</h2>
 
                 <div className="mt-5 flex flex-col gap-3 lg:flex-row">
                     <div className="relative lg:w-[320px]">
@@ -174,7 +174,7 @@ function ReportTable({ reports, loading, onSelect }) {
                             value={keyword}
                             onChange={(event) => setKeyword(event.target.value)}
                             className="pl-9"
-                            placeholder="Tim theo ma SV, ten SV, ten de tai"
+                            placeholder="Tìm theo mã SV, tên SV, tên đề tài"
                         />
                     </div>
 
@@ -183,10 +183,10 @@ function ReportTable({ reports, loading, onSelect }) {
                         onChange={(event) => setStatusKeyword(event.target.value)}
                         className="h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none transition-all focus:border-primary focus:ring-[3px] focus:ring-primary/20 lg:w-[180px]"
                     >
-                        <option value="">Trang thai</option>
-                        <option value="chua duyet">Chua duyet</option>
-                        <option value="da duyet">Da duyet</option>
-                        <option value="tu choi">Tu choi</option>
+                        <option value="">Trạng thái</option>
+                        <option value="chua duyet">Chưa duyệt</option>
+                        <option value="da duyet">Đã duyệt</option>
+                        <option value="tu choi">Từ chối</option>
                     </select>
 
                     <Button
@@ -197,7 +197,7 @@ function ReportTable({ reports, loading, onSelect }) {
                         }}
                         className="lg:w-[110px]"
                     >
-                        Tim kiem
+                        Tìm kiếm
                     </Button>
                 </div>
 
@@ -207,18 +207,18 @@ function ReportTable({ reports, loading, onSelect }) {
                             <TableRow>
                                 <TableHead>STT</TableHead>
                                 <TableHead>MSV</TableHead>
-                                <TableHead>Ho va ten</TableHead>
-                                <TableHead>Ten de tai</TableHead>
-                                <TableHead>Dot bao cao</TableHead>
-                                <TableHead>Trang thai</TableHead>
-                                <TableHead>Hanh dong</TableHead>
+                                <TableHead>Họ và tên</TableHead>
+                                <TableHead>Tên đề tài</TableHead>
+                                <TableHead>Đợt báo cáo</TableHead>
+                                <TableHead>Trạng thái</TableHead>
+                                <TableHead>Hành động</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading && (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-slate-500">
-                                        Dang tai du lieu...
+                                        Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -232,7 +232,7 @@ function ReportTable({ reports, loading, onSelect }) {
                                     <TableCell>{item.trangthai}</TableCell>
                                     <TableCell>
                                         <Button size="sm" variant="outline" onClick={() => onSelect(item)}>
-                                            Xem chi tiet
+                                            Xem chi tiết
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -240,7 +240,7 @@ function ReportTable({ reports, loading, onSelect }) {
                             {!loading && visibleReports.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-slate-500">
-                                        Khong co bao cao nao cho duyet
+                                        Không có báo cáo nào cần duyệt
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -314,10 +314,10 @@ export default function ProjectReportsApi() {
             setSubmitting(true);
             await lecturerApi.reviewCapstoneReport(reportId, { status: 'APPROVED', feedback: comment });
             setReports((prev) => prev.filter((report) => report.id !== reportId));
-            toast.success('Da duyet bao cao do an');
+            toast.success('Đã duyệt báo cáo đồ án');
             setSelectedReport(null);
         } catch (error) {
-            toast.error(error?.message || 'Khong the duyet bao cao do an');
+            toast.error(error?.message || 'Không thể duyệt báo cáo đồ án');
         } finally {
             setSubmitting(false);
         }
@@ -328,10 +328,10 @@ export default function ProjectReportsApi() {
             setSubmitting(true);
             await lecturerApi.reviewCapstoneReport(reportId, { status: 'REJECTED', feedback: comment });
             setReports((prev) => prev.filter((report) => report.id !== reportId));
-            toast.error('Da tu choi bao cao do an');
+            toast.error('Đã từ chối báo cáo đồ án');
             setSelectedReport(null);
         } catch (error) {
-            toast.error(error?.message || 'Khong the tu choi bao cao do an');
+            toast.error(error?.message || 'Không thể từ chối báo cáo đồ án');
         } finally {
             setSubmitting(false);
         }

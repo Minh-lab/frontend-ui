@@ -10,7 +10,7 @@ import * as yup from 'yup';
 import lecturerApi from '@/services/lecturerApi';
 
 const approveSchema = yup.object({
-    comment: yup.string().required('Vui long nhap nhan xet hoac ly do tu choi'),
+    comment: yup.string().required('Vui lòng nhập nhận xét hoặc lý do từ chối'),
 });
 
 const mapTopic = (item) => ({
@@ -19,7 +19,7 @@ const mapTopic = (item) => ({
     name: item.student_name ?? 'N/A',
     className: item.class_name ?? 'N/A',
     topicName: item.topic_title ?? 'N/A',
-    tech: item.technologies ?? 'Chua cap nhat',
+    tech: item.technologies ?? 'Chưa cập nhật',
     desc: item.description ?? 'N/A',
     createdAt: item.created_at ?? '',
 });
@@ -46,7 +46,7 @@ export default function ApproveTopicApi() {
                 const response = await lecturerApi.getPendingCapstoneTopics();
                 setData((Array.isArray(response?.data) ? response.data : []).map(mapTopic));
             } catch (error) {
-                toast.error(error?.message || 'Khong the tai danh sach de tai');
+                toast.error(error?.message || 'Không thể tải danh sách đề tài');
                 setData([]);
             }
         };
@@ -72,10 +72,10 @@ export default function ApproveTopicApi() {
                 feedback: formData.comment,
             });
             setData((prev) => prev.filter((item) => item.id !== selectedTopic.id));
-            toast.success(response?.message || `Da duyet de tai cho sinh vien ${selectedTopic.name}`);
+            toast.success(response?.message || `Đã duyệt đề tài cho sinh viên ${selectedTopic.name}`);
             setSelectedTopic(null);
         } catch (error) {
-            toast.error(error?.message || 'Khong the duyet de tai');
+            toast.error(error?.message || 'Không thể duyệt đề tài');
         } finally {
             setSubmitting(false);
         }
@@ -89,10 +89,10 @@ export default function ApproveTopicApi() {
                 feedback: formData.comment,
             });
             setData((prev) => prev.filter((item) => item.id !== selectedTopic.id));
-            toast.error(response?.message || `Da tu choi de tai cua sinh vien ${selectedTopic.name}`);
+            toast.error(response?.message || `Đã từ chối đề tài của sinh viên ${selectedTopic.name}`);
             setSelectedTopic(null);
         } catch (error) {
-            toast.error(error?.message || 'Khong the tu choi de tai');
+            toast.error(error?.message || 'Không thể từ chối đề tài');
         } finally {
             setSubmitting(false);
         }
@@ -102,12 +102,12 @@ export default function ApproveTopicApi() {
         <Card className="relative m-0 rounded-none border-0 bg-white shadow-sm md:rounded-2xl">
             <div className="p-5 md:p-8">
                 <h2 className="mb-8 text-center text-xl font-bold uppercase tracking-wider text-slate-800 md:text-2xl">
-                    XAC NHAN DUYET DE TAI
+                    XÁC NHẬN DUYỆT ĐỀ TÀI
                 </h2>
 
                 <div className="mb-6 flex flex-wrap items-center gap-4">
                     <span className="inline-flex rounded-full border border-[#fbd38d] px-4 py-1.5 text-xs font-semibold text-[#dd6b20]">
-                        Danh sach de tai cho duyet
+                        Danh sách đề tài chờ duyệt
                     </span>
                 </div>
 
@@ -117,10 +117,10 @@ export default function ApproveTopicApi() {
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="font-bold text-slate-600">STT</TableHead>
                                 <TableHead className="font-bold text-slate-600">MSV</TableHead>
-                                <TableHead className="font-bold text-slate-600">Ho va ten</TableHead>
-                                <TableHead className="font-bold text-slate-600">Lop</TableHead>
-                                <TableHead className="font-bold text-slate-600">Ten de tai de xuat</TableHead>
-                                <TableHead className="text-center font-bold text-slate-600">Hanh dong</TableHead>
+                                <TableHead className="font-bold text-slate-600">Họ và tên</TableHead>
+                                <TableHead className="font-bold text-slate-600">Lớp</TableHead>
+                                <TableHead className="font-bold text-slate-600">Tên đề tài đề xuất</TableHead>
+                                <TableHead className="text-center font-bold text-slate-600">Hành động</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -136,7 +136,7 @@ export default function ApproveTopicApi() {
                                     <TableCell>
                                         <div className="flex items-center justify-center">
                                             <Button variant="ghost" size="sm" className="h-8 font-medium text-[#3b82f6] hover:bg-blue-50 hover:text-[#2563eb]" onClick={() => handleOpenTopic(item)}>
-                                                Xem chi tiet
+                                                Xem chi tiết
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -145,7 +145,7 @@ export default function ApproveTopicApi() {
                             {visibleData.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={6} className="h-32 text-center text-slate-500">
-                                        Khong co de tai nao cho duyet
+                                        Không có đề tài nào chờ duyệt
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -184,7 +184,7 @@ export default function ApproveTopicApi() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
                     <div className="flex max-h-[90vh] w-full max-w-[600px] flex-col overflow-hidden rounded-xl bg-white shadow-xl">
                         <div className="flex items-center justify-between bg-[#6d28d9] p-4">
-                            <h3 className="text-base font-bold uppercase tracking-wider text-white md:text-lg">CHI TIET DE TAI DE XUAT</h3>
+                            <h3 className="text-base font-bold uppercase tracking-wider text-white md:text-lg">CHI TIẾT ĐỀ TÀI ĐỀ XUẤT</h3>
                             <button onClick={() => setSelectedTopic(null)} className="rounded bg-red-500 p-1.5 text-white transition-colors hover:bg-red-600">
                                 <X className="h-5 w-5" />
                             </button>
@@ -193,11 +193,11 @@ export default function ApproveTopicApi() {
                         <div className="overflow-y-auto p-6">
                             <div className="mb-6 grid grid-cols-2 gap-6">
                                 <div>
-                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Ma sinh vien</label>
+                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Mã sinh viên</label>
                                     <p className="text-sm font-bold text-slate-800 sm:text-base">{selectedTopic.msv}</p>
                                 </div>
                                 <div className="text-right sm:text-left">
-                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Ho ten va lop</label>
+                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Họ tên và lớp</label>
                                     <p className="text-sm font-bold text-slate-800 sm:text-base">
                                         {selectedTopic.name} <span className="hidden sm:inline">- </span> {selectedTopic.className}
                                     </p>
@@ -206,27 +206,27 @@ export default function ApproveTopicApi() {
 
                             <div className="space-y-5">
                                 <div>
-                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Ten de tai</label>
+                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Tên đề tài</label>
                                     <p className="text-sm font-bold text-slate-800">{selectedTopic.topicName}</p>
                                 </div>
 
                                 <div>
-                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Cong nghe du kien</label>
+                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Công nghệ dự kiến</label>
                                     <p className="text-sm font-bold text-slate-800">{selectedTopic.tech}</p>
                                 </div>
 
                                 <div>
-                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Mo ta</label>
+                                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 sm:text-xs">Mô tả</label>
                                     <p className="text-sm font-bold text-slate-800">{selectedTopic.desc}</p>
                                 </div>
 
                                 <div className="mt-6">
                                     <label className="mb-2 block text-xs font-bold text-slate-600">
-                                        Nhan xet / Ly do tu choi: <span className="text-red-500">*</span>
+                                        Nhận xét / Lý do từ chối: <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
                                         {...register('comment')}
-                                        placeholder="Nhap nhan xet chi tiet cho sinh vien tai day..."
+                                        placeholder="Nhập nhận xét chi tiết cho sinh viên tại đây..."
                                         className={`min-h-[100px] w-full resize-y rounded-lg border p-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#6d28d9] ${errors.comment ? 'border-red-500' : 'border-slate-200'}`}
                                     />
                                     {errors.comment && <p className="mt-1 text-xs text-red-500">{errors.comment.message}</p>}
@@ -236,10 +236,10 @@ export default function ApproveTopicApi() {
 
                         <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 p-4">
                             <Button variant="outline" disabled={submitting} onClick={handleSubmit(handleReject)} className="border-red-200 px-6 font-semibold text-red-500 hover:bg-red-50 hover:text-red-600">
-                                {submitting ? 'Dang xu ly...' : 'Tu choi'}
+                                {submitting ? 'Đang xử lý...' : 'Từ chối'}
                             </Button>
                             <Button disabled={submitting} onClick={handleSubmit(handleApprove)} className="bg-[#6d28d9] px-6 font-semibold text-white hover:bg-[#5b21b6]">
-                                {submitting ? 'Dang xu ly...' : 'Duyet de tai'}
+                                {submitting ? 'Đang xử lý...' : 'Duyệt đề tài'}
                             </Button>
                         </div>
                     </div>

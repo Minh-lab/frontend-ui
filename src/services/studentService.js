@@ -77,6 +77,38 @@ const studentService = {
       throw error.response?.data || { message: "Khong the dang ky GVHD" };
     }
   },
+
+  getCapstoneMilestones: async () => {
+    try {
+      const response = await api.get("/capstones/milestones");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Không thể lấy danh sách đợt đồ án" };
+    }
+  },
+
+  getCapstoneReportHistory: async () => {
+    try {
+      const response = await api.get("/capstones/reports/history");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Không thể lấy lịch sử báo cáo đồ án" };
+    }
+  },
+
+  submitCapstoneReport: async (payload) => {
+    try {
+      // payload expects capstone_id, milestone_id, link, report_file
+      const response = await api.post("/capstones/reports/submit", payload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Không thể nộp báo cáo đồ án" };
+    }
+  },
 };
 
 export default studentService;

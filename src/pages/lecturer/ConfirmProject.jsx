@@ -31,11 +31,11 @@ const ConfirmProject = () => {
                 setData(Array.isArray(response?.data) ? response.data : []);
             } catch (error) {
                 console.error("Error fetching student:", error);
-                toast.error(error?.message || 'Khong the tai danh sach dang ky');
+                toast.error(error?.message || 'Không thể tải danh sách đăng ký');
             }
         };
         fetchData();
-    },[]);
+    }, []);
 
     const {
         register,
@@ -78,7 +78,7 @@ const ConfirmProject = () => {
             });
             setSelectedStudent(null);
         } catch (error) {
-            toast.error(error?.message || 'Khong the chap nhan dang ky');
+            toast.error(error?.message || 'Không thể chấp nhận đăng ký');
         } finally {
             setSubmitting(false);
         }
@@ -98,7 +98,7 @@ const ConfirmProject = () => {
             });
             setSelectedStudent(null);
         } catch (error) {
-            toast.error(error?.message || 'Khong the tu choi dang ky');
+            toast.error(error?.message || 'Không thể từ chối đăng ký');
         } finally {
             setSubmitting(false);
         }
