@@ -13,10 +13,10 @@ const gradeSchema = yup.object({
     score: yup
         .number()
         .transform((value, originalValue) => (originalValue === '' ? undefined : value))
-        .typeError('Vui long nhap diem la so')
-        .required('Vui long nhap diem')
-        .min(0, 'Diem khong duoc nho hon 0')
-        .max(10, 'Diem khong duoc lon hon 10'),
+        .typeError('Vui lòng nhập điểm là số')
+        .required('Vui lòng nhập điểm')
+        .min(0, 'Điểm không được nhỏ hơn 0')
+        .max(10, 'Điểm không được lớn hơn 10'),
     comment: yup.string().nullable(),
 });
 
@@ -29,14 +29,14 @@ const mapReview = (item) => ({
     expertise: item.expertise ?? 'N/A',
     score: item.my_grade ?? null,
     comment: item.feedback ?? '',
-    status: item.my_grade !== null && item.my_grade !== undefined ? 'Da cham' : 'Dang cho cham',
+    status: item.my_grade !== null && item.my_grade !== undefined ? 'Đã chấm' : 'Đang chờ chấm',
     fileUrl: item.preview_url ?? null,
 });
 
 function GradeStatusBadge({ graded }) {
     return (
         <span className={`inline-flex px-3 py-1 rounded-full text-[11px] font-bold border ${graded ? 'bg-[#dcfce7] text-[#16a34a] border-[#bbf7d0]' : 'bg-[#e0e7ff] text-[#6366f1] border-[#c7d2fe]'}`}>
-            {graded ? 'Da cham' : 'Dang cho cham'}
+            {graded ? 'Đã chấm' : 'Đang chờ chấm'}
         </span>
     );
 }
@@ -70,9 +70,9 @@ function ReviewDetail({ selectedStudent, viewMode, onBack, onSubmitGrade, submit
                 <div className="flex items-center gap-4">
                     <Button variant="outline" size="sm" onClick={onBack} className="text-slate-600 border-slate-200 hover:bg-slate-50 font-semibold px-4 h-9 rounded-lg">
                         <ArrowLeft className="w-4 h-4 mr-2" />
-                        Quay lai
+                        Quay lại
                     </Button>
-                    <h2 className="text-lg md:text-xl font-bold text-slate-800">Cham diem phan bien</h2>
+                    <h2 className="text-lg md:text-xl font-bold text-slate-800">Chấm điểm phản biện</h2>
                 </div>
             </div>
 
@@ -81,47 +81,47 @@ function ReviewDetail({ selectedStudent, viewMode, onBack, onSubmitGrade, submit
                     <FileText className="w-16 h-16 mb-4 text-slate-300 opacity-80" />
                     {selectedStudent.fileUrl ? (
                         <a href={selectedStudent.fileUrl} target="_blank" rel="noreferrer" className="text-[15px] font-medium text-blue-600 underline">
-                            Mo file bao cao
+                            Mở file báo cáo
                         </a>
                     ) : (
-                        <p className="text-[15px] font-medium text-slate-400/80">Chua co file preview</p>
+                        <p className="text-[15px] font-medium text-slate-400/80">Chưa có file preview</p>
                     )}
                 </div>
 
                 <div className="space-y-6">
                     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
                         <div className="flex items-start justify-between mb-5 pb-4 border-b border-slate-100">
-                            <h3 className="font-bold text-slate-800 text-[15px]">Thong tin do an</h3>
+                            <h3 className="font-bold text-slate-800 text-[15px]">Thông tin đồ án</h3>
                             <GradeStatusBadge graded={selectedStudent.score !== null && selectedStudent.score !== undefined} />
                         </div>
                         <div className="space-y-4">
                             <div>
-                                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">Sinh vien thuc hien:</p>
+                                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">Sinh viên thực hiện:</p>
                                 <p className="font-bold text-slate-800 text-[15px]">
                                     {selectedStudent.name} <span className="text-slate-500 font-medium ml-1">({selectedStudent.msv})</span>
                                 </p>
                             </div>
                             <div>
-                                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">Lop:</p>
+                                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">Lớp:</p>
                                 <p className="font-semibold text-slate-700 text-sm">{selectedStudent.className}</p>
                             </div>
                             <div>
-                                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">De tai:</p>
+                                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">Đề tài:</p>
                                 <p className="font-semibold text-[#2563eb] text-sm leading-relaxed">{selectedStudent.topicName}</p>
                             </div>
                             <div>
-                                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">Linh vuc:</p>
+                                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">Chuyên môn:</p>
                                 <p className="font-semibold text-slate-700 text-sm">{selectedStudent.expertise}</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
-                        <h3 className="font-bold text-slate-800 text-[15px] mb-5 pb-4 border-b border-slate-100">Ket qua danh gia</h3>
+                        <h3 className="font-bold text-slate-800 text-[15px] mb-5 pb-4 border-b border-slate-100">Kết quả đánh giá</h3>
 
                         <form onSubmit={handleSubmit((data) => onSubmitGrade(selectedStudent.id, data.score, data.comment))}>
                             <div className="mb-6">
-                                <label className="text-xs font-bold text-slate-700 block mb-2 px-1">Diem tong</label>
+                                <label className="text-xs font-bold text-slate-700 block mb-2 px-1">Điểm tổng</label>
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-2">
                                         <input
@@ -139,11 +139,11 @@ function ReviewDetail({ selectedStudent, viewMode, onBack, onSubmitGrade, submit
                             </div>
 
                             <div className="mb-6">
-                                <label className="text-xs font-bold text-slate-700 block mb-2 px-1">Nhan xet</label>
+                                <label className="text-xs font-bold text-slate-700 block mb-2 px-1">Nhận xét</label>
                                 <textarea
                                     {...register('comment')}
                                     disabled={isViewOnly || submitting}
-                                    placeholder="Nhan xet de gui kem neu can..."
+                                    placeholder="Nhận xét để gửi kèm nếu cần..."
                                     className="w-full min-h-[140px] px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/50 focus:border-[#3b82f6] disabled:bg-slate-50 disabled:text-slate-500 resize-y"
                                 />
                             </div>
@@ -151,7 +151,7 @@ function ReviewDetail({ selectedStudent, viewMode, onBack, onSubmitGrade, submit
                             {!isViewOnly && (
                                 <div className="flex justify-end mt-6 pt-5 border-t border-slate-100">
                                     <Button type="submit" disabled={submitting} className="bg-[#10b981] hover:bg-[#059669] text-white px-6 font-bold h-10 rounded-xl">
-                                        {submitting ? 'Dang xu ly...' : 'Hoan tat cham diem'}
+                                        {submitting ? 'Đang xử lý...' : 'Hoàn tất chấm điểm'}
                                     </Button>
                                 </div>
                             )}
@@ -179,7 +179,7 @@ export default function ReviewGrade() {
                 const response = await lecturerApi.getCapstoneReviewingList();
                 setData((Array.isArray(response?.data) ? response.data : []).map(mapReview));
             } catch (error) {
-                toast.error(error?.message || 'Khong the tai danh sach phan bien');
+                toast.error(error?.message || 'Không thể tải danh sách phản biện');
                 setData([]);
             } finally {
                 setLoading(false);
@@ -222,15 +222,15 @@ export default function ReviewGrade() {
             setData((prev) =>
                 prev.map((item) =>
                     item.id === capstoneId
-                        ? { ...item, score, comment: comment ?? '', status: 'Da cham' }
+                        ? { ...item, score, comment: comment ?? '', status: 'Đã chấm' }
                         : item
                 )
             );
 
-            toast.success(response?.message || 'Da cham diem phan bien thanh cong');
+            toast.success(response?.message || 'Đã chấm điểm phản biện thành công');
             handleBack();
         } catch (error) {
-            toast.error(error?.message || 'Khong the cham diem phan bien');
+            toast.error(error?.message || 'Không thể chấm điểm phản biện');
         } finally {
             setSubmitting(false);
         }
@@ -252,7 +252,7 @@ export default function ReviewGrade() {
         <Card className="bg-white m-0 border-0 shadow-sm rounded-none md:rounded-2xl">
             <div className="p-5 md:p-8">
                 <h2 className="text-center text-xl font-bold uppercase text-slate-800 md:text-2xl mb-8 tracking-wider">
-                    CHAM DIEM PHAN BIEN
+                    CHẤM ĐIỂM PHẢN BIỆN
                 </h2>
 
                 <div className="overflow-hidden rounded-xl border border-slate-100 shadow-sm">
@@ -261,18 +261,18 @@ export default function ReviewGrade() {
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="font-bold text-slate-600">STT</TableHead>
                                 <TableHead className="font-bold text-slate-600">MSV</TableHead>
-                                <TableHead className="font-bold text-slate-600">Ho va ten</TableHead>
-                                <TableHead className="font-bold text-slate-600">Ten de tai</TableHead>
-                                <TableHead className="font-bold text-slate-600 text-center">Trang thai</TableHead>
-                                <TableHead className="font-bold text-slate-600 text-center">Diem</TableHead>
-                                <TableHead className="font-bold text-slate-600 text-center">Hanh dong</TableHead>
+                                <TableHead className="font-bold text-slate-600">Họ và tên</TableHead>
+                                <TableHead className="font-bold text-slate-600">Tên đề tài</TableHead>
+                                <TableHead className="font-bold text-slate-600 text-center">Trạng thái</TableHead>
+                                <TableHead className="font-bold text-slate-600 text-center">Điểm</TableHead>
+                                <TableHead className="font-bold text-slate-600 text-center">Hành động</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading && (
                                 <TableRow>
                                     <TableCell colSpan={7} className="h-32 text-center text-slate-500 font-medium">
-                                        Dang tai du lieu...
+                                        Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -303,7 +303,7 @@ export default function ReviewGrade() {
                                                     onClick={() => handleGoToGrade(item)}
                                                     className={`h-7 px-3 text-[11px] rounded-full font-bold ${!isGraded ? 'border-[#e879f9] text-[#c026d3] bg-[#fdf4ff] hover:bg-[#fae8ff]' : 'border-slate-200 text-slate-400 bg-slate-50'}`}
                                                 >
-                                                    Cham diem
+                                                    Chấm điểm
                                                 </Button>
                                                 <Button
                                                     variant="outline"
@@ -311,7 +311,7 @@ export default function ReviewGrade() {
                                                     onClick={() => handleGoToView(item)}
                                                     className={`h-7 px-3 text-[11px] rounded-full font-bold ${isGraded ? 'border-[#93c5fd] text-[#2563eb] bg-[#eff6ff] hover:bg-[#dbeafe]' : 'border-slate-200 text-slate-400 bg-slate-50'}`}
                                                 >
-                                                    Xem chi tiet
+                                                    Xem chi tiết
                                                 </Button>
                                             </div>
                                         </TableCell>
@@ -321,7 +321,7 @@ export default function ReviewGrade() {
                             {!loading && visibleData.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={7} className="h-32 text-center text-slate-500 font-medium">
-                                        Khong co du lieu de tai
+                                        Không có dữ liệu để tải
                                     </TableCell>
                                 </TableRow>
                             )}

@@ -1,13 +1,14 @@
 import StatusBadge from "@/components/StatusBadge";
 import { doAn, thucTap } from "../../data/studentData";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStudentAccess, setStudentAccess } from "@/lib/studentAccess";
 import { toast } from "sonner";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
 import studentService from "@/services/studentService";
 import internshipService from "@/services/internship";
+
 const steps = [
   { label: "Dang ky", done: true },
   { label: "Cho duyet", done: true },
@@ -24,13 +25,41 @@ function StepIcon({ done, failed, num }) {
 
 export default function HomePageStudent() {
   const navigate = useNavigate();
-  const [access, setAccess] = useState(() => getStudentAccess());
+  const [access, setAccess] = useState({ projectEnabled: false, internEnabled: false });
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      setLoading(true);
+      try {
+        const [capstoneRes, internRes] = await Promise.allSettled([
+          studentService.getMyCapstoneStatus(),
+          internshipService.getStatus()
+        ]);
+
+        const projectEnabled = capstoneRes.status === 'fulfilled' && capstoneRes.value?.data !== null;
+        const internEnabled = internRes.status === 'fulfilled' && internRes.value?.data !== null;
+
+        const newAccess = { projectEnabled, internEnabled };
+        setAccess(newAccess);
+        // Cập nhật lại localStorage để sidebar/các trang khác đồng bộ
+        setStudentAccess(newAccess);
+      } catch (error) {
+        console.error("Lỗi khi tải trạng thái:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStatuses();
+  }, []);
 
   const handleEnableProject = async () => {
     try {
       await studentService.registerCapstonePhase();
-      setAccess(setStudentAccess({ projectEnabled: true }));
+      const newAccess = setStudentAccess({ projectEnabled: true });
+      setAccess(newAccess);
       toast.success("Đã đăng ký đợt đồ án thành công", {
         className: "!bg-[#AAFAB8] !text-[#24AD47]",
       });
@@ -47,14 +76,15 @@ export default function HomePageStudent() {
     try {
       const milestoneRes = await internshipService.getMilestone();
       const milestoneId = milestoneRes.data?.milestone_id || milestoneRes.milestone_id;
-      
+
       if (!milestoneId) {
         throw new Error("Không tìm thấy đợt thực tập nào đang mở");
       }
 
       await internshipService.registerInternship(milestoneId);
-      
-      setAccess(setStudentAccess({ internEnabled: true }));
+
+      const newAccess = setStudentAccess({ internEnabled: true });
+      setAccess(newAccess);
       toast.success("Đã đăng ký đợt thực tập thành công", {
         className: "!bg-[#AAFAB8] !text-[#24AD47]",
       });
@@ -71,21 +101,23 @@ export default function HomePageStudent() {
     try {
       if (confirmModal.type === "project") {
         await studentService.cancelCapstone();
-        setAccess(setStudentAccess({ projectEnabled: false }));
+        const newAccess = setStudentAccess({ projectEnabled: false });
+        setAccess(newAccess);
         toast.success("Đã gửi yêu cầu hủy đợt đồ án thành công", {
           className: "!bg-[#AAFAB8] !text-[#24AD47]",
         });
       } else if (confirmModal.type === "intern") {
         const statusRes = await internshipService.getStatus();
         const internshipId = statusRes.data?.internship_id || statusRes.internship_id;
-        
+
         if (!internshipId) {
           throw new Error("Không tìm thấy thông tin thực tập để hủy");
         }
 
         await internshipService.cancelInternship(internshipId);
 
-        setAccess(setStudentAccess({ internEnabled: false }));
+        const newAccess = setStudentAccess({ internEnabled: false });
+        setAccess(newAccess);
         toast.success("Đã gửi yêu cầu hủy đợt thực tập thành công", {
           className: "!bg-[#AAFAB8] !text-[#24AD47]",
         });
@@ -100,34 +132,40 @@ export default function HomePageStudent() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex flex-wrap gap-3 justify-end">
-        <Button
-          onClick={handleEnableProject}
-          disabled={access.projectEnabled}
-          className="bg-[#5c60c0] hover:bg-[#4a4ea8]"
-        >
-          {access.projectEnabled ? "Đã mở đợt đồ án" : "Đăng ký đợt đồ án"}
-        </Button>
-        <Button
-          onClick={handleEnableIntern}
-          disabled={access.internEnabled}
-          className="bg-[#5c60c0] hover:bg-[#4a4ea8] "
-        >
-          {access.internEnabled ? "Đã mở đợt thực tập" : "Đăng ký đợt thực tập"}
-        </Button>
-        <Button
-          onClick={handleDisableProject}
-          disabled={!access.projectEnabled}
-          className="bg-red-400 hover:bg-red-500 "
-        >
-          {access.projectEnabled ? "Yêu cầu hủy đồ án" : "Đã hủy đồ án"}
-        </Button>
-        <Button
-          onClick={handleDisableIntern}
-          disabled={!access.internEnabled}
-          className="bg-red-400 hover:bg-red-500 "
-        >
-          {access.internEnabled ? "Yêu cầu hủy thực tập" : "Đã hủy thực tập"}
-        </Button>
+        {loading ? (
+          <div className="text-sm text-gray-400 animate-pulse">Đang tải trạng thái...</div>
+        ) : (
+          <>
+            <Button
+              onClick={handleEnableProject}
+              disabled={access.projectEnabled}
+              className="bg-[#5c60c0] hover:bg-[#4a4ea8]"
+            >
+              {access.projectEnabled ? "Đã mở đợt đồ án" : "Đăng ký đợt đồ án"}
+            </Button>
+            <Button
+              onClick={handleEnableIntern}
+              disabled={access.internEnabled}
+              className="bg-[#5c60c0] hover:bg-[#4a4ea8] "
+            >
+              {access.internEnabled ? "Đã mở đợt thực tập" : "Đăng ký đợt thực tập"}
+            </Button>
+            <Button
+              onClick={handleDisableProject}
+              disabled={!access.projectEnabled}
+              className="bg-red-400 hover:bg-red-500 "
+            >
+              {access.projectEnabled ? "Yêu cầu hủy đồ án" : "Đã hủy đồ án"}
+            </Button>
+            <Button
+              onClick={handleDisableIntern}
+              disabled={!access.internEnabled}
+              className="bg-red-400 hover:bg-red-500 "
+            >
+              {access.internEnabled ? "Yêu cầu hủy thực tập" : "Đã hủy thực tập"}
+            </Button>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

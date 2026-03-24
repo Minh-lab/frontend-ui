@@ -26,8 +26,8 @@ const mapReport = (item) => ({
     id: item.report_id,
     maSV: item.student_code ?? 'N/A',
     hoTen: item.student_name ?? 'N/A',
-    vitri: item.position ?? 'N/A',
-    congty: item.company_name ?? 'N/A',
+    position: item.position ?? 'N/A',
+    company_name: item.company_name ?? 'N/A',
     giaiDoan: item.phase_name ?? 'N/A',
     moTa: item.description ?? '',
     fileUrl: item.file_preview_url ?? null,
@@ -50,9 +50,9 @@ function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
             <div className="flex items-center justify-center gap-2">
                 <Button onClick={onBack} variant="ghost" className="border border-gray-200">
                     <ChevronLeft />
-                    Quay lai
+                    Quay lại
                 </Button>
-                <span className="text-lg font-bold">Bao cao thuc tap</span>
+                <span className="text-lg font-bold">Báo cáo thực tập</span>
             </div>
 
             <div className="flex flex-col gap-4 pt-4 sm:flex-row">
@@ -61,10 +61,10 @@ function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
                         <FileText className="mb-4 size-14 text-slate-300" />
                         {item.fileUrl ? (
                             <a href={item.fileUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-600 underline">
-                                Mo file bao cao
+                                Mở file báo cáo
                             </a>
                         ) : (
-                            <p className="text-lg font-medium">Chua co file preview</p>
+                            <p className="text-lg font-medium">Chưa có file preview</p>
                         )}
                     </div>
                 </Card>
@@ -73,24 +73,24 @@ function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
                     <Card className="p-6">
                         <div className="space-y-4">
                             <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Sinh vien thuc hien</span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Sinh viên thực hiện</span>
                                 <p className="text-[15px] font-bold text-slate-800">{item.hoTen}</p>
                             </div>
                             <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Cong ty</span>
-                                <p className="text-[15px] font-bold text-[#2563eb]">{item.congty}</p>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Công ty</span>
+                                <p className="text-[15px] font-bold text-[#2563eb]">{item.company_name}</p>
                             </div>
                             <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Vi tri dang ky</span>
-                                <p className="text-[15px] font-bold text-[#2563eb]">{item.vitri}</p>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Vị trí đăng ký</span>
+                                <p className="text-[15px] font-bold text-[#2563eb]">{item.position}</p>
                             </div>
                             <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Giai doan</span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Giai đoạn</span>
                                 <p className="text-[15px] font-bold text-slate-800">{item.giaiDoan}</p>
                             </div>
                             <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Mo ta</span>
-                                <p className="text-sm text-slate-600">{item.moTa || 'Khong co mo ta'}</p>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Mô tả</span>
+                                <p className="text-sm text-slate-600">{item.moTa || 'Không có mô tả'}</p>
                             </div>
                         </div>
                     </Card>
@@ -99,7 +99,7 @@ function ReviewPanel({ item, onBack, onApprove, onReject, submitting }) {
                         <div className="space-y-4">
                             <div>
                                 <label className="mb-2 block text-sm font-bold text-slate-700">
-                                    Nhan xet <span className="text-red-500">*</span>
+                                    Nhận xét <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
                                     {...register('comment')}
@@ -163,7 +163,7 @@ function ReportTable({ report, loading, onSelect }) {
     return (
         <Card className="bg-[#ffffff]">
             <div className="p-3">
-                <span>QUAN LY BAO CAO THUC TAP</span>
+                <span>QUẢN LÝ BÁO CÁO THỰC TẬP</span>
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -175,10 +175,10 @@ function ReportTable({ report, loading, onSelect }) {
                             onChange={(event) => setStatusKeyword(event.target.value)}
                             className="h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none"
                         >
-                            <option value="">Trang thai</option>
-                            <option value="chua duyet">Chua duyet</option>
-                            <option value="da duyet">Da duyet</option>
-                            <option value="tu choi">Tu choi</option>
+                            <option value="">Trạng thái</option>
+                            <option value="chua duyet">Chưa duyệt</option>
+                            <option value="da duyet">Đã duyệt</option>
+                            <option value="tu choi">Từ chối</option>
                         </select>
                     </div>
                     <Button
@@ -189,7 +189,7 @@ function ReportTable({ report, loading, onSelect }) {
                             setPage(1);
                         }}
                     >
-                        Tim kiem
+                        Tìm kiếm
                     </Button>
                 </div>
 
@@ -199,12 +199,12 @@ function ReportTable({ report, loading, onSelect }) {
                             <TableRow>
                                 <TableHead>STT</TableHead>
                                 <TableHead>MSV</TableHead>
-                                <TableHead>Ho va ten</TableHead>
-                                <TableHead>Vi tri dang ky</TableHead>
-                                <TableHead>Cong ty</TableHead>
-                                <TableHead>Trang thai</TableHead>
-                                <TableHead>Giai doan</TableHead>
-                                <TableHead>Hanh dong</TableHead>
+                                <TableHead>Họ và tên</TableHead>
+                                <TableHead>Vị trí đăng ký</TableHead>
+                                <TableHead>Công ty</TableHead>
+                                <TableHead>Trạng thái</TableHead>
+                                <TableHead>Giai đoạn</TableHead>
+                                <TableHead>Hành động</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -220,17 +220,17 @@ function ReportTable({ report, loading, onSelect }) {
                                     <TableCell>{(page - 1) * visibleTaskLimit + index + 1}</TableCell>
                                     <TableCell>{item.maSV}</TableCell>
                                     <TableCell>{item.hoTen}</TableCell>
-                                    <TableCell>{item.vitri}</TableCell>
-                                    <TableCell>{item.congty}</TableCell>
+                                    <TableCell>{item.position}</TableCell>
+                                    <TableCell>{item.company_name}</TableCell>
                                     <TableCell>{item.trangthai}</TableCell>
                                     <TableCell>{item.giaiDoan}</TableCell>
                                     <TableCell>
                                         <div className="flex gap-2">
                                             <Button size="sm" variant="outline" onClick={() => onSelect(item)}>
-                                                Duyet
+                                                Duyệt
                                             </Button>
                                             <Button size="sm" variant="outline" onClick={() => onSelect(item)}>
-                                                Xem chi tiet
+                                                Xem chi tiết
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -239,7 +239,7 @@ function ReportTable({ report, loading, onSelect }) {
                             {!loading && visibleTask.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center text-slate-500">
-                                        Khong co bao cao nao
+                                        Không có báo cáo nào
                                     </TableCell>
                                 </TableRow>
                             )}

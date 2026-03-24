@@ -296,19 +296,28 @@ export default function DangKyGVHDPage() {
   const [isRegister, setIsRegister] = useState(false);
 
   useEffect(() => {
-    const fetchLecturers = async () => {
+    const fetchLecturersAndStatus = async () => {
       setLoading(true);
       try {
+        // 1. Lấy danh sách giảng viên
         const response = await lecturerApi.getLecturers();
         setListGV(response.data);
+
+        // 2. Lấy trạng thái của sinh viên để kiểm tra đã đăng ký chưa
+        const statusRes = await studentService.getMyCapstoneStatus();
+        const statusData = statusRes?.data || statusRes;
+        
+        if (statusData?.has_pending_lecturer_request || statusData?.lecturer) {
+          setIsRegister(true);
+        }
       } catch (error) {
         console.error(error);
-        toast.error("Không thể tải danh sách giảng viên");
+        toast.error("Không thể tải thông tin đăng ký");
       } finally {
         setLoading(false);
       }
     };
-    fetchLecturers();
+    fetchLecturersAndStatus();
   }, []);
 
   if (!access.projectEnabled) {
