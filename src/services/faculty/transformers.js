@@ -91,15 +91,26 @@ export function mapLecturerFromBackend(backendLecturer) {
 /**
  * Determine lecturer status from backend data
  * Rules:
+ * - If has active LEAVE record (APPROVED_PENDING or LEAVE_ACTIVE) → "Nghỉ phép"
  * - If has pending LEAVE_REQ → "Yêu cầu nghỉ phép"
  * - If is_active = 0 → "Ngưng công tác"  
  * - If is_active = 1 → "Hoạt động"
  * 
- * @param {Object} lecturer - Lecturer object với is_active + requests
- * @returns {String} Status text: "Hoạt động" | "Yêu cầu nghỉ phép" | "Ngưng công tác"
+ * @param {Object} lecturer - Lecturer object với is_active + requests + leaves
+ * @returns {String} Status text: "Hoạt động" | "Yêu cầu nghỉ phép" | "Ngưng công tác" | "Nghỉ phép"
  */
 export function getStatusFromBackend(lecturer) {
-  // Priority 1: Check for pending leave requests
+  // Priority 1: Check for active leave records (APPROVED_PENDING or LEAVE_ACTIVE)
+  if (lecturer.leaves && Array.isArray(lecturer.leaves)) {
+    const hasActiveLeave = lecturer.leaves.some(
+      leave => leave.status === 'LEAVE_ACTIVE' || leave.status === 'APPROVED_PENDING'
+    );
+    if (hasActiveLeave) {
+      return "Nghỉ phép";
+    }
+  }
+  
+  // Priority 2: Check for pending leave requests
   if (lecturer.requests && Array.isArray(lecturer.requests)) {
     const hasPendingLeave = lecturer.requests.some(
       req => req.type === 'LEAVE_REQ' && req.status === 'PENDING'
@@ -109,7 +120,7 @@ export function getStatusFromBackend(lecturer) {
     }
   }
   
-  // Priority 2: Check is_active status
+  // Priority 3: Check is_active status
   if (lecturer.is_active === 0 || lecturer.is_active === false) {
     return "Ngưng công tác";
   }

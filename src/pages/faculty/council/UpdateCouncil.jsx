@@ -174,7 +174,7 @@ export default function UpdateCouncil() {
           <h3 className="font-bold text-slate-800 mb-8 uppercase text-xs tracking-[0.1em]">
             Thành viên hội đồng {councilMembers.length}/5
           </h3>
-          <div className="w-full space-y-4">
+          <div className="w-full space-y-4 max-h-[500px] overflow-y-auto pr-2">
             {councilMembers.map((member) => (
               <div key={member.lecturer_id} className="flex items-center gap-4 animate-in slide-in-from-left-2 duration-300">
                 <button 
@@ -200,7 +200,7 @@ export default function UpdateCouncil() {
           <h3 className="font-bold text-slate-800 mb-8 uppercase text-xs tracking-[0.1em]">
             Danh sách giảng viên khả dụng
           </h3>
-          <div className="w-full space-y-4">
+          <div className="w-full space-y-4 max-h-[500px] overflow-y-auto pr-2">
             {availableLecturers.map((lecturer) => (
               <div key={lecturer.lecturer_id} className="flex items-center gap-4 animate-in slide-in-from-right-2 duration-300">
                 <button 
@@ -226,7 +226,7 @@ export default function UpdateCouncil() {
       <div className="flex justify-end gap-4 pt-4">
         <Button 
           variant="cancel"
-          onClick={() => navigate("/faculty/council")}
+          onClick={() => navigate("/faculty_staff/councils")}
           disabled={submitting}
           className="rounded-xl px-12 h-12 font-bold shadow-lg"
         >

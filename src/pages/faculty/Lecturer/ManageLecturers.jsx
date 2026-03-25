@@ -84,13 +84,15 @@ export default function ManageLecturers() {
   const getStatusColor = (status) => {
     switch(status) {
       case "Hoạt động":
-        return "text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-bold";
+        return "bg-green-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm";
       case "Yêu cầu nghỉ phép":
-        return "text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full text-xs font-bold";
+        return "bg-amber-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm";
+      case "Nghỉ phép":
+        return "bg-blue-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm";
       case "Ngưng công tác":
-        return "text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-bold";
+        return "bg-red-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm";
       default:
-        return "text-slate-600";
+        return "bg-slate-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm";
     }
   };
 
@@ -154,7 +156,7 @@ export default function ManageLecturers() {
                   <TableCell className="text-slate-600">{lecturer.specialization}</TableCell>
                   <TableCell className="text-center">
                     <span className={getStatusColor(lecturer.status)}>
-                      {lecturer.status}
+                      {lecturer.status?.toUpperCase()}
                     </span>
                   </TableCell>
                   <TableCell>
