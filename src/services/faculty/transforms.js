@@ -45,7 +45,16 @@ export const transformCapstone = (backendData) => ({
   description: backendData.topic?.description,
   registration_date: backendData.created_at,
   has_pending_cancel_request: backendData.has_pending_cancel_request,
-  pending_cancel_request: backendData.pending_cancel_request,
+  // Lưu toàn bộ thông tin pending_cancel_request (nếu có) để sử dụng trong dialog
+  pending_cancel_request: backendData.pending_cancel_request ? {
+    capstone_request_id: backendData.pending_cancel_request.capstone_request_id,
+    request_id: backendData.pending_cancel_request.capstone_request_id, // Alias cho compatibility
+    type: backendData.pending_cancel_request.type,
+    status: backendData.pending_cancel_request.status,
+    student_message: backendData.pending_cancel_request.student_message,
+    lecturer_feedback: backendData.pending_cancel_request.lecturer_feedback,
+    created_at: backendData.pending_cancel_request.created_at,
+  } : null,
   instructor_grade: (backendData.instructor_grade && typeof backendData.instructor_grade === 'number') ? parseFloat(backendData.instructor_grade).toFixed(2) : null,
   council_grade: (backendData.council_grade && typeof backendData.council_grade === 'number') ? parseFloat(backendData.council_grade).toFixed(2) : null,
   defense_order: backendData.defense_order,

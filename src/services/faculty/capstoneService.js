@@ -391,14 +391,18 @@ const capstoneService = {
     }
   },
 
-  // Phê duyệt hoặc từ chối yêu cầu hủy đồ án (VPK)
-  processCancelRequest: async (id, actionType, feedback = "") => {
+  // Phê duyệt hoặc từ chối yêu cầu hủy đồ án (VPK) - API riêng cho faculty_staff
+  processCancelRequest: async (capstone_request_id, actionType, feedback = "") => {
     try {
       const action = actionType === "approve" ? "APPROVE" : "REJECT";
-      const response = await api.post(`/faculty_staff/capstones/cancellations/${id}/confirm`, {
-        action,
-        feedback
-      });
+      // Sử dụng API mới riêng cho VPK (tránh conflict với lecturer)
+      const response = await api.post(
+        `/faculty_staff/capstones/cancel-requests/${capstone_request_id}/process`,
+        {
+          action,
+          feedback
+        }
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: "Lỗi xử lý yêu cầu hủy" };

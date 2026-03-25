@@ -139,14 +139,38 @@ export default function CapstoneDetailDialog({ isOpen, onClose, data, onOpenCanc
                   </p>
                 )}
 
+                {/* Hiển thị thông tin pending cancel request nếu có */}
+                {displayData.has_pending_cancel_request && displayData.pending_cancel_request && (
+                  <div className="mt-8 pt-4 border-t border-red-200 space-y-3 bg-red-50 p-4 rounded-lg">
+                    <p className="text-[14px] font-bold text-red-700 uppercase">
+                      ⚠️ Yêu cầu hủy đồ án đang chờ duyệt
+                    </p>
+                    <p className="text-[14px] text-slate-700">
+                      <span className="font-bold">Lý do hủy:</span> {displayData.pending_cancel_request.student_message || "Không có lý do"}
+                    </p>
+                    <p className="text-[14px] text-slate-700">
+                      <span className="font-bold">Ngày gửi:</span> {
+                        displayData.pending_cancel_request.created_at 
+                          ? new Date(displayData.pending_cancel_request.created_at).toLocaleDateString('vi-VN')
+                          : "---"
+                      }
+                    </p>
+                    {displayData.pending_cancel_request.lecturer_feedback && (
+                      <p className="text-[14px] text-slate-700">
+                        <span className="font-bold">Phản hồi giảng viên:</span> {displayData.pending_cancel_request.lecturer_feedback}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Nút Duyệt Hủy (Chỉ hiện khi có pending cancel request) */}
                 {displayData.has_pending_cancel_request && (
-                  <div className="absolute bottom-0 right-0 pt-10">
+                  <div className="mt-6 flex gap-2">
                     <button 
                       onClick={() => onOpenCancelAction(displayData)}
-                      className="px-6 py-2.5 bg-[#7786d1] hover:bg-[#5c6bb2] text-white text-[11px] font-bold rounded-lg uppercase shadow-md transition-all active:scale-95"
+                      className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold rounded-lg uppercase shadow-md transition-all active:scale-95"
                     >
-                      Duyệt yêu cầu hủy đồ án
+                      Duyệt yêu cầu hủy
                     </button>
                   </div>
                 )}

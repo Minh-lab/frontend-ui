@@ -10,7 +10,7 @@ export const MASTER_MENU = [
     title: "Trang chủ", 
     path: "/", // Bạn có thể sửa path linh hoạt theo logic router
     icon: Home, 
-    roles: ["student", "lecturer", "company", "faculty", "admin"] 
+    roles: ["student", "lecturer", "company", "faculty_staff", "admin"] 
   },
 
   // --- SINH VIÊN ---

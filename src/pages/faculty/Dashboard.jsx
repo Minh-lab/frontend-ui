@@ -16,32 +16,32 @@ import {
 const FACULTY_MODULES = [
   { 
     title: "Quản lý thực tập", 
-    path: "/faculty/intern", 
+    path: "/faculty_staff/internships", 
     icon: <Briefcase className="size-20 text-white" />
   },
   { 
     title: "Quản lý đồ án", 
-    path: "/faculty/projects", 
+    path: "/faculty_staff/capstones", 
     icon: <ClipboardList className="size-20 text-white" />
   },
   { 
     title: "Quản lý giảng viên", 
-    path: "/faculty/lecturers", 
+    path: "/faculty_staff/lecturers", 
     icon: <Users className="size-20 text-white" />
   },
   { 
     title: "Quản lý hội đồng", 
-    path: "/faculty/council", 
+    path: "/faculty_staff/councils", 
     icon: <Users2 className="size-20 text-white" />
   },
   { 
     title: "Quản lý kế hoạch", 
-    path: "/faculty/plans", 
+    path: "/faculty_staff/plans", 
     icon: <Clock className="size-20 text-white" />
   },
   { 
     title: "Quản lý đề tài", 
-    path: "/faculty/topics", 
+    path: "/faculty_staff/topics", 
     icon: <BookOpen className="size-20 text-white" />
   },
 ];

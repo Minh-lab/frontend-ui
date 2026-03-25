@@ -100,7 +100,15 @@ export default function ManageCapstones() {
         // Transform backend data to frontend format
         const transformedCapstones = response.data.capstones.map(transformCapstone);
         setCapstones(transformedCapstones);
-        setPagination(response.data.pagination);
+        
+        // Map backend pagination keys to frontend state keys
+        const backendPagination = response.data.pagination;
+        setPagination({
+          current_page: backendPagination.current_page || 1,
+          total_pages: backendPagination.last_page || 1,
+          total_items: backendPagination.total || 0,
+          items_per_page: backendPagination.per_page || 10
+        });
       } else {
         toast.error(response.message);
       }
@@ -146,8 +154,13 @@ export default function ManageCapstones() {
     try {
       setProcessing(true);
       
+      // Lấy request_id từ pending_cancel_request để gửi tới API
+      const requestId = targetCapstone.pending_cancel_request?.capstone_request_id 
+        || targetCapstone.pending_cancel_request?.request_id
+        || targetCapstone.id;
+      
       const response = await capstoneService.processCancelRequest(
-        targetCapstone.id, 
+        requestId, 
         actionType
       );
       
@@ -372,7 +385,17 @@ export default function ManageCapstones() {
                   <TableCell className="text-slate-500 italic text-[11px]">{item.council || "---"}</TableCell>
                   <TableCell className="text-center font-bold text-indigo-600">{item.score || "---"}</TableCell>
                   <TableCell>
-                    <div className="flex justify-center">
+                    <div className="flex justify-center gap-2">
+                      {/* Nếu có pending cancel request thì hiển thị button duyệt hủy */}
+                      {item.has_pending_cancel_request && (
+                        <button 
+                          onClick={() => { setTargetCapstone(item); setIsConfirmCancelOpen(true); }}
+                          className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold rounded-full uppercase shadow-sm active:scale-95"
+                          title="Duyệt yêu cầu hủy đồ án"
+                        >
+                          Duyệt hủy
+                        </button>
+                      )}
                       <button 
                         onClick={() => { setTargetCapstone(item); setIsDetailOpen(true); }}
                         className="px-4 py-1.5 bg-[#7786d1] hover:bg-[#5c6bb2] text-white text-[10px] font-bold rounded-full uppercase shadow-sm active:scale-95"
@@ -396,36 +419,44 @@ export default function ManageCapstones() {
 
       {/* 4. Phân trang */}
       {pagination.total_pages > 0 && (
-        <div className="flex items-center justify-center gap-2 pt-6">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => handlePageChange(pagination.current_page - 1)}
-            disabled={pagination.current_page === 1}
-            className="rounded-xl h-9 w-24 gap-2 font-bold text-slate-500 border-slate-200"
-          >
-            <ChevronLeft className="size-4" /> Previous
-          </Button>
-          
-          <div className="flex gap-1 items-center px-4">
-            <span className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-900 border border-slate-200 font-bold text-sm">
-              {pagination.current_page}
-            </span>
-            <span className="text-slate-400 font-bold px-2">/</span>
-            <span className="text-slate-400 font-bold text-sm">
-              {pagination.total_pages}
-            </span>
-          </div>
+        <div className="flex flex-col items-center justify-center gap-4 pt-6 px-4">
+          <div className="flex items-center justify-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handlePageChange(pagination.current_page - 1)}
+              disabled={pagination.current_page === 1 || loading}
+              className="rounded-xl h-9 w-28 gap-2 font-bold text-slate-500 border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="size-4" /> Previous
+            </Button>
+            
+            <div className="flex gap-1 items-center px-4">
+              <span className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-900 border border-slate-200 font-bold text-sm">
+                {pagination.current_page}
+              </span>
+              <span className="text-slate-400 font-bold px-2">/</span>
+              <span className="text-slate-400 font-bold text-sm">
+                {pagination.total_pages}
+              </span>
+            </div>
 
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => handlePageChange(pagination.current_page + 1)}
-            disabled={pagination.current_page === pagination.total_pages}
-            className="rounded-xl h-9 w-24 gap-2 font-bold text-slate-500 border-slate-200"
-          >
-            Next <ChevronRight className="size-4" />
-          </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handlePageChange(pagination.current_page + 1)}
+              disabled={pagination.current_page === pagination.total_pages || loading}
+              className="rounded-xl h-9 w-28 gap-2 font-bold text-slate-500 border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next <ChevronRight className="size-4" />
+            </Button>
+          </div>
+          
+          {/* Hiển thị thông tin thêm về pagination */}
+          <div className="text-center text-sm text-slate-500">
+            <p>Tổng cộng: <span className="font-bold text-slate-700">{pagination.total_items}</span> đồ án • 
+               Hiển thị: <span className="font-bold text-slate-700">{capstones.length}</span> trên mỗi trang</p>
+          </div>
         </div>
       )}
 

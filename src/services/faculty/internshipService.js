@@ -534,6 +534,101 @@ const internshipService = {
     }
   },
 
+  /**
+   * UC 39.2 (VPK): Lấy danh sách tất cả internships với pending cancel requests
+   * GET /faculty_staff/internships/manage (có phân trang)
+   */
+  getVPKInternshipsWithCancelRequests: async (page = 1, perPage = 10) => {
+    try {
+      const response = await api.get("/faculty_staff/internships/manage", {
+        params: {
+          page: page,
+          per_page: perPage
+        }
+      });
+      
+      // Transform response để hiển thị
+      const data = response.data?.data || [];
+      const transformedData = data.map(item => ({
+        internship_id: item.internship_id,
+        id: item.internship_id, // alias để dùng như các component khác
+        student_id: item.student_id,
+        student_name: item.student_name,
+        student_code: item.student_code,
+        class_name: item.class_name || '---', // Tên lớp của sinh viên
+        lecturer_id: item.lecturer_id,
+        lecturer_name: item.lecturer_name,
+        company_id: item.company_id,
+        company_name: item.company_name,
+        company_grade: item.company_grade ?? null, // Điểm đánh giá từ công ty
+        status: item.status,
+        position: item.position,
+        has_pending_cancel_request: item.has_pending_cancel_request === true,
+        pending_cancel_request: item.pending_cancel_request,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      }));
+
+      return {
+        success: true,
+        data: transformedData,
+        pagination: {
+          current_page: response.data?.pagination?.current_page || page,
+          total: response.data?.pagination?.total || 0,
+          per_page: response.data?.pagination?.per_page || perPage,
+          last_page: response.data?.pagination?.last_page || 1,
+          from: response.data?.pagination?.from || (data.length > 0 ? 1 : 0),
+          to: response.data?.pagination?.to || data.length,
+        }
+      };
+    } catch (error) {
+      console.error("API Error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Lỗi tải danh sách thực tập: " + (error.message || "Unknown"),
+        data: [],
+        pagination: {
+          current_page: 1,
+          total: 0,
+          per_page: 10,
+          last_page: 1,
+          from: 0,
+          to: 0,
+        }
+      };
+    }
+  },
+
+  /**
+   * UC 39.2 (VPK): Xử lý duyệt/từ chối yêu cầu hủy thực tập
+   * POST /faculty_staff/internships/review-cancel/{internship_request_id}
+   */
+  processCancelRequest: async (internship_request_id, actionType, feedback = "") => {
+    try {
+      // Map action type: 'approve' -> 'APPROVED', 'reject' -> 'REJECTED'
+      const status = actionType === 'approve' || actionType === 'APPROVED' ? 'APPROVED' : 'REJECTED';
+      
+      const response = await api.post(
+        `/faculty_staff/internships/review-cancel/${internship_request_id}`,
+        {
+          status: status,
+          feedback: feedback
+        }
+      );
+
+      return {
+        success: true,
+        message: response.data?.message || (actionType === 'approve' ? "Đã duyệt hủy thực tập" : "Đã từ chối hủy thực tập"),
+        data: response.data?.data || {}
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Lỗi xử lý yêu cầu hủy: " + (error.message || "Unknown")
+      };
+    }
+  },
+
   // Legacy fake method names for backward compatibility
   getEnterprises: async (search = "", page = 1) => internshipService.getCompaniesForAssignment(search, page),
   getLecturers: async (search = "", page = 1) => internshipService.getLecturerSlots(search, page),
